@@ -1,0 +1,26 @@
+[
+    {
+        "nombre": "Interstellar",
+        "año": 2014,
+        "genero": "Drama - Ciencia Ficción",
+        "puntuacion": 10
+    },
+    {
+        "nombre": "The Amazing Spiderman",
+        "año": 2012,
+        "genero": "Ciencia Ficción",
+        "puntuacion": 10
+    },
+    {
+        "nombre": "The Amazing Spiderman 2",
+        "año": 2014,
+        "genero": "Ciencia Ficción",
+        "puntuacion": 10
+    },
+    {
+        "nombre": "El Efecto Mariposa",
+        "año": 2004,
+        "genero": "Drama - Romance",
+        "puntuacion": 10
+    }
+]
