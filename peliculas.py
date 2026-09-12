@@ -1,4 +1,5 @@
 from persistencia import guardar_peliculas
+from database import insertar_pelicula
 
 #Funciones auxiliares
 def encontrar_pelicula(lista_peliculas, nombre_buscado):
@@ -12,7 +13,7 @@ def encontrar_pelicula(lista_peliculas, nombre_buscado):
 def mostrar_pelicula(pelicula):
 
     print(f"Nombre: {pelicula['nombre']}")
-    print(f"Año: {pelicula['año']}")
+    print(f"Año: {pelicula['anio']}")
     print(f"Género: {pelicula['genero']}")
     print(f"Puntuación: {pelicula['puntuacion']}")
 
@@ -102,16 +103,16 @@ def agregar_pelicula(lista_peliculas):
 
     
     #Creamos un diccionario pelicula para guardar cada pelicula
-    pelicula = {
-        "nombre": nombre_pelicula,
-        "año": anio_pelicula,
-        "genero": genero_pelicula,
-        "puntuacion": puntuacion_pelicula
-    }
+    pelicula = insertar_pelicula(
+        nombre_pelicula, 
+        anio_pelicula, 
+        genero_pelicula, 
+        puntuacion_pelicula
+    )
     #Metemos cada pelicula de ese diccionario en la lista de peliculas que creamos antes
     lista_peliculas.append(pelicula)
     mostrar_pelicula(pelicula)
-    guardar_peliculas(lista_peliculas)
+    
 
 def buscar_pelicula(lista_peliculas):
     
@@ -213,7 +214,7 @@ def modificar_pelicula(lista_peliculas):
             
         elif seleccion == 2:
             nuevo_anio = pedir_anio()
-            pelicula_encontrada["año"] = nuevo_anio
+            pelicula_encontrada["anio"] = nuevo_anio
 
         elif seleccion == 3:
             nuevo_genero = pedir_texto(

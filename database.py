@@ -1,11 +1,11 @@
 import os
 import psycopg
 from dotenv import load_dotenv
-
+from psycopg.rows import dict_row
 # Cargamos las variables guardadas en el archivo .env
 load_dotenv()
 
-
+#Funcion para conectar la base
 def conectar_db():
 
     try:
@@ -14,7 +14,8 @@ def conectar_db():
             port=os.getenv("DB_PORT"),
             dbname=os.getenv("DB_NAME"),
             user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD")
+            password=os.getenv("DB_PASSWORD"),
+            row_factory=dict_row
         )
 
         print("Conexión exitosa a PostgreSQL")
@@ -24,13 +25,46 @@ def conectar_db():
         print(f"Error al conectar con PostgreSQL: {error}")
         return None
 
+#Funcion para insertar peliculas
+def insertar_pelicula(nombre, anio, genero, puntuacion):
+    conexion = conectar_db()
 
-conexion = conectar_db()
+    with conexion.cursor() as cursor:
 
-with conexion.cursor() as cursor:
-    cursor.execute("SELECT * FROM peliculas")
-    resultados = cursor.fetchall()
+        cursor.execute(
+            """
+            INSERT INTO peliculas (nombre, anio, genero, puntuacion)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id_pelicula, nombre, anio, genero, puntuacion
+            """,
+            (nombre, anio, genero, puntuacion)
+        )
 
-    print(resultados)
+        peliculas = cursor.fetchone()
 
-conexion.close()
+        conexion.commit()
+    conexion.close()
+    return peliculas
+
+#Funcion para obtener peliculas
+def obtener_peliculas():
+    conexion = conectar_db()
+
+    with conexion.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id_pelicula, nombre, anio, genero, puntuacion
+            FROM peliculas
+            ORDER BY id_pelicula
+            """
+        )
+        peliculas = cursor.fetchall()
+    conexion.close()
+
+    return peliculas
+
+
+
+
+
+

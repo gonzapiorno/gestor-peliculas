@@ -1,13 +1,13 @@
 #Importamos las funciones necesarias para ejecutar el programa
 from peliculas import ver_peliculas, agregar_pelicula, buscar_pelicula, eliminar_pelicula, modificar_pelicula
-from persistencia import cargar_peliculas
+from database import obtener_peliculas
 
 
 
 def main():
 
     #Cargamos las películas guardadas al iniciar el programa
-    lista_peliculas = cargar_peliculas()
+    lista_peliculas = obtener_peliculas()
     #Condicion While para no salir nunca del menú
     #Hasta que escriba 5 y salga de él
     while True:
