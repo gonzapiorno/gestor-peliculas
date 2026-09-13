@@ -82,6 +82,30 @@ def eliminar_pelicula_db(id_pelicula):
     return pelicula
 
 
+def actualizar_pelicula_db(id_pelicula, campo, nuevo_valor):
+    conexion = conectar_db()
+    campos_permitidos = {"nombre", "anio", "genero", "puntuacion"}
+            
+    if campo not in campos_permitidos:
+        return None
+
+    with conexion.cursor() as cursor:
+
+        cursor.execute(
+            f"""
+            UPDATE peliculas
+            SET {campo} = %s
+            WHERE id_pelicula = %s
+            RETURNING id_pelicula, nombre, anio, genero, puntuacion
+            """,
+            (nuevo_valor, id_pelicula)
+        )
+
+        pelicula = cursor.fetchone()
+        conexion.commit()
+    conexion.close()
+    return pelicula
+
 
 
 

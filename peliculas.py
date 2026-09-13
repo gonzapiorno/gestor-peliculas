@@ -1,5 +1,5 @@
 from persistencia import guardar_peliculas
-from database import insertar_pelicula, eliminar_pelicula_db
+from database import insertar_pelicula, eliminar_pelicula_db, actualizar_pelicula_db
 
 #Funciones auxiliares
 def encontrar_pelicula(lista_peliculas, nombre_buscado):
@@ -210,28 +210,37 @@ def modificar_pelicula(lista_peliculas):
             return
 
         if seleccion == 1:
-            nuevo_nombre = pedir_texto(
+            campo = "nombre"
+            nuevo_valor = pedir_texto(
                 "Ingrese el nuevo nombre de la pelicula: ",
                 "Debes ingresar un nombre."
             )
-            pelicula_encontrada["nombre"] = nuevo_nombre
+            
             
         elif seleccion == 2:
-            nuevo_anio = pedir_anio()
-            pelicula_encontrada["anio"] = nuevo_anio
+            campo = "anio"
+            nuevo_valor = pedir_anio()
+            
 
         elif seleccion == 3:
-            nuevo_genero = pedir_texto(
+            campo = "genero"
+            nuevo_valor = pedir_texto(
                 "Ingrese el nuevo género de la pelicula: ",
                 "Debes ingresar el genero de la pelicula."
-            )
-            pelicula_encontrada["genero"] = nuevo_genero          
+            )          
         
         elif seleccion == 4:
-            nueva_puntuacion = pedir_puntuacion()
-            pelicula_encontrada["puntuacion"] = nueva_puntuacion
+            campo = "puntuacion"
+            nuevo_valor = pedir_puntuacion()
 
-        guardar_peliculas(lista_peliculas)
+        pelicula_actualizada = actualizar_pelicula_db(
+            pelicula_encontrada["id_pelicula"],
+            campo,
+            nuevo_valor
+        )
+
+        pelicula_encontrada.update(pelicula_actualizada)
+        
         print("\nPelicula actualizada:")
         mostrar_pelicula(pelicula_encontrada)
 
