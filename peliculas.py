@@ -1,5 +1,5 @@
 from persistencia import guardar_peliculas
-from database import insertar_pelicula
+from database import insertar_pelicula, eliminar_pelicula_db
 
 #Funciones auxiliares
 def encontrar_pelicula(lista_peliculas, nombre_buscado):
@@ -147,10 +147,14 @@ def eliminar_pelicula(lista_peliculas):
     pelicula_encontrada = encontrar_pelicula(lista_peliculas, nombre_buscado)
     #Si encontramos la pelicula la eliminamos, si no, mostramos mensaje de que no se encontro
     if pelicula_encontrada:
+
+        pelicula_eliminada = eliminar_pelicula_db(
+            pelicula_encontrada["id_pelicula"]
+        )
         lista_peliculas.remove(pelicula_encontrada)
-        guardar_peliculas(lista_peliculas)
+        
         print("\nPelicula eliminada:")
-        mostrar_pelicula(pelicula_encontrada)
+        mostrar_pelicula(pelicula_eliminada)
     else:
         print("No se encontro la pelicula.")
 

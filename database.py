@@ -63,6 +63,24 @@ def obtener_peliculas():
 
     return peliculas
 
+def eliminar_pelicula_db(id_pelicula):
+    conexion = conectar_db()
+
+    with conexion.cursor() as cursor:
+        cursor.execute(
+            """
+            DELETE FROM peliculas
+            WHERE id_pelicula = %s
+            RETURNING id_pelicula, nombre, anio, genero, puntuacion
+            """,
+            (id_pelicula,)
+        )
+
+        pelicula = cursor.fetchone()
+        conexion.commit()
+    conexion.close()
+    return pelicula
+
 
 
 
