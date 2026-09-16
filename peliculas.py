@@ -1,5 +1,4 @@
-from persistencia import guardar_peliculas
-from database import insertar_pelicula, eliminar_pelicula_db, actualizar_pelicula_db
+from database import insertar_pelicula, eliminar_pelicula_db, actualizar_pelicula_db, obtener_peliculas, buscar_pelicula_db
 
 #Funciones auxiliares
 def encontrar_pelicula(lista_peliculas, nombre_buscado):
@@ -63,11 +62,13 @@ def pedir_texto(mensaje, mensaje_error):
     
 
 #Funciones para acceder al menú
-def ver_peliculas(lista_peliculas):
+def ver_peliculas():
+
+    peliculas = obtener_peliculas()
     
-    if lista_peliculas:
-        #Recorremos cada pelicula de lista_peliculas
-        for i, pelicula in enumerate(lista_peliculas, start=1):
+    if peliculas:
+        #Recorremos las películas obtenidas de PostgreSQL
+        for i, pelicula in enumerate(peliculas, start=1):
             print(f"\nPelicula {i}")
             #Recorremos cada clave y valor del diccionario pelicula
             mostrar_pelicula(pelicula)
@@ -114,19 +115,14 @@ def agregar_pelicula(lista_peliculas):
     mostrar_pelicula(pelicula)
     
 
-def buscar_pelicula(lista_peliculas):
-    
-    if not lista_peliculas:
-        print("No hay peliculas cargadas.")
-        return
-
+def buscar_pelicula():
 
     nombre_buscado = pedir_texto(
         "Ingrese el nombre de la pelicula: ",
         "Debes ingresar el nombre de la pelicula."
     ).strip().lower()
     
-    pelicula_encontrada = encontrar_pelicula(lista_peliculas, nombre_buscado)
+    pelicula_encontrada = buscar_pelicula_db(nombre_buscado)
     #Si encontramos la pelicula la mostramos, si no, mostramos mensaje de que no se encontro
     if pelicula_encontrada:
         mostrar_pelicula(pelicula_encontrada)

@@ -43,11 +43,11 @@ def main():
             agregar_pelicula(lista_peliculas)
             
         elif seleccion == 2:
-            ver_peliculas(lista_peliculas)
+            ver_peliculas()
     
         elif seleccion == 3:
     
-            buscar_pelicula(lista_peliculas)
+            buscar_pelicula()
     
     
         elif seleccion == 4:

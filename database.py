@@ -106,7 +106,25 @@ def actualizar_pelicula_db(id_pelicula, campo, nuevo_valor):
     conexion.close()
     return pelicula
 
+def buscar_pelicula_db(nombre):
+    conexion = conectar_db()
 
+    with conexion.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id_pelicula, nombre, anio, genero, puntuacion
+            FROM peliculas
+            WHERE LOWER(nombre) = LOWER(%s)
+            ORDER BY id_pelicula
+            LIMIT 1
+            """,
+            (nombre,)
+            
+        )
+        pelicula = cursor.fetchone()
+        
+    conexion.close()
+    return pelicula
 
 
 
