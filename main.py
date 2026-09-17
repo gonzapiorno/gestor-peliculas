@@ -1,15 +1,11 @@
 #Importamos las funciones necesarias para ejecutar el programa
 from peliculas import ver_peliculas, agregar_pelicula, buscar_pelicula, eliminar_pelicula, modificar_pelicula
-from database import obtener_peliculas
-
+import psycopg
 
 
 def main():
-
-    #Cargamos las películas guardadas al iniciar el programa
-    lista_peliculas = obtener_peliculas()
     #Condicion While para no salir nunca del menú
-    #Hasta que escriba 5 y salga de él
+    #Hasta que escriba 6 y salga de él
     while True:
     
         print("===========================")
@@ -39,28 +35,31 @@ def main():
                 print("Debe ingresar un numero.")
     
         #Condiciones para acceder a los diferentes menúes
-        if seleccion == 1:
-            agregar_pelicula(lista_peliculas)
+        try:
+            if seleccion == 1:
+                agregar_pelicula()
             
-        elif seleccion == 2:
-            ver_peliculas()
-    
-        elif seleccion == 3:
-    
-            buscar_pelicula()
-    
-    
-        elif seleccion == 4:
-    
-            eliminar_pelicula(lista_peliculas)
+            elif seleccion == 2:
+                ver_peliculas()
 
-        elif seleccion == 5:
-            modificar_pelicula(lista_peliculas)
-
-        elif seleccion == 6:
-            print("Elegiste salir")
-            break
+            elif seleccion == 3:
     
+                buscar_pelicula()
+    
+    
+            elif seleccion == 4:
+    
+                eliminar_pelicula()
+
+            elif seleccion == 5:
+                modificar_pelicula()
+
+            elif seleccion == 6:
+                print("Elegiste salir")
+                break
+
+        except psycopg.Error:
+            print("No se pudo acceder a la base de datos.")
 
 if __name__ == "__main__":
     main()

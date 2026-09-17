@@ -77,13 +77,9 @@ def ver_peliculas():
     else:
         print("No hay peliculas cargadas.")
 
-def agregar_pelicula(lista_peliculas):
-
-    print("Elegiste agregar una pelicula.\n")
+def agregar_pelicula():
     
-    #Guardamos los valores que ingrese el usuario sobre cada pelicula
-
-    
+    #Guardamos los valores que ingrese el usuario sobre cada pelicula    
     nombre_pelicula = pedir_texto(
         "Ingrese el nombre de la película: ",
         "Debes ingresar un nombre."
@@ -110,10 +106,10 @@ def agregar_pelicula(lista_peliculas):
         genero_pelicula, 
         puntuacion_pelicula
     )
-    #Metemos cada pelicula de ese diccionario en la lista de peliculas que creamos antes
-    lista_peliculas.append(pelicula)
-    mostrar_pelicula(pelicula)
-    
+    if pelicula:
+        mostrar_pelicula(pelicula)
+    else:
+        print("No se pudo agregar la película.")
 
 def buscar_pelicula():
 
@@ -129,38 +125,27 @@ def buscar_pelicula():
     else:
         print("No se encontro la pelicula.")
 
-def eliminar_pelicula(lista_peliculas):
-
-    if not lista_peliculas:
-        print("No hay peliculas cargadas.")
-        return
+def eliminar_pelicula():
 
     nombre_buscado = pedir_texto(
         "Ingrese el nombre de la pelicula: ",
         "Debes ingresar el nombre de la pelicula."
     ).strip().lower()
 
-    pelicula_encontrada = encontrar_pelicula(lista_peliculas, nombre_buscado)
+    pelicula_encontrada = buscar_pelicula_db(nombre_buscado)
     #Si encontramos la pelicula la eliminamos, si no, mostramos mensaje de que no se encontro
     if pelicula_encontrada:
 
         pelicula_eliminada = eliminar_pelicula_db(
             pelicula_encontrada["id_pelicula"]
         )
-        lista_peliculas.remove(pelicula_encontrada)
         
         print("\nPelicula eliminada:")
         mostrar_pelicula(pelicula_eliminada)
     else:
         print("No se encontro la pelicula.")
 
-def modificar_pelicula(lista_peliculas):
-
-    #Si no hay peliculas cargadas retornamos para no seguir con la lógica
-    if not lista_peliculas:
-        print("No hay peliculas cargadas.")
-        return
-
+def modificar_pelicula():
     #Buscamos la pelicula que queremos encontrar:
     while True:
         nombre_buscado = input("Ingrese el nombre de la pelicula: ").strip().lower()
@@ -171,8 +156,7 @@ def modificar_pelicula(lista_peliculas):
             break
 
     
-    pelicula_encontrada = encontrar_pelicula(
-        lista_peliculas,
+    pelicula_encontrada = buscar_pelicula_db(
         nombre_buscado
     )
 
@@ -235,10 +219,11 @@ def modificar_pelicula(lista_peliculas):
             nuevo_valor
         )
 
-        pelicula_encontrada.update(pelicula_actualizada)
-        
-        print("\nPelicula actualizada:")
-        mostrar_pelicula(pelicula_encontrada)
+        if pelicula_actualizada:
+            print("\nPelicula actualizada:")
+            mostrar_pelicula(pelicula_actualizada)
+        else:
+            print("No se pudo actualizar la pelicula.")
 
     else:
         print("No existe una pelicula con ese nombre")

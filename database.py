@@ -15,7 +15,8 @@ def conectar_db():
             dbname=os.getenv("DB_NAME"),
             user=os.getenv("DB_USER"),
             password=os.getenv("DB_PASSWORD"),
-            row_factory=dict_row
+            row_factory=dict_row,
+            connect_timeout=5
         )
 
         print("Conexión exitosa a PostgreSQL")
@@ -23,107 +24,95 @@ def conectar_db():
 
     except psycopg.Error as error:
         print(f"Error al conectar con PostgreSQL: {error}")
-        return None
+        raise #vuelve a lanzar el mismo error que acabamos de capturar
 
 #Funcion para insertar peliculas
 def insertar_pelicula(nombre, anio, genero, puntuacion):
-    conexion = conectar_db()
 
-    with conexion.cursor() as cursor:
+    with conectar_db() as conexion:
+        with conexion.cursor() as cursor:
 
-        cursor.execute(
-            """
-            INSERT INTO peliculas (nombre, anio, genero, puntuacion)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id_pelicula, nombre, anio, genero, puntuacion
-            """,
-            (nombre, anio, genero, puntuacion)
-        )
+            cursor.execute(
+                """
+                INSERT INTO peliculas (nombre, anio, genero, puntuacion)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id_pelicula, nombre, anio, genero, puntuacion
+                """,
+                (nombre, anio, genero, puntuacion)
+            )
 
-        peliculas = cursor.fetchone()
-
-        conexion.commit()
-    conexion.close()
-    return peliculas
+            pelicula = cursor.fetchone()
+    return pelicula
 
 #Funcion para obtener peliculas
 def obtener_peliculas():
-    conexion = conectar_db()
 
-    with conexion.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT id_pelicula, nombre, anio, genero, puntuacion
-            FROM peliculas
-            ORDER BY id_pelicula
-            """
-        )
-        peliculas = cursor.fetchall()
-    conexion.close()
-
+    with conectar_db() as conexion:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id_pelicula, nombre, anio, genero, puntuacion
+                FROM peliculas
+                ORDER BY id_pelicula
+                """
+            )
+            peliculas = cursor.fetchall()
     return peliculas
 
 def eliminar_pelicula_db(id_pelicula):
-    conexion = conectar_db()
+    with conectar_db() as conexion:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM peliculas
+                WHERE id_pelicula = %s
+                RETURNING id_pelicula, nombre, anio, genero, puntuacion
+                """,
+                (id_pelicula,)
+            )
 
-    with conexion.cursor() as cursor:
-        cursor.execute(
-            """
-            DELETE FROM peliculas
-            WHERE id_pelicula = %s
-            RETURNING id_pelicula, nombre, anio, genero, puntuacion
-            """,
-            (id_pelicula,)
-        )
-
-        pelicula = cursor.fetchone()
-        conexion.commit()
-    conexion.close()
+            pelicula = cursor.fetchone()
     return pelicula
 
 
 def actualizar_pelicula_db(id_pelicula, campo, nuevo_valor):
-    conexion = conectar_db()
+    
     campos_permitidos = {"nombre", "anio", "genero", "puntuacion"}
             
     if campo not in campos_permitidos:
         return None
 
-    with conexion.cursor() as cursor:
+    with conectar_db() as conexion:
+        with conexion.cursor() as cursor:
 
-        cursor.execute(
-            f"""
-            UPDATE peliculas
-            SET {campo} = %s
-            WHERE id_pelicula = %s
-            RETURNING id_pelicula, nombre, anio, genero, puntuacion
-            """,
-            (nuevo_valor, id_pelicula)
-        )
+            cursor.execute(
+                f"""
+                UPDATE peliculas
+                SET {campo} = %s
+                WHERE id_pelicula = %s
+                RETURNING id_pelicula, nombre, anio, genero, puntuacion
+                """,
+                (nuevo_valor, id_pelicula)
+            )
 
-        pelicula = cursor.fetchone()
-        conexion.commit()
-    conexion.close()
+            pelicula = cursor.fetchone()
     return pelicula
 
 def buscar_pelicula_db(nombre):
-    conexion = conectar_db()
-
-    with conexion.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT id_pelicula, nombre, anio, genero, puntuacion
-            FROM peliculas
-            WHERE LOWER(nombre) = LOWER(%s)
-            ORDER BY id_pelicula
-            LIMIT 1
-            """,
-            (nombre,)
-            
-        )
-        pelicula = cursor.fetchone()
-        
-    conexion.close()
+    with conectar_db() as conexion:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id_pelicula, nombre, anio, genero, puntuacion
+                FROM peliculas
+                WHERE LOWER(nombre) = LOWER(%s)
+                ORDER BY id_pelicula
+                LIMIT 1
+                """,
+                (nombre,)
+                
+            )
+            pelicula = cursor.fetchone()
     return pelicula
 
 
