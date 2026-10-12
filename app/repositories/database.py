@@ -134,3 +134,42 @@ def actualizar_pelicula_db(id_pelicula, campo, nuevo_valor):
         session.refresh(pelicula)
 
         return pelicula_a_diccionario(pelicula)
+
+
+def obtener_pelicula_por_id(id_pelicula):
+
+    with Session(engine) as session:
+
+        # session.get() busca directamente por la clave primaria
+        pelicula = session.get(Pelicula, id_pelicula)
+
+        if pelicula is None:
+            return None
+
+        return pelicula_a_diccionario(pelicula)
+
+def actualizar_pelicula_completa_db(id_pelicula, nombre, anio, genero, puntuacion):
+    # Abrimos una única sesión
+    with Session(engine) as session:
+
+        # Buscamos la película por su ID
+        pelicula = session.get(Pelicula, id_pelicula)
+
+        if pelicula is None:
+            return None
+
+        # Modificamos los atributos del objeto ORM
+        pelicula.nombre = nombre
+        pelicula.anio = anio
+        pelicula.genero = genero
+        pelicula.puntuacion = puntuacion
+
+        # SQLAlchemy detecta los cambios y genera el UPDATE
+        session.commit()
+
+        # Recuperamos el estado definitivo de PostgreSQL
+        session.refresh(pelicula)
+
+        return pelicula_a_diccionario(pelicula)
+
+

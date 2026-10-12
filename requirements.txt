@@ -1,3 +1,5 @@
 psycopg[binary]
 python-dotenv
 SQLAlchemy>=2.0,<3.0
+fastapi
+uvicorn[standard]
