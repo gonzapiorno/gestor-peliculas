@@ -1,4 +1,4 @@
-from database import insertar_pelicula, eliminar_pelicula_db, actualizar_pelicula_db, obtener_peliculas, buscar_pelicula_db
+from app.repositories.database import insertar_pelicula, eliminar_pelicula_db, actualizar_pelicula_db, obtener_peliculas, buscar_pelicula_db
 
 #Funciones auxiliares
 def encontrar_pelicula(lista_peliculas, nombre_buscado):

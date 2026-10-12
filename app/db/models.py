@@ -1,7 +1,7 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from sqlalchemy_db import Base
+from app.db.session import Base
 
 class Pelicula(Base):
     __tablename__ = "peliculas"

@@ -1,5 +1,5 @@
 #Importamos las funciones necesarias para ejecutar el programa
-from peliculas import ver_peliculas, agregar_pelicula, buscar_pelicula, eliminar_pelicula, modificar_pelicula
+from app.cli.peliculas import ver_peliculas, agregar_pelicula, buscar_pelicula, eliminar_pelicula, modificar_pelicula
 from sqlalchemy.exc import SQLAlchemyError
 
 

@@ -1,8 +1,8 @@
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
-from sqlalchemy_db import engine
-from models import Pelicula
+from app.db.session import engine
+from app.db.models import Pelicula
 
 
 # Convierte un objeto Pelicula de SQLAlchemy

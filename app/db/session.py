@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import DeclarativeBase
 
@@ -22,10 +22,3 @@ engine=create_engine(DATABASE_URL) #La conexion se abre cuando la solicitamos
 
 class Base(DeclarativeBase):
     pass
-
-#script de prueba
-if __name__ == "__main__":
-
-    with engine.connect() as conexion:
-        resultado = conexion.execute(text("SELECT 1"))
-        print(resultado.scalar_one())
