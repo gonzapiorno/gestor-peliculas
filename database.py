@@ -2,6 +2,12 @@ import os
 import psycopg
 from dotenv import load_dotenv
 from psycopg.rows import dict_row
+from sqlalchemy import select, func
+from sqlalchemy.orm import Session
+
+from sqlalchemy_db import engine
+from models import Pelicula
+
 # Cargamos las variables guardadas en el archivo .env
 load_dotenv()
 
@@ -29,91 +35,139 @@ def conectar_db():
 #Funcion para insertar peliculas
 def insertar_pelicula(nombre, anio, genero, puntuacion):
 
-    with conectar_db() as conexion:
-        with conexion.cursor() as cursor:
+    # Creamos una sesión para trabajar con PostgreSQL usando SQLAlchemy
+    with Session(engine) as session:
 
-            cursor.execute(
-                """
-                INSERT INTO peliculas (nombre, anio, genero, puntuacion)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id_pelicula, nombre, anio, genero, puntuacion
-                """,
-                (nombre, anio, genero, puntuacion)
-            )
+        # Creamos un objeto Pelicula con los datos recibidos
+        pelicula = Pelicula(
+            nombre=nombre,
+            anio=anio,
+            genero=genero,
+            puntuacion=puntuacion
+        )
 
-            pelicula = cursor.fetchone()
-    return pelicula
+        # Le decimos a SQLAlchemy que queremos guardar este objeto
+        session.add(pelicula)
+
+        # Confirmamos la transacción
+        # Por debajo SQLAlchemy ejecuta el INSERT
+        session.commit()
+
+        # Actualizamos el objeto con los datos que quedaron en PostgreSQL,
+        # especialmente el id_pelicula generado automáticamente
+        session.refresh(pelicula)
+
+        # Seguimos devolviendo un diccionario para no romper peliculas.py
+        return {
+            "id_pelicula": pelicula.id_pelicula,
+            "nombre": pelicula.nombre,
+            "anio": pelicula.anio,
+            "genero": pelicula.genero,
+            "puntuacion": pelicula.puntuacion
+        }
 
 #Funcion para obtener peliculas
 def obtener_peliculas():
+    with Session(engine) as session:
+        sentencia = select(Pelicula).order_by(Pelicula.id_pelicula)
 
-    with conectar_db() as conexion:
-        with conexion.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT id_pelicula, nombre, anio, genero, puntuacion
-                FROM peliculas
-                ORDER BY id_pelicula
-                """
-            )
-            peliculas = cursor.fetchall()
+        peliculas_orm = session.scalars(sentencia).all()
+
+    peliculas = []
+
+    for pelicula in peliculas_orm:
+        peliculas.append({
+            "id_pelicula": pelicula.id_pelicula,
+            "nombre": pelicula.nombre,
+            "anio": pelicula.anio,
+            "genero": pelicula.genero,
+            "puntuacion": pelicula.puntuacion
+        })
+
     return peliculas
 
 def eliminar_pelicula_db(id_pelicula):
-    with conectar_db() as conexion:
-        with conexion.cursor() as cursor:
-            cursor.execute(
-                """
-                DELETE FROM peliculas
-                WHERE id_pelicula = %s
-                RETURNING id_pelicula, nombre, anio, genero, puntuacion
-                """,
-                (id_pelicula,)
-            )
 
-            pelicula = cursor.fetchone()
-    return pelicula
+    # Abrimos una sesión con SQLAlchemy
+    with Session(engine) as session:
+
+        pelicula = session.get(Pelicula, id_pelicula)
+
+        if pelicula is None:
+            return None
+
+        pelicula_eliminada = {
+            "id_pelicula": pelicula.id_pelicula,
+            "nombre": pelicula.nombre,
+            "anio": pelicula.anio,
+            "genero": pelicula.genero,
+            "puntuacion": pelicula.puntuacion
+        }
+
+        # Marcamos el objeto para eliminarlo
+        session.delete(pelicula)
+
+        # Confirmamos la transacción
+        # Por debajo SQLAlchemy ejecuta el DELETE
+        session.commit()
+
+        return pelicula_eliminada
 
 
 def actualizar_pelicula_db(id_pelicula, campo, nuevo_valor):
-    
+
+    # Solo permitimos modificar estas columnas
     campos_permitidos = {"nombre", "anio", "genero", "puntuacion"}
-            
+
     if campo not in campos_permitidos:
         return None
 
-    with conectar_db() as conexion:
-        with conexion.cursor() as cursor:
+    # Abrimos una sesión con SQLAlchemy
+    with Session(engine) as session:
 
-            cursor.execute(
-                f"""
-                UPDATE peliculas
-                SET {campo} = %s
-                WHERE id_pelicula = %s
-                RETURNING id_pelicula, nombre, anio, genero, puntuacion
-                """,
-                (nuevo_valor, id_pelicula)
-            )
+        # Buscamos la película por su clave primaria
+        pelicula = session.get(Pelicula, id_pelicula)
 
-            pelicula = cursor.fetchone()
-    return pelicula
+        if pelicula is None:
+            return None
+
+        # Modificamos el atributo indicado
+        setattr(pelicula, campo, nuevo_valor)
+        session.commit()
+
+        # Refrescamos el objeto con el estado actual de PostgreSQL
+        session.refresh(pelicula)
+
+        # Por ahora seguimos devolviendo un diccionario
+        return {
+            "id_pelicula": pelicula.id_pelicula,
+            "nombre": pelicula.nombre,
+            "anio": pelicula.anio,
+            "genero": pelicula.genero,
+            "puntuacion": pelicula.puntuacion
+        }
 
 def buscar_pelicula_db(nombre):
-    with conectar_db() as conexion:
-        with conexion.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT id_pelicula, nombre, anio, genero, puntuacion
-                FROM peliculas
-                WHERE LOWER(nombre) = LOWER(%s)
-                ORDER BY id_pelicula
-                LIMIT 1
-                """,
-                (nombre,)
-                
-            )
-            pelicula = cursor.fetchone()
-    return pelicula
+    sentencia = (
+        select(Pelicula)
+        .where(func.lower(Pelicula.nombre) == nombre.lower())
+        .order_by(Pelicula.id_pelicula)
+        .limit(1)
+    )
+
+    with Session(engine) as session:
+        pelicula = session.execute(sentencia).scalar_one_or_none()
+
+    if pelicula:
+        return {
+            "id_pelicula": pelicula.id_pelicula,
+            "nombre": pelicula.nombre,
+            "anio": pelicula.anio,
+            "genero": pelicula.genero,
+            "puntuacion": pelicula.puntuacion
+        }
+
+    return None
 
 
 
