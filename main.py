@@ -1,6 +1,6 @@
 #Importamos las funciones necesarias para ejecutar el programa
 from peliculas import ver_peliculas, agregar_pelicula, buscar_pelicula, eliminar_pelicula, modificar_pelicula
-import psycopg
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def main():
@@ -58,7 +58,7 @@ def main():
                 print("Elegiste salir")
                 break
 
-        except psycopg.Error:
+        except SQLAlchemyError:
             print("No se pudo acceder a la base de datos.")
 
 if __name__ == "__main__":
