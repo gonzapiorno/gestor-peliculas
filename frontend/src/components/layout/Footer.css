@@ -1,0 +1,35 @@
+.footer {
+  width: 100%;
+  margin-top: 40px;
+
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.footer__inner {
+  width: min(1400px, calc(100% - 64px));
+
+  margin: 0 auto;
+  padding: 22px 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .footer {
+    margin-top: 24px;
+  }
+
+  .footer__inner {
+    width: calc(100% - 32px);
+    padding: 18px 0;
+  }
+}
