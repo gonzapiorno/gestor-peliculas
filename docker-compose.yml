@@ -1,29 +1,32 @@
 services:
+
   db:
     image: postgres:16
     container_name: gestor_peliculas_db
 
     environment:
-      POSTGRES_USER: peliculas_user
-      POSTGRES_PASSWORD: peliculas_pass
-      POSTGRES_DB: peliculas_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
 
     ports:
-      - "5433:5432"
+      - "127.0.0.1:${DB_PORT}:5432"
 
     volumes:
       - peliculas_data:/var/lib/postgresql/data
+
 
   pgadmin:
     image: dpage/pgadmin4
     container_name: gestor_peliculas_pgadmin
 
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
 
     ports:
-      - "8081:80"
+      - "127.0.0.1:${PGADMIN_PORT}:80"
+
 
 volumes:
   peliculas_data:
