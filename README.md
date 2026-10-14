@@ -6,6 +6,11 @@ El proyecto nació como un gestor de películas desarrollado en Python para prac
 
 Actualmente se encuentra en desarrollo.
 
+## Vista Previa
+
+<img width="1886" height="905" alt="image" src="https://github.com/user-attachments/assets/b5648e38-c052-4cee-afb0-77ceed7fe334" />
+Pantalla de descubrimiento de películas. Proyecto en desarrollo.
+
 ---
 
 ## Objetivo del proyecto
