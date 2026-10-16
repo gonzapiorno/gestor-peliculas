@@ -1,6 +1,6 @@
-from sqlalchemy import String, Boolean
+from sqlalchemy import String, Boolean, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
-
+from decimal import Decimal
 from app.db.session import Base
 
 class Pelicula(Base):
@@ -28,5 +28,8 @@ class PeliculaColeccion(Base):
     # Información personalizada de nuestra colección
     estado: Mapped[str] = mapped_column(String(20), default="pendiente", nullable=False)
     favorita: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    puntuacion_personal: Mapped[int | None] = mapped_column(nullable=True)
+    puntuacion_personal: Mapped[Decimal | None] = mapped_column(
+        Numeric(3, 1),
+        nullable=True
+    )
 

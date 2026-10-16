@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import engine
 from app.db.models import PeliculaColeccion
-from app.schemas.coleccion import ColeccionAgregar, ColeccionActualizarEstado
+from app.schemas.coleccion import ColeccionAgregar, ColeccionActualizarEstado, ColeccionActualizarFavorita, ColeccionActualizarPuntuacion
 from app.services.tmdb import obtener_detalle_pelicula
 
 
@@ -125,4 +125,85 @@ def actualizar_estado(id: int, datos: ColeccionActualizarEstado):
         }
 
 
+@router.patch("/{id}/favorita")
+def actualizar_favorita(id: int, datos: ColeccionActualizarFavorita):
+
+    with Session(engine) as sesion:
+
+        # Buscamos la película por su ID interno.
+        pelicula = sesion.get(PeliculaColeccion, id)
+
+        if pelicula is None:
+            raise HTTPException(
+                status_code=404,
+                detail="La película no existe en tu colección"
+            )
+
+        # Actualizamos únicamente su estado de favorita.
+        pelicula.favorita = datos.favorita
+
+        sesion.commit()
+        sesion.refresh(pelicula)
+
+        return {
+            "mensaje": "Favoritos actualizados correctamente",
+            "id": pelicula.id,
+            "titulo": pelicula.titulo,
+            "favorita": pelicula.favorita
+        }
+
+
+@router.patch("/{id}/puntuacion")
+def actualizar_puntuacion(id: int, datos: ColeccionActualizarPuntuacion):
+
+    with Session(engine) as sesion:
+
+        # Buscamos la película por su ID interno.
+        pelicula = sesion.get(PeliculaColeccion, id)
+
+        if pelicula is None:
+            raise HTTPException(
+                status_code=404,
+                detail="La película no existe en tu colección"
+            )
+
+        # Actualizamos únicamente la puntuación personal.
+        pelicula.puntuacion_personal = datos.puntuacion_personal
+
+        # Guardamos el cambio.
+        sesion.commit()
+        sesion.refresh(pelicula)
+
+        return {
+            "mensaje": "Puntuación actualizada correctamente",
+            "id": pelicula.id,
+            "titulo": pelicula.titulo,
+            "puntuacion_personal": (
+                float(pelicula.puntuacion_personal)
+                if pelicula.puntuacion_personal is not None
+                else None
+            )
+        }
+
+@router.delete("/{id}", status_code=204)
+def eliminar_de_coleccion(id: int):
+
+    # Abrimos una sesión con PostgreSQL.
+    with Session(engine) as sesion:
+
+        # Buscamos la película por su ID interno.
+        pelicula = sesion.get(PeliculaColeccion, id)
+
+        # Si no existe, devolvemos un error 404.
+        if pelicula is None:
+            raise HTTPException(
+                status_code=404,
+                detail="La película no existe en tu colección"
+            )
+
+        # Marcamos el registro para eliminarlo.
+        sesion.delete(pelicula)
+
+        # Confirmamos la eliminación en PostgreSQL.
+        sesion.commit()
 

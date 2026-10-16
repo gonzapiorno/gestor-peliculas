@@ -1,7 +1,7 @@
 import MovieCard from "./MovieCard";
 
 
-function MovieGrid({ peliculas, onCambiarEstado, actualizando }) {
+function MovieGrid({ peliculas, onCambiarEstado, onCambiarFavorita, onCambiarPuntuacion, onEliminar, actualizando }) {
   return (
     <section>
       {peliculas.map((pelicula) => (
@@ -9,6 +9,9 @@ function MovieGrid({ peliculas, onCambiarEstado, actualizando }) {
           key={pelicula.id}
           pelicula={pelicula}
           onCambiarEstado={onCambiarEstado}
+          onCambiarFavorita={onCambiarFavorita}
+          onCambiarPuntuacion={onCambiarPuntuacion}
+          onEliminar={onEliminar}
           actualizando={actualizando}
         />
       ))}

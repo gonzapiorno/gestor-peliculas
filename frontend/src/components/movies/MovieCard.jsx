@@ -1,4 +1,4 @@
-function MovieCard({ pelicula, onCambiarEstado, actualizando }) {
+function MovieCard({ pelicula, onCambiarEstado, onCambiarFavorita, onCambiarPuntuacion, onEliminar, actualizando }) {
   return (
     <article>
       {/* Póster de la película */}
@@ -44,7 +44,51 @@ function MovieCard({ pelicula, onCambiarEstado, actualizando }) {
             : "Marcar como vista"}
       </button>
 
-      {pelicula.favorita && <p>♥ Favorita</p>}
+      <button
+        type="button"
+        onClick={() => onCambiarFavorita(pelicula)}
+        disabled={actualizando}
+        aria-pressed={pelicula.favorita}
+      >
+        {pelicula.favorita
+          ? "♥ Quitar de favoritos"
+          : "♡ Agregar a favoritos"}
+      </button>
+
+      <label>
+        Tu puntuación:
+
+        <select
+          value={pelicula.puntuacion_personal ?? ""}
+          disabled={actualizando}
+          onChange={(evento) => {
+            const valor = evento.target.value;
+
+            onCambiarPuntuacion(
+              pelicula,
+              valor === "" ? null : Number(valor)
+            );
+          }}
+        >
+          <option value="">Sin puntuar</option>
+
+          {Array.from({ length: 19 }, (_, i) => i * 0.5 + 1).map(
+            (nota) => (
+              <option key={nota} value={nota}>
+                {nota}/10
+              </option>
+            )
+          )}
+        </select>
+      </label>
+
+      <button
+        type="button"
+        onClick={() => onEliminar(pelicula)}
+        disabled={actualizando}
+      >
+        Eliminar de mi colección
+      </button>
     </article>
   );
 }

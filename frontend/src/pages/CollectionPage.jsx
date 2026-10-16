@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import MovieGrid from "../components/movies/MovieGrid";
 import {
   obtenerColeccion,
-  actualizarEstado
+  actualizarEstado,
+  actualizarFavorita,
+  actualizarPuntuacion,
+  eliminarDeColeccion
 } from "../services/coleccionApi";
 
 
@@ -60,6 +63,96 @@ function CollectionPage() {
     }
   }
 
+  async function manejarCambiarFavorita(pelicula) {
+    if (actualizandoId !== null) return;
+
+    // Invertimos el valor actual.
+    const nuevoValor = !pelicula.favorita;
+
+    setActualizandoId(pelicula.id);
+    setErrorCambio(null);
+
+    try {
+      // Guardamos el cambio en PostgreSQL.
+      await actualizarFavorita(pelicula.id, nuevoValor);
+
+      // Actualizamos el estado local de React.
+      setPeliculas((anteriores) =>
+        anteriores.map((item) =>
+          item.id === pelicula.id
+            ? { ...item, favorita: nuevoValor }
+            : item
+        )
+      );
+    } catch (error) {
+      setErrorCambio(error.message);
+    } finally {
+      setActualizandoId(null);
+    }
+  }
+
+  async function manejarCambiarPuntuacion(pelicula, nuevaPuntuacion) {
+    if (actualizandoId !== null) return;
+
+    setActualizandoId(pelicula.id);
+    setErrorCambio(null);
+
+    try {
+      // Actualizamos la puntuación en PostgreSQL.
+      const resultado = await actualizarPuntuacion(
+        pelicula.id,
+        nuevaPuntuacion
+      );
+
+      // Actualizamos la película en el estado de React.
+      setPeliculas((anteriores) =>
+        anteriores.map((item) =>
+          item.id === pelicula.id
+            ? {
+                ...item,
+                puntuacion_personal: resultado.puntuacion_personal
+              }
+            : item
+        )
+      );
+
+    } catch (error) {
+      setErrorCambio(error.message);
+    } finally {
+      setActualizandoId(null);
+    }
+  }
+
+  async function manejarEliminar(pelicula) {
+    if (actualizandoId !== null) return;
+
+    // Pedimos confirmación antes de eliminar.
+    const confirmado = window.confirm(
+      `¿Querés eliminar "${pelicula.titulo}" de tu colección?`
+    );
+
+    if (!confirmado) return;
+
+    setActualizandoId(pelicula.id);
+    setErrorCambio(null);
+
+    try {
+      // Eliminamos la película de PostgreSQL.
+      await eliminarDeColeccion(pelicula.id);
+
+      // La quitamos también de la lista de React.
+      setPeliculas((anteriores) =>
+        anteriores.filter((item) => item.id !== pelicula.id)
+      );
+
+    } catch (error) {
+      setErrorCambio(error.message);
+    } finally {
+      setActualizandoId(null);
+    }
+  }
+
+
   if (cargando) {
     return <p>Cargando colección...</p>;
   }
@@ -78,6 +171,9 @@ function CollectionPage() {
         peliculas={peliculas}
         onCambiarEstado={manejarCambiarEstado}
         actualizando={actualizandoId !== null}
+        onCambiarFavorita={manejarCambiarFavorita}
+        onCambiarPuntuacion={manejarCambiarPuntuacion}
+        onEliminar={manejarEliminar}
       />
     </main>
   );

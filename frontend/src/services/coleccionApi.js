@@ -58,3 +58,53 @@ export async function actualizarEstado(id, estado) {
   return respuesta.json();
 }
 
+// Marca o desmarca una película como favorita.
+export async function actualizarFavorita(id, favorita) {
+  const respuesta = await fetch(`${API_URL}/coleccion/${id}/favorita`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ favorita }),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudo actualizar el favorito");
+  }
+
+  return respuesta.json();
+}
+
+
+// Actualiza la puntuación personal de una película.
+export async function actualizarPuntuacion(id, puntuacion) {
+  const respuesta = await fetch(`${API_URL}/coleccion/${id}/puntuacion`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      puntuacion_personal: puntuacion,
+    }),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudo actualizar la puntuación");
+  }
+
+  return respuesta.json();
+}
+
+
+// Elimina una película de nuestra colección.
+export async function eliminarDeColeccion(id) {
+  const respuesta = await fetch(`${API_URL}/coleccion/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudo eliminar la película");
+  }
+}
+
+
