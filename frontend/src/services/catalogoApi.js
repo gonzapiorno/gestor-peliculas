@@ -25,3 +25,17 @@ export async function obtenerDetallePelicula(idTmdb) {
 
   return respuesta.json();
 }
+
+// Busca películas en TMDB a través de nuestro backend.
+export async function buscarPeliculas(titulo) {
+  const respuesta = await fetch(
+    `${API_URL}/catalogo/buscar?titulo=${encodeURIComponent(titulo)}`
+  );
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudieron buscar las películas");
+  }
+
+  return respuesta.json();
+}
+
