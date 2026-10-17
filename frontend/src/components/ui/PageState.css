@@ -1,0 +1,14 @@
+.page-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 330px; padding: 40px 22px; text-align: center; border: 1px dashed var(--color-border); border-radius: 10px; }
+.page-state__icon { display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin-bottom: 20px; color: var(--color-accent); background: var(--color-surface-soft); border-radius: 50%; }
+.page-state h2 { margin: 0; font-size: 1.5rem; font-weight: 400; letter-spacing: -.025em; }
+.page-state p { max-width: 440px; margin: 12px 0 0; color: var(--color-text-secondary); line-height: 1.7; }
+.page-state__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
+.skeleton-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 22px; }
+.skeleton-grid--6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.skeleton-card__poster { aspect-ratio: 2 / 3; border-radius: 7px; background: var(--color-surface); animation: skeleton-pulse 1.5s ease-in-out infinite alternate; }
+.skeleton-card__line { height: 12px; width: 80%; margin-top: 15px; border-radius: 3px; background: var(--color-surface); }
+.skeleton-card__line--short { width: 45%; height: 9px; margin-top: 10px; }
+@keyframes skeleton-pulse { to { background: #252a22; } }
+@media (max-width: 1000px) { .skeleton-grid--6 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .skeleton-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 25px 14px; } }

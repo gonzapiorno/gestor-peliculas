@@ -3,14 +3,11 @@ import "./CatalogMovieGrid.css";
 
 function CatalogMovieGrid({ peliculas }) {
   return (
-    <section className="catalog-grid">
+    <div className="catalog-grid">
       {peliculas.map((pelicula) => (
-        <CatalogMovieCard
-          key={pelicula.id_tmdb}
-          pelicula={pelicula}
-        />
+        <CatalogMovieCard key={pelicula.id_tmdb} pelicula={pelicula} />
       ))}
-    </section>
+    </div>
   );
 }
 

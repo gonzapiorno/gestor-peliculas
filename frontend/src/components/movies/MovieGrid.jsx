@@ -1,9 +1,10 @@
 import MovieCard from "./MovieCard";
+import "./MovieGrid.css";
 
 
-function MovieGrid({ peliculas, onCambiarEstado, onCambiarFavorita, onCambiarPuntuacion, onEliminar, actualizando }) {
+function MovieGrid({ peliculas, onCambiarEstado, onCambiarFavorita, onCambiarPuntuacion, onEliminar, actualizandoIds = new Set() }) {
   return (
-    <section>
+    <section className="movie-grid" aria-label="Películas de mi colección">
       {peliculas.map((pelicula) => (
         <MovieCard
           key={pelicula.id}
@@ -12,7 +13,7 @@ function MovieGrid({ peliculas, onCambiarEstado, onCambiarFavorita, onCambiarPun
           onCambiarFavorita={onCambiarFavorita}
           onCambiarPuntuacion={onCambiarPuntuacion}
           onEliminar={onEliminar}
-          actualizando={actualizando}
+          actualizando={actualizandoIds.has(pelicula.id)}
         />
       ))}
     </section>

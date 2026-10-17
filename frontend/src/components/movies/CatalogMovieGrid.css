@@ -1,41 +1,17 @@
 .catalog-grid {
   display: grid;
-
   grid-template-columns: repeat(6, minmax(0, 1fr));
-
-  gap: 28px 20px;
+  gap: 30px 18px;
 }
 
-
-/* Monitores grandes */
-@media (min-width: 1500px) {
-  .catalog-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-  }
-}
-
-
-/* Notebook / tablet horizontal */
 @media (max-width: 1200px) {
-  .catalog-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+  .catalog-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-
-/* Tablet */
 @media (max-width: 850px) {
-  .catalog-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-
-/* Celular */
 @media (max-width: 600px) {
-  .catalog-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    gap: 24px 12px;
-  }
+  .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 14px; }
 }
