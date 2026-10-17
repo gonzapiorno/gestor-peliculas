@@ -110,3 +110,47 @@ async def obtener_detalle_pelicula(id_tmdb):
                 else None
             )
         }
+
+
+async def buscar_peliculas(titulo: str):
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+
+        respuesta = await client.get(
+            f"{TMDB_URL}/search/movie",
+            headers=HEADERS,
+            params={
+                "query": titulo,
+                "language": "es-AR",
+                "include_adult": "false",
+                "page": 1
+            }
+        )
+
+        respuesta.raise_for_status()
+        datos = respuesta.json()
+
+        peliculas = []
+
+        for pelicula in datos["results"]:
+
+            poster_path = pelicula.get("poster_path")
+
+            peliculas.append({
+                "id_tmdb": pelicula["id"],
+                "titulo": pelicula["title"],
+                "anio": (
+                    pelicula["release_date"][:4]
+                    if pelicula.get("release_date")
+                    else None
+                ),
+                "puntuacion": round(
+                    pelicula.get("vote_average", 0), 1
+                ),
+                "poster": (
+                    f"https://image.tmdb.org/t/p/w500{poster_path}"
+                    if poster_path else None
+                )
+            })
+
+        return peliculas

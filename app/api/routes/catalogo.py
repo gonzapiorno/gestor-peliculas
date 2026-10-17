@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from app.services.tmdb import (
     obtener_populares,
-    obtener_detalle_pelicula
+    obtener_detalle_pelicula,
+    buscar_peliculas
 )
 
 
@@ -28,3 +29,17 @@ async def detalle_pelicula(id_tmdb: int):
         )
 
     return pelicula
+
+
+@router.get("/buscar")
+async def buscar_en_catalogo(titulo: str = Query(min_length=2, max_length=100)):
+
+    titulo = titulo.strip()
+
+    if len(titulo) < 2:
+        raise HTTPException(
+            status_code=422,
+            detail="Ingresá al menos dos caracteres"
+        )
+
+    return await buscar_peliculas(titulo)
