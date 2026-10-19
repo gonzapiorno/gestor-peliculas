@@ -10,6 +10,7 @@ import { obtenerPopulares } from "../services/catalogoApi";
 import "./DiscoverPage.css";
 import { errorMessage } from "../utils/errorMessage";
 import useMovieSearch from "../hooks/useMovieSearch";
+import useCatalogCollection from "../hooks/useCatalogCollection";
 
 function DiscoverPage() {
   const [peliculas, setPeliculas] = useState([]);
@@ -17,6 +18,7 @@ function DiscoverPage() {
   const [error, setError] = useState(null);
   const [reintentos, setReintentos] = useState(0);
   const search = useMovieSearch();
+  const coleccion = useCatalogCollection();
   const resultsHeadingRef = useRef(null);
 
   useEffect(() => {
@@ -65,9 +67,17 @@ function DiscoverPage() {
 
       <MovieSearch query={search.query} onQueryChange={search.setQuery} results={search.results} status={search.status} error={search.error} onRetry={search.retry} onViewAll={mostrarResultados} />
 
+      <p className="visually-hidden" role="status">{coleccion.anuncio}</p>
+      {coleccion.estadoColeccion === "error" && (
+        <div className="discover-page__collection-error inline-error" role="alert">
+          <p><Icon name="alert" size={16} /> {coleccion.errorColeccion}. Podés seguir explorando. Reintentá la comprobación para agregar películas desde las tarjetas.</p>
+          <button className="button" type="button" onClick={coleccion.reintentarColeccion}><Icon name="refresh" size={16} />Reintentar comprobación</button>
+        </div>
+      )}
+
       <section className="discover-page__catalog" aria-labelledby="radar-heading" aria-busy={cargandoVista}>
         <div className="discover-page__section-heading">
-          <h2 id="radar-heading" ref={resultsHeadingRef} tabIndex={-1}>{buscando ? `Resultados para «${search.query.trim()}»` : "En el radar"}</h2>
+          <h2 id="radar-heading" ref={resultsHeadingRef} tabIndex={-1}>{buscando ? `Resultados para «${search.query.trim()}»` : "Populares"}</h2>
           <span role="status">{buscando ? cargandoVista ? "Buscando en TMDB…" : errorVista ? "Búsqueda no disponible" : `${peliculasVisibles.length} ${peliculasVisibles.length === 1 ? "resultado" : "resultados"}` : "Populares en TMDB"}</span>
         </div>
 
@@ -90,7 +100,7 @@ function DiscoverPage() {
             </button>
           </PageState>
         ) : (
-          <CatalogMovieGrid peliculas={peliculasVisibles} />
+          <CatalogMovieGrid peliculas={peliculasVisibles} guardadas={coleccion.guardadas} guardandoIds={coleccion.guardandoIds} errores={coleccion.errores} estadoColeccion={coleccion.estadoColeccion} onAgregar={coleccion.agregar} />
         )}
       </section>
 
