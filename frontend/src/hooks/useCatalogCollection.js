@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { agregarAColeccion, obtenerColeccion } from "../services/coleccionApi";
 import { errorMessage } from "../utils/errorMessage";
+import { COLLECTION_CHANGED_EVENT } from "../utils/collectionEvents";
 
 // Sólo se comparten altas en curso, sin mantener una caché de la colección.
 // Si se vuelve a Descubrir durante un POST, su resultado llega a la nueva vista.
@@ -68,6 +69,20 @@ export default function useCatalogCollection() {
     });
     return () => { vigente = false; };
   }, [intento]);
+
+  useEffect(() => {
+    function refrescarColeccion(event) {
+      if (event.detail?.tipo === "eliminar") {
+        confirmadasRef.current.delete(Number(event.detail.idTmdb));
+      }
+      estadoRef.current = "loading";
+      setEstadoColeccion("loading");
+      setErrorColeccion(null);
+      setIntento((anterior) => anterior + 1);
+    }
+    window.addEventListener(COLLECTION_CHANGED_EVENT, refrescarColeccion);
+    return () => window.removeEventListener(COLLECTION_CHANGED_EVENT, refrescarColeccion);
+  }, []);
 
   function reintentarColeccion() {
     if (estadoRef.current !== "error") return;

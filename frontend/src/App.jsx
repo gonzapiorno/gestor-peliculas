@@ -12,6 +12,7 @@ import Footer from "./components/layout/Footer";
 import DiscoverPage from "./pages/DiscoverPage";
 import CollectionPage from "./pages/CollectionPage";
 import MovieDetailPage from "./pages/MovieDetailPage";
+import CollectionMovieDetailPage from "./pages/CollectionMovieDetailPage";
 
 function RouteScroll() {
   const { pathname } = useLocation();
@@ -38,6 +39,11 @@ function App() {
             <Route
               path="/coleccion"
               element={<CollectionPage />}
+            />
+
+            <Route
+              path="/coleccion/:id"
+              element={<CollectionMovieDetailPage />}
             />
 
             <Route

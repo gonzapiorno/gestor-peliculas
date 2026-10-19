@@ -15,6 +15,7 @@ import {
 } from "../services/coleccionApi";
 import "./CollectionPage.css";
 import { errorMessage } from "../utils/errorMessage";
+import { COLLECTION_CHANGED_EVENT } from "../utils/collectionEvents";
 
 const FILTERS = [
   { id: "todas", label: "Todas" },
@@ -75,6 +76,16 @@ function CollectionPage() {
       .finally(() => { if (vigente) setCargando(false); });
     return () => { vigente = false; };
   }, [intentoCarga]);
+
+  useEffect(() => {
+    function refrescarColeccion() {
+      setError(null);
+      setCargando(true);
+      setIntentoCarga((anterior) => anterior + 1);
+    }
+    window.addEventListener(COLLECTION_CHANGED_EVENT, refrescarColeccion);
+    return () => window.removeEventListener(COLLECTION_CHANGED_EVENT, refrescarColeccion);
+  }, []);
 
   const cantidades = useMemo(() => ({
     todas: peliculas.length,

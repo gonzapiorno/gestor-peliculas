@@ -18,7 +18,7 @@ function MovieCard({
 }) {
   const vista = pelicula.estado === "vista";
   const tienePuntuacion = pelicula.puntuacion_personal != null;
-  const detalle = `/pelicula/${pelicula.id_tmdb}`;
+  const detalle = `/coleccion/${pelicula.id}`;
 
   return (
     <article className="movie-card" aria-busy={actualizando}>

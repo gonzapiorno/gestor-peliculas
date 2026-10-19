@@ -11,6 +11,21 @@ export async function obtenerColeccion() {
   return respuesta.json();
 }
 
+// Recupera una película por su identificador interno de la colección.
+export async function obtenerPeliculaColeccion(id) {
+  const respuesta = await fetch(`${API_URL}/coleccion/${id}`);
+
+  if (!respuesta.ok) {
+    const error = new Error(respuesta.status === 404
+      ? "Esta película no está en tu colección"
+      : "No se pudo cargar la película de tu colección");
+    error.status = respuesta.status;
+    throw error;
+  }
+
+  return respuesta.json();
+}
+
 // Agrega una película de TMDB a nuestra colección.
 export async function agregarAColeccion(idTmdb) {
   const respuesta = await fetch(`${API_URL}/coleccion/`, {

@@ -92,6 +92,32 @@ def listar_coleccion():
         ]
 
 
+@router.get("/{id}")
+def obtener_pelicula_coleccion(id: int):
+
+    with Session(engine) as sesion:
+
+        pelicula = sesion.get(PeliculaColeccion, id)
+
+        if pelicula is None:
+            raise HTTPException(
+                status_code=404,
+                detail="La película no existe en tu colección"
+            )
+        
+        # Convertimos los objetos de SQLAlchemy en diccionarios.
+        return {
+                "id": pelicula.id,
+                "id_tmdb": pelicula.id_tmdb,
+                "titulo": pelicula.titulo,
+                "anio": pelicula.anio,
+                "poster": pelicula.poster,
+                "estado": pelicula.estado,
+                "favorita": pelicula.favorita,
+                "puntuacion_personal": pelicula.puntuacion_personal
+            }
+
+
 @router.patch("/{id}")
 def actualizar_estado(id: int, datos: ColeccionActualizarEstado):
 
