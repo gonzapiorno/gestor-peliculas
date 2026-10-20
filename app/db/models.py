@@ -77,3 +77,31 @@ class Usuario(Base):
     nullable=False
     )
 
+
+class SesionUsuario(Base):
+    __tablename__ = "sesiones"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id"),
+        nullable=False
+    )
+
+    token_hash: Mapped[str] = mapped_column(
+        String(64),
+        unique=True,
+        nullable=False
+    )
+
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+
+    fecha_expiracion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+

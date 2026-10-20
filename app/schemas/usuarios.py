@@ -25,3 +25,7 @@ class UsuarioRespuesta(BaseModel):
     email: EmailStr
     fecha_creacion: datetime
 
+class UsuarioLogin(BaseModel):
+    email: EmailStr
+    password: str
+
