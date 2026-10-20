@@ -206,19 +206,32 @@ function PersonalMovieDetail({ id }) {
       <div className="movie-detail__layout">
         <aside className="movie-detail__poster-column" aria-label="Póster e información técnica">
           <div className="movie-detail__poster"><Poster src={detalle?.poster || pelicula.poster} title={titulo} /></div>
-          <div className="movie-detail__poster-caption">
-            <span>Tu archivo personal</span>
-            {detalle?.duracion > 0 && <span>{detalle.duracion} min</span>}
-          </div>
         </aside>
 
         <section className="movie-detail__content" aria-labelledby="collection-movie-title">
           <p className="eyebrow">Una historia que se queda contigo</p>
           <h1 id="collection-movie-title">{titulo}</h1>
           <div className="movie-detail__meta">
-            <span className="movie-detail__year">{detalle?.anio || pelicula.anio || "Año no disponible"}</span>
-            {generos.length > 0 && <span className="movie-detail__meta-separator" aria-hidden="true">·</span>}
-            <div className="movie-detail__genres">{generos.map((genero) => <span key={genero}>{genero}</span>)}</div>
+            <span className="movie-detail__year">
+              {detalle?.anio || pelicula.anio || "Año no disponible"}
+            </span>
+
+            {detalle?.duracion > 0 && (
+              <>
+                <span className="movie-detail__meta-separator">·</span>
+                <span>{detalle.duracion} min</span>
+              </>
+            )}
+
+            {generos.length > 0 && (
+              <span className="movie-detail__meta-separator">·</span>
+            )}
+
+            <div className="movie-detail__genres">
+              {generos.map((genero) => (
+                <span key={genero}>{genero}</span>
+              ))}
+            </div>
           </div>
 
           <div className="movie-detail__rating" aria-busy={Boolean(idTmdb) && cargandoDetalle}>

@@ -1,4 +1,6 @@
-from sqlalchemy import String, Boolean, Numeric
+from datetime import datetime
+from sqlalchemy import String, Boolean, Numeric, DateTime, func
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from decimal import Decimal
 from app.db.session import Base
@@ -15,10 +17,23 @@ class Pelicula(Base):
 class PeliculaColeccion(Base):
     __tablename__ = "coleccion"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "usuario_id",
+            "id_tmdb",
+            name="uq_coleccion_usuario_tmdb"
+        ),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # Identificador de la película en TMDB
-    id_tmdb: Mapped[int] = mapped_column(unique=True, nullable=False)
+    id_tmdb: Mapped[int] = mapped_column(nullable=False)
+
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id"),
+        nullable=False
+    )
 
     # Información que obtenemos de TMDB
     titulo: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -31,5 +46,34 @@ class PeliculaColeccion(Base):
     puntuacion_personal: Mapped[Decimal | None] = mapped_column(
         Numeric(3, 1),
         nullable=True
+    )
+
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    nombre_usuario: Mapped[str] = mapped_column(
+        String(50),
+        unique=True,
+        nullable=False
+    )
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=False
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    fecha_creacion: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True),
+    server_default=func.now(),
+    nullable=False
     )
 

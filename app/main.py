@@ -3,6 +3,7 @@ from app.api.routes.peliculas import router as peliculas_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.catalogo import router as catalogo_router
 from app.api.routes.coleccion import router as coleccion_router
+from app.api.routes.usuarios import router as usuarios_router
 
 # Creamos nuestra aplicación FastAPI
 app = FastAPI(
@@ -23,6 +24,7 @@ app.add_middleware(
 app.include_router(peliculas_router)
 app.include_router(catalogo_router)
 app.include_router(coleccion_router)
+app.include_router(usuarios_router)
 
 
 # Primera ruta de prueba
