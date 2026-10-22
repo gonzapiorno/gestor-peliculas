@@ -7,6 +7,7 @@ from app.db.models import PeliculaColeccion, Usuario
 from app.schemas.coleccion import ColeccionAgregar, ColeccionActualizarEstado, ColeccionActualizarFavorita, ColeccionActualizarPuntuacion
 from app.services.tmdb import obtener_detalle_pelicula
 from app.core.auth import obtener_usuario_actual
+from app.core.csrf import verificar_origen, exigir_csrf
 
 
 router = APIRouter(
@@ -15,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=201, dependencies=[Depends(exigir_csrf)])
 async def agregar_pelicula(datos: ColeccionAgregar, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     # Buscamos la película en TMDB usando su ID.
@@ -128,7 +129,7 @@ def obtener_pelicula_coleccion(id: int,  usuario: Usuario = Depends(obtener_usua
             }
 
 
-@router.patch("/{id}")
+@router.patch("/{id}", dependencies=[Depends(exigir_csrf)])
 def actualizar_estado(id: int, datos: ColeccionActualizarEstado, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     # Abrimos una sesión con PostgreSQL.
@@ -166,7 +167,7 @@ def actualizar_estado(id: int, datos: ColeccionActualizarEstado, usuario: Usuari
         }
 
 
-@router.patch("/{id}/favorita")
+@router.patch("/{id}/favorita", dependencies=[Depends(exigir_csrf)])
 def actualizar_favorita(id: int, datos: ColeccionActualizarFavorita, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     with Session(engine) as sesion:
@@ -199,7 +200,7 @@ def actualizar_favorita(id: int, datos: ColeccionActualizarFavorita, usuario: Us
         }
 
 
-@router.patch("/{id}/puntuacion")
+@router.patch("/{id}/puntuacion", dependencies=[Depends(exigir_csrf)])
 def actualizar_puntuacion(id: int, datos: ColeccionActualizarPuntuacion, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     with Session(engine) as sesion:
@@ -236,7 +237,7 @@ def actualizar_puntuacion(id: int, datos: ColeccionActualizarPuntuacion, usuario
             )
         }
 
-@router.delete("/{id}", status_code=204)
+@router.delete("/{id}", status_code=204, dependencies=[Depends(exigir_csrf)])
 def eliminar_de_coleccion(id: int, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     # Abrimos una sesión con PostgreSQL.

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, Depends, Cookie
+from fastapi import APIRouter, HTTPException, Response, Depends, Cookie, Request
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -12,6 +12,7 @@ from app.db.models import Usuario, SesionUsuario
 from app.schemas.usuarios import UsuarioRegistro, UsuarioRespuesta, UsuarioLogin
 from app.core.security import hash_password, verify_password, generar_token_sesion, hash_token_sesion
 from app.core.auth import obtener_usuario_actual
+from app.core.csrf import verificar_origen, generar_token_csrf, exigir_csrf
 
 router = APIRouter(
     prefix="/usuarios",
@@ -21,7 +22,8 @@ router = APIRouter(
 @router.post(
     "/registro",
     response_model=UsuarioRespuesta,
-    status_code=201
+    status_code=201,
+    dependencies=[Depends(verificar_origen)]
 )
 def registrar_usuario(datos: UsuarioRegistro):
     nombre_usuario = datos.nombre_usuario.lower()
@@ -65,7 +67,7 @@ def registrar_usuario(datos: UsuarioRegistro):
     return nuevo_usuario
 
 
-@router.post("/login")
+@router.post("/login",  dependencies=[Depends(verificar_origen)])
 def login_usuario(datos: UsuarioLogin, response: Response):
 
     email = str(datos.email).lower()
@@ -122,7 +124,30 @@ def obtener_mi_perfil(
     return usuario
 
 
-@router.post("/logout", status_code=204)
+@router.get("/csrf")
+def obtener_token_csrf(
+    request: Request,
+    response: Response,
+    usuario: Usuario = Depends(obtener_usuario_actual)
+):
+    token_sesion = request.cookies.get("muvis_session")
+
+    if token_sesion is None:
+        raise HTTPException(
+            status_code=401,
+            detail="No autenticado"
+        )
+
+    token_hash = hash_token_sesion(token_sesion)
+
+    token_csrf = generar_token_csrf(token_hash)
+
+    response.headers["Cache-Control"] = "no-store"
+
+    return {"csrf_token": token_csrf}
+
+
+@router.post("/logout", status_code=204, dependencies=[Depends(exigir_csrf)])
 def cerrar_sesion(
     response: Response,
     muvis_session: str | None = Cookie(default=None)
