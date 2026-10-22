@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import engine
-from app.db.models import PeliculaColeccion
+from app.db.models import PeliculaColeccion, Usuario
 from app.schemas.coleccion import ColeccionAgregar, ColeccionActualizarEstado, ColeccionActualizarFavorita, ColeccionActualizarPuntuacion
 from app.services.tmdb import obtener_detalle_pelicula
+from app.core.auth import obtener_usuario_actual
 
 
 router = APIRouter(
@@ -15,7 +16,7 @@ router = APIRouter(
 
 
 @router.post("/", status_code=201)
-async def agregar_pelicula(datos: ColeccionAgregar):
+async def agregar_pelicula(datos: ColeccionAgregar, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     # Buscamos la película en TMDB usando su ID.
     pelicula_tmdb = await obtener_detalle_pelicula(datos.id_tmdb)
@@ -29,10 +30,11 @@ async def agregar_pelicula(datos: ColeccionAgregar):
     # Abrimos una sesión con PostgreSQL.
     with Session(engine) as sesion:
 
-        # Comprobamos si ya tenemos guardada esa película.
+        # Comprueba si un usuario ya tiene guardada guardada esa película.
         existe = sesion.scalar(
             select(PeliculaColeccion).where(
-                PeliculaColeccion.id_tmdb == datos.id_tmdb
+                PeliculaColeccion.id_tmdb == datos.id_tmdb,
+                PeliculaColeccion.usuario_id == usuario.id
             )
         )
 
@@ -44,6 +46,7 @@ async def agregar_pelicula(datos: ColeccionAgregar):
 
         # Construimos el objeto que guardaremos.
         nueva_pelicula = PeliculaColeccion(
+            usuario_id=usuario.id,
             id_tmdb=pelicula_tmdb["id_tmdb"],
             titulo=pelicula_tmdb["titulo"],
             anio=int(pelicula_tmdb["anio"]) if pelicula_tmdb["anio"] else None,
@@ -66,14 +69,16 @@ async def agregar_pelicula(datos: ColeccionAgregar):
 
 
 @router.get("/")
-def listar_coleccion():
+def listar_coleccion(usuario: Usuario = Depends(obtener_usuario_actual)):
 
     # Abrimos una sesión con nuestra base de datos.
     with Session(engine) as sesion:
 
         # Recuperamos todas las películas de nuestra colección.
         peliculas = sesion.scalars(
-            select(PeliculaColeccion).order_by(PeliculaColeccion.id.desc())
+            select(PeliculaColeccion)
+            .where(PeliculaColeccion.usuario_id == usuario.id)
+            .order_by(PeliculaColeccion.id.desc())
         ).all()
 
         # Convertimos los objetos de SQLAlchemy en diccionarios.
@@ -93,11 +98,16 @@ def listar_coleccion():
 
 
 @router.get("/{id}")
-def obtener_pelicula_coleccion(id: int):
+def obtener_pelicula_coleccion(id: int,  usuario: Usuario = Depends(obtener_usuario_actual)):
 
     with Session(engine) as sesion:
 
-        pelicula = sesion.get(PeliculaColeccion, id)
+        pelicula = sesion.scalar(
+            select(PeliculaColeccion).where(
+                PeliculaColeccion.id == id,
+                PeliculaColeccion.usuario_id == usuario.id
+            )
+        )
 
         if pelicula is None:
             raise HTTPException(
@@ -119,13 +129,18 @@ def obtener_pelicula_coleccion(id: int):
 
 
 @router.patch("/{id}")
-def actualizar_estado(id: int, datos: ColeccionActualizarEstado):
+def actualizar_estado(id: int, datos: ColeccionActualizarEstado, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     # Abrimos una sesión con PostgreSQL.
     with Session(engine) as sesion:
 
         # Buscamos la película por su ID interno.
-        pelicula = sesion.get(PeliculaColeccion, id)
+        pelicula = sesion.scalar(
+            select(PeliculaColeccion).where(
+                PeliculaColeccion.id == id,
+                PeliculaColeccion.usuario_id == usuario.id
+            )
+        )
 
         # Si no existe, devolvemos un error 404.
         if pelicula is None:
@@ -152,12 +167,17 @@ def actualizar_estado(id: int, datos: ColeccionActualizarEstado):
 
 
 @router.patch("/{id}/favorita")
-def actualizar_favorita(id: int, datos: ColeccionActualizarFavorita):
+def actualizar_favorita(id: int, datos: ColeccionActualizarFavorita, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     with Session(engine) as sesion:
 
         # Buscamos la película por su ID interno.
-        pelicula = sesion.get(PeliculaColeccion, id)
+        pelicula = sesion.scalar(
+            select(PeliculaColeccion).where(
+                PeliculaColeccion.id == id,
+                PeliculaColeccion.usuario_id == usuario.id
+            )
+        )
 
         if pelicula is None:
             raise HTTPException(
@@ -180,12 +200,17 @@ def actualizar_favorita(id: int, datos: ColeccionActualizarFavorita):
 
 
 @router.patch("/{id}/puntuacion")
-def actualizar_puntuacion(id: int, datos: ColeccionActualizarPuntuacion):
+def actualizar_puntuacion(id: int, datos: ColeccionActualizarPuntuacion, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     with Session(engine) as sesion:
 
         # Buscamos la película por su ID interno.
-        pelicula = sesion.get(PeliculaColeccion, id)
+        pelicula = sesion.scalar(
+            select(PeliculaColeccion).where(
+                PeliculaColeccion.id == id,
+                PeliculaColeccion.usuario_id == usuario.id
+            )
+        )
 
         if pelicula is None:
             raise HTTPException(
@@ -212,13 +237,18 @@ def actualizar_puntuacion(id: int, datos: ColeccionActualizarPuntuacion):
         }
 
 @router.delete("/{id}", status_code=204)
-def eliminar_de_coleccion(id: int):
+def eliminar_de_coleccion(id: int, usuario: Usuario = Depends(obtener_usuario_actual)):
 
     # Abrimos una sesión con PostgreSQL.
     with Session(engine) as sesion:
 
         # Buscamos la película por su ID interno.
-        pelicula = sesion.get(PeliculaColeccion, id)
+        pelicula = sesion.scalar(
+            select(PeliculaColeccion).where(
+                PeliculaColeccion.id == id,
+                PeliculaColeccion.usuario_id == usuario.id
+            )
+        )
 
         # Si no existe, devolvemos un error 404.
         if pelicula is None:

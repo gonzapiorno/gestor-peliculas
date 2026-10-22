@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Depends, Cookie
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from app.db.session import engine
 from app.db.models import Usuario, SesionUsuario
 from app.schemas.usuarios import UsuarioRegistro, UsuarioRespuesta, UsuarioLogin
 from app.core.security import hash_password, verify_password, generar_token_sesion, hash_token_sesion
+from app.core.auth import obtener_usuario_actual
 
 router = APIRouter(
     prefix="/usuarios",
@@ -112,3 +113,38 @@ def login_usuario(datos: UsuarioLogin, response: Response):
         )
 
     return {"mensaje": "Inicio de sesión correcto"}
+
+
+@router.get("/me", response_model=UsuarioRespuesta)
+def obtener_mi_perfil(
+    usuario: Usuario = Depends(obtener_usuario_actual)
+):
+    return usuario
+
+
+@router.post("/logout", status_code=204)
+def cerrar_sesion(
+    response: Response,
+    muvis_session: str | None = Cookie(default=None)
+):
+    #invalidamos la sesión.
+    if muvis_session is not None:
+
+        token_hash = hash_token_sesion(muvis_session)
+
+        with Session(engine) as sesion:
+
+            sesion_actual = sesion.scalar(
+                select(SesionUsuario).where(
+                    SesionUsuario.token_hash == token_hash
+                )
+            )
+
+            if sesion_actual is not None:
+                sesion.delete(sesion_actual)
+                sesion.commit()
+
+    response.delete_cookie(
+    key="muvis_session",
+    path="/"
+)
