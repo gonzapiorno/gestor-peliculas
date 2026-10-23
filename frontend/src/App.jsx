@@ -13,6 +13,10 @@ import DiscoverPage from "./pages/DiscoverPage";
 import CollectionPage from "./pages/CollectionPage";
 import MovieDetailPage from "./pages/MovieDetailPage";
 import CollectionMovieDetailPage from "./pages/CollectionMovieDetailPage";
+import AuthPage from "./pages/AuthPage";
+import { AuthProvider } from "./auth/AuthContext";
+import { useAuth } from "./auth/useAuth";
+import RequireAuth from "./auth/RequireAuth";
 
 function RouteScroll() {
   const { pathname } = useLocation();
@@ -20,7 +24,8 @@ function RouteScroll() {
   return null;
 }
 
-function App() {
+function AppContent() {
+  const { sessionKey } = useAuth();
   return (
     <BrowserRouter>
       <RouteScroll />
@@ -29,7 +34,7 @@ function App() {
         <Header />
 
         {/* El contenido ocupa todo el espacio disponible */}
-        <div className="app-content" id="contenido" tabIndex={-1}>
+        <div className="app-content" id="contenido" tabIndex={-1} key={sessionKey}>
           <Routes>
             <Route
               path="/"
@@ -38,18 +43,20 @@ function App() {
 
             <Route
               path="/coleccion"
-              element={<CollectionPage />}
+              element={<RequireAuth><CollectionPage /></RequireAuth>}
             />
 
             <Route
               path="/coleccion/:id"
-              element={<CollectionMovieDetailPage />}
+              element={<RequireAuth><CollectionMovieDetailPage /></RequireAuth>}
             />
 
             <Route
               path="/pelicula/:id"
               element={<MovieDetailPage />}
             />
+            <Route path="/login" element={<AuthPage mode="login" />} />
+            <Route path="/registro" element={<AuthPage mode="register" />} />
           </Routes>
         </div>
 
@@ -58,6 +65,10 @@ function App() {
       </div>
     </BrowserRouter>
   );
+}
+
+function App() {
+  return <AuthProvider><AppContent /></AuthProvider>;
 }
 
 export default App;

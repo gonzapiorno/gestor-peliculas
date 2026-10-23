@@ -29,6 +29,7 @@ function PersonalMovieDetail({ id }) {
   const idValido = /^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number(id) > 0;
   const cicloRef = useRef(null);
   const guardandoRef = useRef(null);
+  const cargaRef = useRef(null);
   const [pelicula, setPelicula] = useState(null);
   const [cargando, setCargando] = useState(idValido);
   const [error, setError] = useState(idValido ? null : { status: 404, mensaje: "El enlace no corresponde a una película de tu colección." });
@@ -53,7 +54,10 @@ function PersonalMovieDetail({ id }) {
     if (!idValido) return;
     let vigente = true;
 
-    obtenerPeliculaColeccion(id)
+    if (cargaRef.current?.intento !== intentoCarga) {
+      cargaRef.current = { intento: intentoCarga, promesa: obtenerPeliculaColeccion(id) };
+    }
+    cargaRef.current.promesa
       .then((datos) => { if (vigente) setPelicula(datos); })
       .catch((cause) => {
         if (vigente) setError({ status: cause.status, mensaje: errorMessage(cause) });

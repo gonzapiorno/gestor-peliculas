@@ -9,14 +9,18 @@ import { agregarAColeccion, obtenerColeccion } from "../services/coleccionApi";
 
 import "./MovieDetailPage.css";
 import { errorMessage } from "../utils/errorMessage";
+import { useAuth } from "../auth/useAuth";
 
 function formatearNota(nota) {
   return nota.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 function MovieDetailPage() {
+  const { status } = useAuth();
   const { id } = useParams();
   const idActual = useRef(id);
+  const detalleRequestRef = useRef(null);
+  const coleccionRequestRef = useRef(null);
 
   const [pelicula, setPelicula] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -48,7 +52,10 @@ function MovieDetailPage() {
       setAgregando(false);
 
       try {
-        const datos = await obtenerDetallePelicula(id);
+        if (detalleRequestRef.current?.id !== id || detalleRequestRef.current.reintentos !== reintentos) {
+          detalleRequestRef.current = { id, reintentos, promesa: obtenerDetallePelicula(id) };
+        }
+        const datos = await detalleRequestRef.current.promesa;
         if (!cancelado) setPelicula(datos);
       } catch (error) {
         if (!cancelado) setError(errorMessage(error));
@@ -63,6 +70,7 @@ function MovieDetailPage() {
 
   // La comprobación es independiente: un fallo de colección no oculta el detalle.
   useEffect(() => {
+    if (status !== "authenticated") return;
     let cancelado = false;
 
     async function comprobarColeccion() {
@@ -72,7 +80,10 @@ function MovieDetailPage() {
       setPeliculaGuardada(null);
 
       try {
-        const datos = await obtenerColeccion();
+        if (coleccionRequestRef.current?.id !== id || coleccionRequestRef.current.reintentos !== reintentosColeccion) {
+          coleccionRequestRef.current = { id, reintentos: reintentosColeccion, promesa: obtenerColeccion() };
+        }
+        const datos = await coleccionRequestRef.current.promesa;
         if (cancelado) return;
 
         const guardada = datos.find((item) => Number(item.id_tmdb) === Number(id));
@@ -86,7 +97,7 @@ function MovieDetailPage() {
 
     comprobarColeccion();
     return () => { cancelado = true; };
-  }, [id, reintentosColeccion]);
+  }, [id, reintentosColeccion, status]);
 
   async function manejarAgregar() {
     if (!pelicula || agregando || enColeccion || !coleccionComprobada) return;
@@ -207,7 +218,9 @@ function MovieDetailPage() {
                 : "Guárdala en tu colección para marcarla como vista, elegir tus favoritas y dejar tu puntuación personal."}
               </p>
             </div>
-            <button
+            {status === "anonymous" || status === "error" ? (
+              <Link className="button button--primary" to="/login" state={{ from: `/pelicula/${id}` }}>Iniciar sesión para guardar</Link>
+            ) : <button
               type="button"
               className={`button ${enColeccion ? "" : "button--primary"}`}
               onClick={manejarAgregar}
@@ -215,7 +228,7 @@ function MovieDetailPage() {
             >
               <Icon name={enColeccion ? "check" : "plus"} size={17} />
               {agregando ? "Agregando…" : enColeccion ? "En mi colección" : !coleccionComprobada && !errorColeccion ? "Comprobando colección…" : "Agregar a mi colección"}
-            </button>
+            </button>}
 
             {errorColeccion && (
               <div className="movie-detail__collection-error inline-error" role="alert">

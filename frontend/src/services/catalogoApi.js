@@ -1,41 +1,13 @@
-const API_URL = "http://127.0.0.1:8000";
+import { apiRequest } from "./apiClient";
 
-
-// Obtiene películas populares desde nuestro backend.
-// El frontend nunca habla directamente con TMDB.
-export async function obtenerPopulares() {
-  const respuesta = await fetch(`${API_URL}/catalogo/populares`);
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudo cargar el catálogo");
-  }
-
-  return respuesta.json();
+export function obtenerPopulares() {
+  return apiRequest("/catalogo/populares", { message: "No se pudo cargar el catálogo" });
 }
 
-// Obtiene el detalle completo de una película del catálogo.
-export async function obtenerDetallePelicula(idTmdb) {
-  const respuesta = await fetch(
-    `${API_URL}/catalogo/peliculas/${idTmdb}`
-  );
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudo cargar la película");
-  }
-
-  return respuesta.json();
+export function obtenerDetallePelicula(idTmdb) {
+  return apiRequest(`/catalogo/peliculas/${idTmdb}`, { message: "No se pudo cargar la película" });
 }
 
-// Busca películas en TMDB a través de nuestro backend.
-export async function buscarPeliculas(titulo) {
-  const respuesta = await fetch(
-    `${API_URL}/catalogo/buscar?titulo=${encodeURIComponent(titulo)}`
-  );
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudieron buscar las películas");
-  }
-
-  return respuesta.json();
+export function buscarPeliculas(titulo) {
+  return apiRequest(`/catalogo/buscar?titulo=${encodeURIComponent(titulo)}`, { message: "No se pudieron buscar las películas" });
 }
-

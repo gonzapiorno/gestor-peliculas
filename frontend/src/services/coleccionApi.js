@@ -1,125 +1,32 @@
-const API_URL = "http://127.0.0.1:8000";
+import { apiRequest } from "./apiClient";
 
-// Recupera las películas guardadas en nuestra colección.
-export async function obtenerColeccion() {
-  const respuesta = await fetch(`${API_URL}/coleccion/`);
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudo cargar tu colección");
-  }
-
-  return respuesta.json();
+export function obtenerColeccion() {
+  return apiRequest("/coleccion/", { requiresAuth: true, message: "No se pudo cargar tu colección" });
 }
 
-// Recupera una película por su identificador interno de la colección.
-export async function obtenerPeliculaColeccion(id) {
-  const respuesta = await fetch(`${API_URL}/coleccion/${id}`);
+export function obtenerPeliculaColeccion(id) {
+  return apiRequest(`/coleccion/${id}`, { requiresAuth: true, message: "No se pudo cargar la película de tu colección" });
+}
 
-  if (!respuesta.ok) {
-    const error = new Error(respuesta.status === 404
-      ? "Esta película no está en tu colección"
-      : "No se pudo cargar la película de tu colección");
-    error.status = respuesta.status;
+export function agregarAColeccion(idTmdb) {
+  return apiRequest("/coleccion/", { method: "POST", requiresAuth: true, body: { id_tmdb: idTmdb }, message: "No se pudo agregar la película" }).catch((error) => {
+    if (error.status === 409) error.message = "Esta película ya está en tu colección";
     throw error;
-  }
-
-  return respuesta.json();
-}
-
-// Agrega una película de TMDB a nuestra colección.
-export async function agregarAColeccion(idTmdb) {
-  const respuesta = await fetch(`${API_URL}/coleccion/`, {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify({
-      id_tmdb: idTmdb,
-    }),
   });
-
-  if (!respuesta.ok) {
-    if (respuesta.status === 409) {
-      throw new Error("Esta película ya está en tu colección");
-    }
-
-    throw new Error("No se pudo agregar la película");
-  }
-
-  return respuesta.json();
 }
 
-
-// Actualiza el estado de una película guardada.
-export async function actualizarEstado(id, estado) {
-  const respuesta = await fetch(`${API_URL}/coleccion/${id}`, {
-    method: "PATCH",
-
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify({
-      estado: estado,
-    }),
-  });
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudo actualizar el estado");
-  }
-
-  return respuesta.json();
+export function actualizarEstado(id, estado) {
+  return apiRequest(`/coleccion/${id}`, { method: "PATCH", requiresAuth: true, body: { estado }, message: "No se pudo actualizar el estado" });
 }
 
-// Marca o desmarca una película como favorita.
-export async function actualizarFavorita(id, favorita) {
-  const respuesta = await fetch(`${API_URL}/coleccion/${id}/favorita`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ favorita }),
-  });
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudo actualizar el favorito");
-  }
-
-  return respuesta.json();
+export function actualizarFavorita(id, favorita) {
+  return apiRequest(`/coleccion/${id}/favorita`, { method: "PATCH", requiresAuth: true, body: { favorita }, message: "No se pudo actualizar el favorito" });
 }
 
-
-// Actualiza la puntuación personal de una película.
-export async function actualizarPuntuacion(id, puntuacion) {
-  const respuesta = await fetch(`${API_URL}/coleccion/${id}/puntuacion`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      puntuacion_personal: puntuacion,
-    }),
-  });
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudo actualizar la puntuación");
-  }
-
-  return respuesta.json();
+export function actualizarPuntuacion(id, puntuacion) {
+  return apiRequest(`/coleccion/${id}/puntuacion`, { method: "PATCH", requiresAuth: true, body: { puntuacion_personal: puntuacion }, message: "No se pudo actualizar la puntuación" });
 }
 
-
-// Elimina una película de nuestra colección.
-export async function eliminarDeColeccion(id) {
-  const respuesta = await fetch(`${API_URL}/coleccion/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!respuesta.ok) {
-    throw new Error("No se pudo eliminar la película");
-  }
+export function eliminarDeColeccion(id) {
+  return apiRequest(`/coleccion/${id}`, { method: "DELETE", requiresAuth: true, message: "No se pudo eliminar la película" });
 }
-
-

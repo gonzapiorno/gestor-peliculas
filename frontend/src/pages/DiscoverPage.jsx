@@ -20,6 +20,7 @@ function DiscoverPage() {
   const search = useMovieSearch();
   const coleccion = useCatalogCollection();
   const resultsHeadingRef = useRef(null);
+  const catalogRequestRef = useRef(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -29,7 +30,10 @@ function DiscoverPage() {
       setError(null);
 
       try {
-        const datos = await obtenerPopulares();
+        if (catalogRequestRef.current?.intento !== reintentos) {
+          catalogRequestRef.current = { intento: reintentos, promesa: obtenerPopulares() };
+        }
+        const datos = await catalogRequestRef.current.promesa;
         if (!cancelado) setPeliculas(datos);
       } catch (error) {
         if (!cancelado) setError(errorMessage(error));

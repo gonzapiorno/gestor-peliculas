@@ -1,19 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { agregarAColeccion, obtenerColeccion } from "../services/coleccionApi";
 import { errorMessage } from "../utils/errorMessage";
 import { COLLECTION_CHANGED_EVENT } from "../utils/collectionEvents";
+import { useAuth } from "../auth/useAuth";
+import { useNavigate } from "react-router-dom";
 
 // Sólo se comparten altas en curso, sin mantener una caché de la colección.
 // Si se vuelve a Descubrir durante un POST, su resultado llega a la nueva vista.
-const altasEnCurso = new Set();
+const altasEnCurso = new Map();
 const suscriptores = new Set();
 function notificar(cambio) {
   suscriptores.forEach((suscriptor) => suscriptor(cambio));
 }
 
 export default function useCatalogCollection() {
+  const { status, sessionKey } = useAuth();
+  const navigate = useNavigate();
+  const pendientes = useCallback(() => new Set([...altasEnCurso].filter(([, scope]) => scope === sessionKey).map(([id]) => id)), [sessionKey]);
   const [guardadas, setGuardadas] = useState(new Set());
-  const [guardandoIds, setGuardandoIds] = useState(() => new Set(altasEnCurso));
+  const [guardandoIds, setGuardandoIds] = useState(pendientes);
   const [errores, setErrores] = useState(new Map());
   const [estadoColeccion, setEstadoColeccion] = useState("loading");
   const [errorColeccion, setErrorColeccion] = useState(null);
@@ -26,7 +31,8 @@ export default function useCatalogCollection() {
 
   useEffect(() => {
     function recibirCambio(cambio) {
-      setGuardandoIds(new Set(altasEnCurso));
+      if (cambio.scope !== sessionKey) return;
+      setGuardandoIds(pendientes());
       if (cambio.tipo === "guardada") {
         confirmadasRef.current.add(cambio.id);
         guardadasRef.current.add(cambio.id);
@@ -44,9 +50,15 @@ export default function useCatalogCollection() {
     }
     suscriptores.add(recibirCambio);
     return () => suscriptores.delete(recibirCambio);
-  }, []);
+  }, [sessionKey, pendientes]);
 
   useEffect(() => {
+    if (status !== "authenticated") {
+      consultaRef.current = null;
+      estadoRef.current = status === "loading" ? "loading" : "anonymous";
+      setEstadoColeccion(estadoRef.current);
+      return;
+    }
     let vigente = true;
     // StrictMode reutiliza esta promesa durante su doble ejecución de efectos.
     if (consultaRef.current?.intento !== intento) {
@@ -57,7 +69,7 @@ export default function useCatalogCollection() {
       const ids = new Set([...datos.map((pelicula) => Number(pelicula.id_tmdb)), ...confirmadasRef.current]);
       guardadasRef.current = ids;
       setGuardadas(ids);
-      setGuardandoIds(new Set(altasEnCurso));
+      setGuardandoIds(pendientes());
       estadoRef.current = "ready";
       setEstadoColeccion("ready");
       setErrorColeccion(null);
@@ -68,7 +80,7 @@ export default function useCatalogCollection() {
       setErrorColeccion(errorMessage(error));
     });
     return () => { vigente = false; };
-  }, [intento]);
+  }, [intento, status, sessionKey, pendientes]);
 
   useEffect(() => {
     function refrescarColeccion(event) {
@@ -93,11 +105,15 @@ export default function useCatalogCollection() {
   }
 
   async function agregar(pelicula) {
+    if (status !== "authenticated") {
+      navigate("/login", { state: { from: "/" } });
+      return;
+    }
     const id = Number(pelicula.id_tmdb);
-    if (estadoRef.current !== "ready" || guardadasRef.current.has(id) || altasEnCurso.has(id)) return;
-    altasEnCurso.add(id);
+    if (estadoRef.current !== "ready" || guardadasRef.current.has(id) || altasEnCurso.get(id) === sessionKey) return;
+    altasEnCurso.set(id, sessionKey);
     setAnuncio("");
-    notificar({ tipo: "inicio", id });
+    notificar({ tipo: "inicio", id, scope: sessionKey });
     let resultado;
     try {
       await agregarAColeccion(id);
@@ -107,9 +123,9 @@ export default function useCatalogCollection() {
         ? { tipo: "guardada", id, titulo: pelicula.titulo, existente: true }
         : { tipo: "error", id, error: errorMessage(error) };
     } finally {
-      altasEnCurso.delete(id);
+      if (altasEnCurso.get(id) === sessionKey) altasEnCurso.delete(id);
     }
-    notificar(resultado);
+    notificar({ ...resultado, scope: sessionKey });
   }
 
   return { guardadas, guardandoIds, errores, estadoColeccion, errorColeccion, anuncio, agregar, reintentarColeccion };

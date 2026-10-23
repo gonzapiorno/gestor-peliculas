@@ -61,6 +61,7 @@ function CollectionPage() {
   const [intentoCarga, setIntentoCarga] = useState(0);
   // El bloqueo es síncrono: también evita dos clics antes del siguiente render.
   const guardandoRef = useRef(new Set());
+  const cargaRef = useRef(null);
 
   function reintentarCarga() {
     setCargando(true);
@@ -70,7 +71,10 @@ function CollectionPage() {
 
   useEffect(() => {
     let vigente = true;
-    obtenerColeccion()
+    if (cargaRef.current?.intento !== intentoCarga) {
+      cargaRef.current = { intento: intentoCarga, promesa: obtenerColeccion() };
+    }
+    cargaRef.current.promesa
       .then((datos) => { if (vigente) setPeliculas(datos); })
       .catch((cause) => { if (vigente) setError(errorMessage(cause)); })
       .finally(() => { if (vigente) setCargando(false); });
