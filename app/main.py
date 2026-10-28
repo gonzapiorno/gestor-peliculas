@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.catalogo import router as catalogo_router
 from app.api.routes.coleccion import router as coleccion_router
 from app.api.routes.usuarios import router as usuarios_router
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter
 
 
 load_dotenv()
@@ -12,6 +15,13 @@ load_dotenv()
 # Creamos nuestra aplicación FastAPI
 app = FastAPI(
     title="Gestor de Películas API"
+)
+
+app.state.limiter = limiter
+
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler
 )
 
 origenes_permitidos = [

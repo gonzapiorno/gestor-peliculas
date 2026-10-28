@@ -13,6 +13,8 @@ from app.schemas.usuarios import UsuarioRegistro, UsuarioRespuesta, UsuarioLogin
 from app.core.security import hash_password, verify_password, generar_token_sesion, hash_token_sesion
 from app.core.auth import obtener_usuario_actual
 from app.core.csrf import verificar_origen, generar_token_csrf, exigir_csrf
+from app.core.rate_limit import limiter
+from app.core.login_attempts import (esta_bloqueado_login, registrar_fallo_login, limpiar_intentos_login)
 
 router = APIRouter(
     prefix="/usuarios",
@@ -25,7 +27,11 @@ router = APIRouter(
     status_code=201,
     dependencies=[Depends(verificar_origen)]
 )
-def registrar_usuario(datos: UsuarioRegistro):
+@limiter.limit("10/hour")
+def registrar_usuario(
+    datos: UsuarioRegistro, 
+    request: Request
+):
     nombre_usuario = datos.nombre_usuario.lower()
     email = str(datos.email).lower()
 
@@ -67,43 +73,75 @@ def registrar_usuario(datos: UsuarioRegistro):
     return nuevo_usuario
 
 
-@router.post("/login",  dependencies=[Depends(verificar_origen)])
-def login_usuario(datos: UsuarioLogin, response: Response):
+@router.post(
+    "/login",
+    dependencies=[Depends(verificar_origen)]
+)
+@limiter.limit("5/minute")
+def login_usuario(
+    datos: UsuarioLogin,
+    response: Response,
+    request: Request
+):
 
     email = str(datos.email).lower()
 
     with Session(engine) as sesion:
 
-        # Acá buscaremos al usuario en PostgreSQL.
+        # Verificamos si existe una espera activa.
+        if esta_bloqueado_login(sesion, email):
+            raise HTTPException(
+                status_code=429,
+                detail="Demasiados intentos. Probá nuevamente más tarde."
+            )
+
+        # Buscamos al usuario.
         usuario = sesion.scalar(
-            select(Usuario).where(Usuario.email==email)
+            select(Usuario).where(Usuario.email == email)
         )
 
+        # Comprobamos las credenciales.
         if usuario is None or not verify_password(
             datos.password,
             usuario.password_hash
         ):
+
+            # Registramos el intento fallido.
+            intentos, bloqueado = registrar_fallo_login(
+                sesion,
+                email
+            )
+
+            if bloqueado:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Demasiados intentos. Probá nuevamente más tarde."
+                )
+
             raise HTTPException(
                 status_code=401,
                 detail="Correo electrónico o contraseña incorrectos"
             )
 
-        # Generamos un token nuevo para esta sesión.
+        # Las credenciales son correctas.
+        # Limpiamos los intentos fallidos.
+        limpiar_intentos_login(sesion, email)
+
+        # Generamos el token de sesión.
         token = generar_token_sesion()
 
-        # Definimos cuándo dejará de ser válida.
         expiracion = datetime.now(timezone.utc) + timedelta(days=21)
 
-        # Creamos el registro de sesión.
         nueva_sesion = SesionUsuario(
             usuario_id=usuario.id,
             token_hash=hash_token_sesion(token),
             fecha_expiracion=expiracion
         )
 
-        # Guardamos la sesión en PostgreSQL.
         sesion.add(nueva_sesion)
         sesion.commit()
+
+        # Enviamos la cookie.
         response.set_cookie(
             key="muvis_session",
             value=token,
@@ -117,7 +155,10 @@ def login_usuario(datos: UsuarioLogin, response: Response):
     return {"mensaje": "Inicio de sesión correcto"}
 
 
-@router.get("/me", response_model=UsuarioRespuesta)
+@router.get(
+    "/me", 
+    response_model=UsuarioRespuesta
+)
 def obtener_mi_perfil(
     usuario: Usuario = Depends(obtener_usuario_actual)
 ):
@@ -147,7 +188,11 @@ def obtener_token_csrf(
     return {"csrf_token": token_csrf}
 
 
-@router.post("/logout", status_code=204, dependencies=[Depends(exigir_csrf)])
+@router.post(
+    "/logout", 
+    status_code=204, 
+    dependencies=[Depends(exigir_csrf)]
+)
 def cerrar_sesion(
     response: Response,
     muvis_session: str | None = Cookie(default=None)

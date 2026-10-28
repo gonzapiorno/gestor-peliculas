@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Boolean, Numeric, DateTime, func
+from sqlalchemy import String, Boolean, Numeric, DateTime, func, Integer
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from decimal import Decimal
@@ -103,5 +103,30 @@ class SesionUsuario(Base):
     fecha_expiracion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False
+    )
+
+
+class IntentoLogin(Base):
+    __tablename__ = "intentos_login"
+
+    email_hash: Mapped[str] = mapped_column(
+        String(64),
+        primary_key=True
+    )
+
+    intentos_fallidos: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+
+    inicio_ventana: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    bloqueo_hasta: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
     )
 
