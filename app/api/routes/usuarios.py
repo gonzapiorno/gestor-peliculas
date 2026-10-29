@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Response, Depends, Cookie, Request
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr, Field
 
 import os
 
@@ -15,11 +16,21 @@ from app.core.auth import obtener_usuario_actual
 from app.core.csrf import verificar_origen, generar_token_csrf, exigir_csrf
 from app.core.rate_limit import limiter
 from app.core.login_attempts import (esta_bloqueado_login, registrar_fallo_login, limpiar_intentos_login)
+from app.core.email_verification import verificar_codigo_email
 
 router = APIRouter(
     prefix="/usuarios",
     tags=["Usuarios"]
 )
+
+class VerificarEmailSolicitud(BaseModel):
+    email: EmailStr
+    codigo: str = Field(
+        min_length=6,
+        max_length=6,
+        pattern=r"^[0-9]{6}$"
+    )
+
 
 @router.post(
     "/registro",
@@ -218,3 +229,45 @@ def cerrar_sesion(
     key="muvis_session",
     path="/"
 )
+
+
+@router.post(
+    "/verificar-email",
+    dependencies=[Depends(verificar_origen)]
+)
+@limiter.limit("10/minute")
+def verificar_email(
+    datos: VerificarEmailSolicitud,
+    request: Request
+):
+    email = str(datos.email).lower()
+
+    with Session(engine) as sesion:
+        usuario_id = sesion.scalar(
+            select(Usuario.id).where(
+                Usuario.email == email
+            )
+        )
+
+    if usuario_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Código inválido o vencido"
+        )
+
+    verificado = verificar_codigo_email(
+        usuario_id=usuario_id,
+        codigo=datos.codigo
+    )
+
+    if not verificado:
+        raise HTTPException(
+            status_code=400,
+            detail="Código inválido o vencido"
+        )
+
+    return {
+        "mensaje": "Correo verificado correctamente"
+    }
+
+

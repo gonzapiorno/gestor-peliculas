@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Boolean, Numeric, DateTime, func, Integer
+from sqlalchemy import String, Boolean, Numeric, DateTime, func, Integer, false, ForeignKey
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from decimal import Decimal
@@ -66,6 +66,18 @@ class Usuario(Base):
         nullable=False
     )
 
+    email_verificado: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false()
+    )
+
+    fecha_verificacion: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
     password_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False
@@ -75,6 +87,37 @@ class Usuario(Base):
     DateTime(timezone=True),
     server_default=func.now(),
     nullable=False
+    )
+
+class CodigoVerificacionEmail(Base):
+    __tablename__ = "codigos_verificacion_email"
+
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+
+    codigo_hash: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False
+    )
+
+    fecha_expiracion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    intentos_fallidos: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0"
+    )
+
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
     )
 
 
