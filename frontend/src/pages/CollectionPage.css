@@ -1,277 +1,81 @@
-.collection-page {
-  padding-top: 47px;
-  padding-bottom: 42px;
+.collection-page { padding-top: 24px; padding-bottom: 36px; }
+.collection-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.collection-heading .eyebrow { margin: 0 0 8px; font-size: 11px; letter-spacing: .1em; }
+.collection-heading .page-title { font-size: clamp(29px, 2.9vw, 38px); font-weight: 700; line-height: 1.25; letter-spacing: -.045em; }
+.collection-heading .page-description { margin-top: 7px; font-size: 13px; }
+.collection-heading > .button { flex-shrink: 0; font-size: 12px; }
+.collection-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.collection-controls { margin-top: 0; }
+.collection-tabs { display: flex; align-items: center; width: fit-content; max-width: 100%; gap: 4px; padding: 5px; border-radius: 999px; margin-bottom: 14px; background: var(--color-surface-soft); }
+.collection-tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 7px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--color-text-secondary); font-size: 12px; font-weight: 600; transition: background 150ms ease, color 150ms ease; }
+.collection-tab:hover { background: var(--color-surface-raised, #232823); color: var(--color-text); }
+.collection-tab.is-active { background: var(--color-accent); color: var(--color-bg); }
+.collection-tab__count { display: inline-flex; min-width: 25px; min-height: 25px; align-items: center; justify-content: center; padding: 3px 6px; border-radius: 999px; background: var(--color-surface-raised, #232823); color: var(--color-text-secondary); font-size: 11px; font-weight: 600; line-height: 1.3; }
+.collection-tab.is-active .collection-tab__count { background: rgba(16, 18, 16, .12); color: #424D2E; }
+.collection-tab svg { width: 15px; height: 15px; }
+.collection-tab:has([aria-hidden]) { gap: 7px; }
+.collection-toolbar { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 13px; background: var(--color-surface-soft); }
+.collection-search { flex: 1; min-width: 140px; min-height: 44px; padding-inline: 12px; border: 0; border-radius: 9px; background: var(--color-surface); }
+.collection-search .field-input { padding-block: 11px; font-size: 12px; }
+.collection-search input::-webkit-search-cancel-button { appearance: none; }
+.collection-ratings { position: relative; flex-shrink: 0; }
+.collection-ratings summary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 10px 12px; border-radius: 9px; background: var(--color-surface); color: var(--color-text-secondary); font-size: 12px; list-style: none; cursor: pointer; }
+.collection-ratings summary::-webkit-details-marker { display: none; }
+.collection-ratings[open] summary { color: var(--color-accent); background: var(--color-surface-raised, #232823); }
+.collection-ratings__panel { position: absolute; z-index: 4; right: 0; top: calc(100% + 8px); display: flex; width: 228px; flex-wrap: wrap; gap: 6px; padding: 12px; border: 1px solid var(--color-border); border-radius: 11px; background: var(--color-surface); }
+.collection-rating-filter { min-height: 36px; padding: 7px 10px; border: 0; border-radius: 8px; background: var(--color-surface-raised, #232823); color: var(--color-text-secondary); font-size: 12px; }
+.collection-rating-filter:hover { color: var(--color-text); }
+.collection-rating-filter.is-active { background: var(--color-accent); color: var(--color-bg); }
+.collection-sort { display: flex; align-items: center; flex-shrink: 0; }
+.collection-sort__select { position: relative; display: flex; align-items: center; }
+.collection-sort__select select { width: 181px; max-width: 100%; min-height: 44px; appearance: none; padding: 10px 29px 10px 12px; border: 0; border-radius: 9px; background: var(--color-surface); color: var(--color-text); font-size: 12px; cursor: pointer; }
+.collection-sort__select > svg { position: absolute; right: 10px; color: var(--color-text-secondary); pointer-events: none; }
+.collection-summary { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 12px 0; color: var(--color-text-secondary); font-size: 12px; }
+.collection-summary p { margin: 0; }
+.collection-error { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.collection-error > button:not(.icon-button) { min-height: 36px; padding: 5px 0; border: 0; background: none; color: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.collection-error > .icon-button { margin-left: auto; }
+.collection-note { display: flex; align-items: center; gap: 7px; margin: 25px 0 0; color: var(--color-text-secondary); font-size: 11px; line-height: 1.7; }
+.collection-delete-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; margin-top: 25px; }
+.collection-controls button:disabled, .collection-controls select:disabled { cursor: wait; opacity: .55; }
+.collection-page .skeleton-grid { margin-top: 24px; }
+@media (min-width: 901px) and (max-width: 1170px) {
+  .collection-stats { gap: 10px; }
+  .collection-toolbar { flex-wrap: wrap; }
+  .collection-search { flex-basis: 100%; }
+  .collection-sort { margin-left: auto; }
 }
-
-.collection-controls {
-  margin-top: 28px;
-}
-
-.collection-search {
-  min-height: 44px;
-}
-
-.collection-search input::-webkit-search-cancel-button {
-  appearance: none;
-}
-
-.collection-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 15px;
-}
-
-.collection-tab {
-  display: inline-flex;
-  min-height: 42px;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 9px 15px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 12px;
-  cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease;
-}
-
-.collection-tab:hover {
-  border-color: var(--color-text-muted);
-}
-
-.collection-tab.is-active {
-  border-color: var(--color-accent);
-  background: var(--color-surface-soft);
-  color: var(--color-accent);
-}
-
-.collection-tab__count {
-  margin-left: -3px;
-}
-
-.collection-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 20px;
-  padding: 13px 0 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.collection-options__label {
-  color: var(--color-text-secondary);
-  font-size: 11px;
-}
-
-.collection-ratings {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.collection-ratings > span {
-  margin-right: 3px;
-}
-
-.collection-rating-filter {
-  min-height: 28px;
-  padding: 4px 9px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.collection-rating-filter:hover {
-  color: var(--color-text);
-  border-color: var(--color-text-muted);
-}
-
-.collection-rating-filter.is-active {
-  background: var(--color-surface-soft);
-  color: var(--color-accent);
-}
-
-.collection-sort {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.collection-sort__select {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.collection-sort__select select {
-  max-width: 180px;
-  min-height: 32px;
-  appearance: none;
-  padding: 6px 23px 6px 0;
-  border: 0;
-  border-radius: 3px;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.collection-sort__select > svg {
-  position: absolute;
-  right: 2px;
-  color: var(--color-text-secondary);
-  pointer-events: none;
-}
-
-.collection-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  margin: 23px 0 18px;
-  color: var(--color-text-secondary);
-  font-size: 11px;
-}
-
-.collection-summary p {
-  margin: 0;
-}
-
-.collection-summary > span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.collection-summary > span svg {
-  color: var(--color-accent);
-}
-
-.collection-error {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.collection-error > button:not(.icon-button) {
-  min-height: 32px;
-  padding: 3px 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font-size: 12px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.collection-error > .icon-button {
-  margin-left: auto;
-}
-
-.collection-note {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 24px 0 0;
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  line-height: 1.7;
-}
-
-.collection-note svg {
-  flex-shrink: 0;
-}
-
-.collection-delete-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-top: 25px;
-}
-
-.collection-controls button:disabled,
-.collection-controls select:disabled {
-  cursor: wait;
-  opacity: .55;
-}
-
-.collection-page .skeleton-grid {
-  margin-top: 24px;
-}
-
 @media (max-width: 650px) {
-  .collection-page {
-    padding-top: 33px;
-    padding-bottom: 30px;
-  }
-
-  .collection-controls {
-    margin-top: 23px;
-  }
-
-  .collection-tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .collection-tab {
-    gap: 5px;
-    padding: 9px 10px;
-    font-size: 11px;
-  }
-
-  .collection-options {
-    align-items: flex-start;
-    gap: 8px;
-    padding-bottom: 13px;
-  }
-
-  .collection-ratings {
-    width: 100%;
-    gap: 5px;
-  }
-
-  .collection-ratings > .collection-options__label {
-    flex-basis: 100%;
-    margin: 2px 0 1px;
-  }
-
-  .collection-rating-filter {
-    min-height: 40px;
-  }
-
-  .collection-sort {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .collection-summary {
-    margin-top: 20px;
-    font-size: 10px;
-  }
-
-  .collection-note {
-    align-items: flex-start;
-    font-size: 10px;
-  }
-
-  .collection-note svg {
-    margin-top: 3px;
-  }
-
-  .collection-delete-actions {
-    flex-direction: column-reverse;
-  }
+  .collection-page { padding-top: 18px; padding-bottom: 28px; }
+  .collection-heading { align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .collection-heading .page-title { font-size: 30px; }
+  .collection-heading .page-description { font-size: 13px; }
+  .collection-heading > .button { min-height: 44px; padding: 10px 13px; font-size: 12px; }
+  .collection-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+  .collection-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 6px; padding: 6px; border-radius: 19px; margin-bottom: 10px; }
+  .collection-tab { justify-content: flex-start; min-height: 44px; gap: 6px; padding: 7px 12px; font-size: 12px; }
+  .collection-tab__count { margin-left: auto; }
+  .collection-toolbar { flex-wrap: wrap; gap: 8px; padding: 8px; }
+  .collection-search { flex-basis: 100%; }
+  .collection-ratings { flex: 1; }
+  .collection-ratings summary { width: 100%; padding: 10px; font-size: 11px; }
+  .collection-ratings__panel { left: 0; right: auto; width: 220px; }
+  .collection-rating-filter { min-height: 44px; }
+  .collection-sort { flex: 1.2; min-width: 0; }
+  .collection-sort__select { width: 100%; }
+  .collection-sort__select select { width: 100%; font-size: 11px; }
+  .collection-summary { margin-top: 10px; font-size: 11px; }
+  .collection-note { align-items: flex-start; font-size: 11px; }
+  .collection-note svg { margin-top: 3px; }
+  .collection-delete-actions { flex-direction: column-reverse; }
+}
+.collection-tab { font-size: 13px; }
+.collection-search .field-input { font-size: 13px; }
+.collection-ratings summary, .collection-rating-filter, .collection-sort__select select { font-size: 13px; }
+.collection-summary { font-size: 13px; }
+@media (max-width: 650px) {
+  .collection-search .field-input { font-size: 16px; }
+  .collection-tab { font-size: 13px; }
+  .collection-ratings summary, .collection-sort__select select { font-size: 12px; }
+  .collection-summary { font-size: 12px; }
 }

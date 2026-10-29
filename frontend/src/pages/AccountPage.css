@@ -1,0 +1,25 @@
+.account-page { max-width: 800px; padding-block: 28px; }
+.account-page .page-heading { margin-bottom: 20px; }
+.account-page__profile { padding: 22px; border-radius: 14px; background: var(--color-surface); }
+.account-page__profile-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.account-page__avatar { display: grid; width: 44px; height: 44px; flex-shrink: 0; place-items: center; border-radius: 13px; background: #283223; color: var(--color-accent); }
+.account-page__profile h2 { min-width: 0; margin: 0; font-size: 19px; line-height: 1.45; font-weight: 600; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.account-page__data { display: grid; gap: 14px; margin: 16px 0; }
+.account-page__data > div { display: grid; gap: 4px; min-width: 0; }
+.account-page__data dt { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+.account-page__data dd { margin: 0; color: var(--color-text); font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.account-page .account-session { margin-top: 16px; }
+.account-page .account-session__actions { gap: 12px; }
+.account-page__feedback { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 12px; margin-top: 16px; padding: 20px 22px; border-radius: 14px; background: #171e18; }
+.account-page__feedback-icon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; background: #263022; color: var(--color-accent); }
+.account-page__feedback h2 { margin: 0 0 5px; font-size: 16px; font-weight: 600; line-height: 1.5; }
+.account-page__feedback p { margin: 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.65; }
+.account-page__feedback .button { grid-column: 2; justify-self: start; }
+@media (max-width: 600px) {
+  .account-page { padding-block: 18px 22px; }
+  .account-page .page-heading { margin-bottom: 18px; }
+  .account-page .page-description { margin-top: 8px; line-height: 1.65; }
+  .account-page__profile { padding: 18px; }
+  .account-page__feedback { gap: 12px; margin-top: 14px; padding: 18px; }
+  .account-page__feedback .button { grid-column: 1 / -1; width: 100%; }
+}

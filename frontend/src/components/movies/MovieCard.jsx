@@ -56,6 +56,7 @@ function MovieCard({
               <Icon name="refresh" size={11} /> Guardando…
             </span>
           )}
+          <button className="movie-card__remove" type="button" disabled={actualizando} onClick={() => onEliminar(pelicula)} aria-label={`Eliminar ${pelicula.titulo} de mi colección`} title="Quitar de mi colección"><Icon name="trash" size={15} /></button>
         </div>
 
         <div className="movie-card__personal">
@@ -79,22 +80,11 @@ function MovieCard({
             aria-label={`Editar puntuación de ${pelicula.titulo}: ${tienePuntuacion ? `${formatRating(pelicula.puntuacion_personal)} sobre 10` : "sin puntuar"}`}
           >
             {tienePuntuacion
-              ? <>Tu puntuación <strong>{formatRating(pelicula.puntuacion_personal)} / 10</strong></>
-              : "Sin puntuar"}
+              ? <><Icon name="star" size={13} /><span>Tu nota <strong>{formatRating(pelicula.puntuacion_personal)}</strong></span></>
+              : <><Icon name="star" size={13} />Sin puntuar</>}
           </button>
         </div>
 
-        <div className="movie-card__actions">
-          <button
-            className="movie-card__remove"
-            type="button"
-            disabled={actualizando}
-            onClick={() => onEliminar(pelicula)}
-            aria-label={`Eliminar ${pelicula.titulo} de mi colección`}
-          >
-            <Icon name="trash" size={12} /> Quitar
-          </button>
-        </div>
       </div>
     </article>
   );

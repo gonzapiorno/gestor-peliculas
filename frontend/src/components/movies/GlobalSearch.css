@@ -1,0 +1,11 @@
+.global-search { width: min(660px, 100%); min-width: 0; }
+.global-search .movie-search { margin: 0; }
+.global-search .movie-search__field { min-height: 46px; background: var(--color-surface); border-radius: var(--radius-control); }
+.global-search .movie-search__hint { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.global-search .movie-search__dropdown { z-index: 60; border: 0; border-radius: 14px; background: var(--color-surface); box-shadow: 0 14px 40px rgb(0 0 0 / .35); }
+.global-search .movie-search__heading { font-size: .75rem; letter-spacing: .06em; }
+.global-search .movie-search__option { border: 0; border-radius: 10px; background: var(--color-surface-soft); }
+.global-search .movie-search__option.is-active { background: var(--color-surface-raised); box-shadow: inset 3px 0 var(--color-accent); }
+.global-search .movie-search__genres, .global-search .movie-search__year, .global-search .movie-search__details { font-size: .8rem; }
+.global-search .movie-search__all.button { background: var(--color-surface-raised); font-size: .85rem; min-height: 44px; }
+@media(max-width:899px) { .global-search { width: 100%; } .global-search .movie-search__field { min-height: 46px; } .global-search .movie-search__field .field-input { font-size: 16px; } }

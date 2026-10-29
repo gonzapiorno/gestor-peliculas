@@ -1,0 +1,12 @@
+.feedback-panel { display: grid; gap: 10px; }
+.feedback-panel__notice { margin: 0 0 23px; padding: 15px 17px; border-radius: 10px; background: var(--color-surface-soft); color: var(--color-secondary, #a8c590); font-size: 13px; line-height: 1.7; }
+.feedback-panel__notice strong { font-weight: 600; }
+.feedback-panel__notice p { margin: 5px 0 0; color: var(--color-text-secondary); }
+.feedback-panel > label { color: var(--color-text); font-size: 13px; font-weight: 500; }
+.feedback-panel > select, .feedback-panel > textarea { width: 100%; min-width: 0; padding: 12px 13px; border: 0; border-radius: 10px; background: var(--color-bg); color: var(--color-text); font: inherit; font-size: 14px; }
+.feedback-panel > select { min-height: 45px; margin-bottom: 11px; }
+.feedback-panel > textarea { resize: vertical; min-height: 130px; line-height: 1.7; }
+.feedback-panel > textarea::placeholder { color: var(--color-text-muted); }
+.feedback-panel .dialog__actions { margin-top: 12px; }
+.feedback-panel .button:disabled { cursor: not-allowed; }
+@media (max-width: 600px) { .feedback-panel > select, .feedback-panel > textarea { font-size: 16px; } }

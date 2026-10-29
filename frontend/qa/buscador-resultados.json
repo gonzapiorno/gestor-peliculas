@@ -1,0 +1,156 @@
+{
+  "fecha": "2026-10-17",
+  "entorno": "Chromium integrado: búsqueda y detalle con FastAPI real; casos de carrera, debounce y errores en harness aislado",
+  "comprobaciones": [
+    {
+      "test": "Backend real: cinco sugerencias y veinte tarjetas para Interstellar",
+      "passed": true
+    },
+    {
+      "test": "Backend real: flecha abajo activa primera sugerencia",
+      "passed": true
+    },
+    {
+      "test": "Escape cierra sugerencias y conserva resultados",
+      "passed": true
+    },
+    {
+      "test": "Ver todos los resultados es accesible con Tab",
+      "passed": true
+    },
+    {
+      "test": "Ver todos cierra panel y enfoca cuadrícula completa",
+      "passed": true
+    },
+    {
+      "test": "Backend real: Enter navega a detalle por id_tmdb",
+      "passed": true
+    },
+    {
+      "test": "Un carácter conserva populares y no consulta búsqueda",
+      "passed": true
+    },
+    {
+      "test": "No hay peticiones inmediatas durante el debounce",
+      "passed": true
+    },
+    {
+      "test": "Escritura rápida genera sólo una búsqueda de la última consulta",
+      "passed": true
+    },
+    {
+      "test": "Cinco sugerencias como máximo y todos los resultados en cuadrícula",
+      "passed": true
+    },
+    {
+      "test": "Flecha arriba desde input activa la quinta sugerencia",
+      "passed": true
+    },
+    {
+      "test": "Las flechas recorren las sugerencias y mantienen aria-activedescendant",
+      "passed": true
+    },
+    {
+      "test": "Respuesta lenta anterior no reemplaza búsqueda rápida posterior",
+      "passed": true
+    },
+    {
+      "test": "Escape durante una consulta impide que su respuesta reabra el panel",
+      "passed": true
+    },
+    {
+      "test": "Limpiar durante una consulta conserva populares al llegar respuesta antigua",
+      "passed": true
+    },
+    {
+      "test": "Sin resultados muestra estado vacío en panel y cuadrícula",
+      "passed": true
+    },
+    {
+      "test": "Error de búsqueda muestra mensaje y reintento",
+      "passed": true
+    },
+    {
+      "test": "Reintentar vuelve a mostrar carga",
+      "passed": true
+    },
+    {
+      "test": "Reintentar emite una nueva petición de la misma búsqueda",
+      "passed": true
+    },
+    {
+      "test": "Clic fuera cierra sugerencias sin borrar la cuadrícula",
+      "passed": true
+    },
+    {
+      "test": "Enter sin opción activa muestra todos los resultados",
+      "passed": true
+    },
+    {
+      "test": "Seleccionar con clic abre detalle por id_tmdb",
+      "passed": true
+    },
+    {
+      "test": "Volver a la consulta A no reutiliza una respuesta A antigua mientras espera la nueva",
+      "passed": true
+    },
+    {
+      "test": "Secuencia A→B→A termina con la respuesta de la última petición A",
+      "passed": true
+    },
+    {
+      "test": "Error de consulta anterior no reemplaza estado ni resultados de la nueva",
+      "passed": true
+    },
+    {
+      "test": "Backend real: panel sin desbordamiento a 1440/768/390/320 px",
+      "passed": true
+    },
+    {
+      "test": "Selección por clic en ancho de 320 px navega al detalle real",
+      "passed": true
+    },
+    {
+      "test": "Backend real: sugerencia sin año y sin póster muestra reemplazos",
+      "passed": true
+    }
+  ],
+  "responsive": [
+    {
+      "width": 1440,
+      "actualWidth": 1440,
+      "height": 1000,
+      "options": 5,
+      "panelBottom": 858,
+      "scroll": 1425,
+      "viewport": 1425
+    },
+    {
+      "width": 768,
+      "actualWidth": 768,
+      "height": 1000,
+      "options": 5,
+      "panelBottom": 879,
+      "scroll": 753,
+      "viewport": 753
+    },
+    {
+      "width": 390,
+      "actualWidth": 390,
+      "height": 844,
+      "options": 5,
+      "panelBottom": 832,
+      "scroll": 375,
+      "viewport": 375
+    },
+    {
+      "width": 320,
+      "actualWidth": 320,
+      "height": 844,
+      "options": 5,
+      "panelBottom": 832,
+      "scroll": 305,
+      "viewport": 305
+    }
+  ]
+}

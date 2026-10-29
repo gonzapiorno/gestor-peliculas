@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import CatalogMovieGrid from "../components/movies/CatalogMovieGrid";
-import MovieSearch from "../components/movies/MovieSearch";
 import Icon from "../components/ui/Icon";
 import PageState, { MovieSkeleton } from "../components/ui/PageState";
 import { obtenerPopulares } from "../services/catalogoApi";
@@ -17,9 +16,9 @@ function DiscoverPage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [reintentos, setReintentos] = useState(0);
-  const search = useMovieSearch();
+  const [searchParams] = useSearchParams();
+  const search = useMovieSearch(searchParams.get("buscar") || "");
   const coleccion = useCatalogCollection();
-  const resultsHeadingRef = useRef(null);
   const catalogRequestRef = useRef(null);
 
   useEffect(() => {
@@ -51,25 +50,19 @@ function DiscoverPage() {
   const errorVista = buscando ? search.error : error;
   const peliculasVisibles = buscando ? search.results : peliculas;
 
-  function mostrarResultados() {
-    resultsHeadingRef.current?.scrollIntoView({ block: "start" });
-    resultsHeadingRef.current?.focus({ preventScroll: true });
-  }
-
   return (
     <main className="discover-page page-container">
       <header className="discover-page__header page-heading">
         <div>
-          <p className="eyebrow">El cine, a tu manera</p>
-          <h1 className="page-title">Tu próxima gran película.</h1>
+          <p className="eyebrow">TU PRÓXIMA HISTORIA</p>
+          <h1 className="page-title">{buscando ? "Resultados de búsqueda" : "Descubrir"}</h1>
           <p className="page-description">
-            Explora el catálogo. Guarda lo que te inspira. Construye tu propia historia de cine.
+            {buscando ? `Películas para «${search.query.trim()}».` : "Encontrá algo que te den ganas de ver."}
           </p>
         </div>
-        <span className="discover-page__source"><Icon name="film" size={15} />Catálogo externo · TMDB</span>
+        {buscando && <Link className="button" to="/">Ver populares</Link>}
       </header>
 
-      <MovieSearch query={search.query} onQueryChange={search.setQuery} results={search.results} status={search.status} error={search.error} onRetry={search.retry} onViewAll={mostrarResultados} />
 
       <p className="visually-hidden" role="status">{coleccion.anuncio}</p>
       {coleccion.estadoColeccion === "error" && (
@@ -81,8 +74,10 @@ function DiscoverPage() {
 
       <section className="discover-page__catalog" aria-labelledby="radar-heading" aria-busy={cargandoVista}>
         <div className="discover-page__section-heading">
-          <h2 id="radar-heading" ref={resultsHeadingRef} tabIndex={-1}>{buscando ? `Resultados para «${search.query.trim()}»` : "Populares"}</h2>
-          <span role="status">{buscando ? cargandoVista ? "Buscando en TMDB…" : errorVista ? "Búsqueda no disponible" : `${peliculasVisibles.length} ${peliculasVisibles.length === 1 ? "resultado" : "resultados"}` : "Populares en TMDB"}</span>
+          <div><h2 id="radar-heading">{buscando ? "Películas encontradas" : "Populares ahora"}</h2>
+            {!buscando && <p>Lo que se está viendo en TMDB.</p>}
+          </div>
+          <span role="status">{buscando ? cargandoVista ? "Buscando…" : errorVista ? "Búsqueda no disponible" : `${peliculasVisibles.length} ${peliculasVisibles.length === 1 ? "resultado" : "resultados"}` : <><Icon name="film" size={15} /> Catálogo TMDB</>}</span>
         </div>
 
         {cargandoVista ? (
@@ -95,7 +90,7 @@ function DiscoverPage() {
           </PageState>
         ) : buscando && peliculasVisibles.length === 0 ? (
           <PageState kind="search" title="No encontramos películas con ese título" description="Probá con otro título o volvé a explorar las películas populares.">
-            <button className="button" type="button" onClick={() => search.setQuery("")}>Ver populares</button>
+            <Link className="button" to="/">Ver populares</Link>
           </PageState>
         ) : peliculasVisibles.length === 0 ? (
           <PageState title="Todavía no hay películas para mostrar" description="Vuelve a consultar el catálogo en un momento.">
@@ -111,8 +106,8 @@ function DiscoverPage() {
       <aside className="discover-page__collection-cta">
         <Icon name="library" size={24} />
         <div>
-          <h2>No dejes que una buena película se pierda.</h2>
-          <p>Tu colección reúne las que viste, las que esperas ver y las que volverías a ver.</p>
+          <h2>¿Cuál vas a ver después?</h2>
+          <p>Guardá tus pendientes y volvé a tus favoritas cuando quieras.</p>
         </div>
         <Link className="button" to="/coleccion"><Icon name="arrow-right" size={17} />Ir a mi colección</Link>
       </aside>

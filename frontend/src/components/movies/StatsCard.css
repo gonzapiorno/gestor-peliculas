@@ -1,0 +1,14 @@
+.stats-card { min-width: 0; padding: 12px 16px; border-radius: 14px; background: var(--color-surface); }
+.stats-card__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--color-text-secondary); font-size: 13px; font-weight: 500; line-height: 1.5; }
+.stats-card__icon { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 9px; background: var(--color-surface-raised, #232823); color: var(--color-accent); }
+.stats-card--secondary .stats-card__icon { color: var(--color-secondary, #A8C590); }
+.stats-card--rating .stats-card__icon, .stats-card--rating .stats-card__value { color: var(--color-tertiary, #F4D06F); }
+.stats-card__value { display: block; margin-top: 1px; font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -.04em; }
+.stats-card__detail { display: block; margin-top: 2px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.5; }
+@media (max-width: 600px) {
+  .stats-card { padding: 11px 12px; }
+  .stats-card__top { font-size: 12px; gap: 5px; }
+  .stats-card__icon { width: 28px; height: 28px; border-radius: 8px; }
+  .stats-card__value { font-size: 27px; }
+  .stats-card__detail { font-size: 12px; }
+}
