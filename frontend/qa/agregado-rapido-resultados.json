@@ -1,0 +1,184 @@
+{
+  "fecha": "2026-10-17",
+  "entorno": "Chromium integrado: lectura con backend real; altas, errores, duplicados y concurrencia con API simulada aislada",
+  "comprobaciones": [
+    {
+      "test": "Una sola consulta inicial de colección, incluso con StrictMode",
+      "passed": true
+    },
+    {
+      "test": "Guardadas se identifican desde el inicio por id_tmdb y no permiten otra alta",
+      "passed": true
+    },
+    {
+      "test": "Botón + accesible por Tab y visible al enfocar",
+      "passed": true
+    },
+    {
+      "test": "Mientras guarda bloquea sólo esa acción y conserva el enlace",
+      "passed": true
+    },
+    {
+      "test": "Agregar desde Populares actualiza indicador sin navegar ni recargar",
+      "passed": true
+    },
+    {
+      "test": "Agregado desde búsqueda conserva título y marca guardada",
+      "passed": true
+    },
+    {
+      "test": "Doble clic rápido genera un solo POST para la película",
+      "passed": true
+    },
+    {
+      "test": "Indicador se comparte entre búsqueda y populares sin otro GET de colección",
+      "passed": true
+    },
+    {
+      "test": "Póster mantiene navegación correcta al detalle",
+      "passed": true
+    },
+    {
+      "test": "Pulsar un indicador guardado no produce POST",
+      "passed": true
+    },
+    {
+      "test": "Recarga completa conserva indicador usando colección persistida de prueba",
+      "passed": true
+    },
+    {
+      "test": "Fallo del POST muestra error por tarjeta y permite reintentar sin bloquear otras",
+      "passed": true
+    },
+    {
+      "test": "Reintentar POST fallido guarda y retira el error",
+      "passed": true
+    },
+    {
+      "test": "409 sincroniza como guardada sin mostrar error",
+      "passed": true
+    },
+    {
+      "test": "Fallo inicial muestra membresía desconocida, sin falsos botones +",
+      "passed": true
+    },
+    {
+      "test": "Búsqueda y catálogo siguen disponibles cuando falla comprobar colección",
+      "passed": true
+    },
+    {
+      "test": "Reintento de comprobación sincroniza guardadas y habilita disponibles",
+      "passed": true
+    },
+    {
+      "test": "Carga inicial muestra comprobación pendiente y mantiene pósters navegables",
+      "passed": true
+    },
+    {
+      "test": "Permite guardar dos películas distintas a la vez con bloqueos independientes",
+      "passed": true
+    },
+    {
+      "test": "Salir y volver durante POST actualiza nueva vista sin duplicar el alta",
+      "passed": true
+    },
+    {
+      "test": "Desconexión de red muestra mensaje claro y no marca guardada falsamente",
+      "passed": true
+    },
+    {
+      "test": "Recupera el agregado tras una desconexión de red",
+      "passed": true
+    },
+    {
+      "test": "Buscador mantiene mínimo de dos caracteres",
+      "passed": true
+    },
+    {
+      "test": "Buscador conserva debounce, cinco sugerencias y todos los resultados",
+      "passed": true
+    },
+    {
+      "test": "Buscador sigue descartando respuestas antiguas",
+      "passed": true
+    },
+    {
+      "test": "Backend real: indicadores iniciales coinciden con colección existente",
+      "passed": true
+    },
+    {
+      "test": "Backend real: buscador conserva resultados y detecta guardadas por TMDB",
+      "passed": true
+    },
+    {
+      "test": "Recarga real conserva detección de películas previamente existentes",
+      "passed": true
+    },
+    {
+      "test": "Responsive real a 1440/768/390/320 px sin desbordamiento horizontal",
+      "passed": true
+    },
+    {
+      "test": "En celular acciones visibles, táctiles de 44 px y guardadas siempre identificadas",
+      "passed": true
+    }
+  ],
+  "responsive": [
+    {
+      "width": 1440,
+      "actionHeight": 38,
+      "actionWidth": 38,
+      "actualWidth": 1440,
+      "pointerEvents": "none",
+      "savedVisible": true,
+      "scroll": 1425,
+      "viewport": 1425
+    },
+    {
+      "width": 768,
+      "actionHeight": 38,
+      "actionWidth": 38,
+      "actualWidth": 768,
+      "pointerEvents": "none",
+      "savedVisible": true,
+      "scroll": 753,
+      "viewport": 753
+    },
+    {
+      "width": 390,
+      "actionHeight": 44,
+      "actionWidth": 44,
+      "actualWidth": 390,
+      "pointerEvents": "auto",
+      "savedVisible": true,
+      "scroll": 375,
+      "viewport": 375
+    },
+    {
+      "width": 320,
+      "actionHeight": 44,
+      "actionWidth": 44,
+      "actualWidth": 320,
+      "pointerEvents": "auto",
+      "savedVisible": true,
+      "scroll": 305,
+      "viewport": 305
+    }
+  ],
+  "altasReales": {
+    "estado": "Pendientes de autorización explícita; el POST fue bloqueado por la revisión automática de aprobación",
+    "coleccionSinCambios": true,
+    "peliculasPropuestas": [
+      {
+        "id_tmdb": 1148365,
+        "titulo": "Matchbox: La película",
+        "origen": "Populares"
+      },
+      {
+        "id_tmdb": 693134,
+        "titulo": "Dune: Parte dos",
+        "origen": "Búsqueda"
+      }
+    ]
+  }
+}

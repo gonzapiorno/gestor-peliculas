@@ -1,0 +1,216 @@
+{
+  "fecha": "2026-10-16",
+  "entorno": "Chromium integrado; API simulada aislada, sin acceso a PostgreSQL",
+  "comprobaciones": [
+    {
+      "test": "Búsqueda combinada con Favoritas, ignorando acentos y mayúsculas",
+      "passed": true
+    },
+    {
+      "test": "Búsqueda sin resultados",
+      "passed": true
+    },
+    {
+      "test": "Orden alfabético",
+      "passed": true
+    },
+    {
+      "test": "Orden por nota personal",
+      "passed": true
+    },
+    {
+      "test": "Orden por año",
+      "passed": true
+    },
+    {
+      "test": "Slider ajusta medio punto sin peticiones",
+      "passed": true
+    },
+    {
+      "test": "Cancelar nota no envía petición y restaura foco",
+      "passed": true
+    },
+    {
+      "test": "Guardar nota envía una petición con ID interno y 9.5",
+      "passed": true
+    },
+    {
+      "test": "Quitar nota envía null y actualiza la tarjeta",
+      "passed": true
+    },
+    {
+      "test": "Cancelar eliminación no envía DELETE",
+      "passed": true
+    },
+    {
+      "test": "Vista/pendiente actualiza estado y contadores sin recarga",
+      "passed": true
+    },
+    {
+      "test": "Favorita actualiza corazón y contador",
+      "passed": true
+    },
+    {
+      "test": "Eliminar tras confirmar usa ID interno y actualiza lista",
+      "passed": true
+    },
+    {
+      "test": "Fallo de guardado conserva dato previo y permite reintentar",
+      "passed": true
+    },
+    {
+      "test": "Reintentar cambio fallido guarda correctamente",
+      "passed": true
+    },
+    {
+      "test": "Slider permite límite mínimo 1",
+      "passed": true
+    },
+    {
+      "test": "Guardar nota que excluye tarjeta del filtro cierra modal y conserva foco accesible",
+      "passed": true
+    },
+    {
+      "test": "Colección responsive 4/4/3/2/2 columnas, sin scroll horizontal (1440/1024/768/390/320)",
+      "passed": true
+    },
+    {
+      "test": "Año ausente, título largo y guardado sin desbordar a 320 px",
+      "passed": true
+    },
+    {
+      "test": "Buscar entre populares filtra títulos sin acentos",
+      "passed": true
+    },
+    {
+      "test": "Error de agregado permite reintentar",
+      "passed": true
+    },
+    {
+      "test": "Agregar película conserva POST por id_tmdb y admite respuesta parcial",
+      "passed": true
+    },
+    {
+      "test": "Nueva película aparece al abrir colección",
+      "passed": true
+    },
+    {
+      "test": "Detalle detecta película existente y diferencia nota TMDB de personal",
+      "passed": true
+    },
+    {
+      "test": "Colección vacía con acceso real a Descubrir",
+      "passed": true
+    },
+    {
+      "test": "Error de carga de colección recuperable con Reintentar",
+      "passed": true
+    },
+    {
+      "test": "Detalle visible y agregado bloqueado si falla comprobar colección",
+      "passed": true
+    },
+    {
+      "test": "Reintentar comprobación restablece agregado sin perder detalle",
+      "passed": true
+    },
+    {
+      "test": "Descubrir y detalle sin scroll horizontal a 1440/768/390/320 px",
+      "passed": true
+    },
+    {
+      "test": "Carga de colección muestra esqueletos y controles deshabilitados",
+      "passed": true
+    },
+    {
+      "test": "El foco de teclado permanece dentro del diálogo",
+      "passed": true
+    },
+    {
+      "test": "Escape cancela y no guarda la nota",
+      "passed": true
+    }
+  ],
+  "responsiveColeccion": [
+    {
+      "width": 1440,
+      "columns": 4,
+      "scroll": 1425,
+      "viewport": 1425
+    },
+    {
+      "width": 1024,
+      "columns": 4,
+      "scroll": 1009,
+      "viewport": 1009
+    },
+    {
+      "width": 768,
+      "columns": 3,
+      "scroll": 753,
+      "viewport": 753
+    },
+    {
+      "width": 390,
+      "columns": 2,
+      "scroll": 375,
+      "viewport": 375
+    },
+    {
+      "width": 320,
+      "columns": 2,
+      "scroll": 305,
+      "viewport": 305
+    }
+  ],
+  "responsiveOtrasPaginas": [
+    {
+      "page": "discover",
+      "width": 1440,
+      "scroll": 1425,
+      "viewport": 1425
+    },
+    {
+      "page": "discover",
+      "width": 768,
+      "scroll": 753,
+      "viewport": 753
+    },
+    {
+      "page": "discover",
+      "width": 390,
+      "scroll": 375,
+      "viewport": 375
+    },
+    {
+      "page": "discover",
+      "width": 320,
+      "scroll": 305,
+      "viewport": 305
+    },
+    {
+      "page": "detail",
+      "width": 1440,
+      "scroll": 1440,
+      "viewport": 1440
+    },
+    {
+      "page": "detail",
+      "width": 768,
+      "scroll": 753,
+      "viewport": 753
+    },
+    {
+      "page": "detail",
+      "width": 390,
+      "scroll": 375,
+      "viewport": 375
+    },
+    {
+      "page": "detail",
+      "width": 320,
+      "scroll": 305,
+      "viewport": 305
+    }
+  ]
+}

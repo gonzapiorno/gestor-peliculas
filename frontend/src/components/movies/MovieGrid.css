@@ -1,19 +1,5 @@
-.movie-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32px 22px;
-}
-
-@media (min-width: 651px) and (max-width: 900px) {
-  .movie-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: 18px;
-  }
-}
-
-@media (max-width: 650px) {
-  .movie-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 25px 14px;
-  }
-}
+.movie-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px 18px; }
+.movie-list { display: grid; gap: 15px; }
+@media (min-width: 1550px) { .movie-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 901px) and (max-width: 1150px) { .movie-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .movie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 19px 12px; } }

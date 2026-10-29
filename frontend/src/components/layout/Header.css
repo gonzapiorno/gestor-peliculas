@@ -1,42 +1,46 @@
-.header { border-bottom: 1px solid var(--color-border); background: var(--color-bg); }
-.header__inner { width: min(1200px, calc(100% - 96px)); min-height: 80px; margin-inline: auto; display: grid; grid-template-columns: minmax(110px, 1fr) auto minmax(210px, 1fr); align-items: center; gap: 24px; }
-.header__brand { justify-self: start; display: inline-flex; align-items: center; text-decoration: none; }
-.header__brand img { display: block; width: 112px; height: auto; }
-.header__nav { display: flex; align-self: stretch; align-items: stretch; gap: 34px; }
-.header__link { display: flex; align-items: center; position: relative; padding: 10px 0; color: var(--color-text-secondary); text-decoration: none; font-size: .88rem; transition: color .18s; }
-.header__link:hover { color: var(--color-text); }
-.header__link.active { color: var(--color-accent); }
-.header__link.active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--color-accent); }
-.header__account { justify-self: end; min-width: 0; max-width: 100%; padding-block: 10px; }
-.header__session { display: flex; align-items: center; gap: 13px; min-width: 0; }
-.header__identity { display: grid; gap: 4px; min-width: 0; max-width: 170px; text-align: right; }
-.header__username, .header__email { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.header__username { font-size: .85rem; }
-.header__email { color: var(--color-text-secondary); font-size: .7rem; }
-.header__logout { flex-shrink: 0; min-height: 40px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 6px; background: transparent; color: var(--color-text-secondary); font-size: .78rem; }
-.header__logout:hover:not(:disabled) { color: var(--color-text); border-color: #525d48; }
-.header__auth-links { display: flex; align-items: center; gap: 10px; }
-.header__auth-link { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 11px; border-radius: 6px; color: var(--color-text-secondary); text-decoration: none; font-size: .83rem; white-space: nowrap; }
-.header__auth-link:hover, .header__auth-link.active { color: var(--color-accent); }
-.header__auth-link--register { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); }
-.header__session-status { display: inline-block; color: var(--color-text-secondary); font-size: .75rem; }
-.header__session-error { max-width: 310px; padding-top: 8px; color: var(--color-danger); font-size: .73rem; line-height: 1.6; }
-.header__session-error p { margin: 0 0 3px; overflow-wrap: anywhere; }
-.header__session-error button { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 3px 0; border: 0; background: transparent; color: var(--color-accent); font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
-@media (max-width: 1000px) { .header__inner { gap: 18px; } .header__nav { gap: 23px; } .header__identity { max-width: 125px; } }
-@media (max-width: 700px) {
-  .header__inner { width: calc(100% - 40px); min-height: 72px; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 0; }
-  .header__brand img { width: 98px; }
-  .header__nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 30px; }
-  .header__link { font-size: .84rem; min-height: 49px; }
-  .header__account { max-width: 100%; }
-  .header__session { gap: 8px; }
-  .header__identity { max-width: 120px; }
-  .header__email { display: none; }
-  .header__auth-links { gap: 7px; }
-  .header__auth-link { padding-inline: 9px; font-size: .79rem; }
-  .header__logout { padding-inline: 8px; font-size: .76rem; }
-  .header__session-error { max-width: 220px; }
+.header { position: sticky; z-index: 35; top: 0; background: var(--color-bg); }
+.header__inner { display: flex; width: min(1400px, calc(100% - 64px)); min-height: 88px; align-items: center; gap: 24px; margin-inline: auto; padding-block: 17px; }
+.header__search { flex: 1; min-width: 0; max-width: 710px; }
+.header__desktop-account { min-width: 0; margin-left: auto; }
+.header__account { min-width: 0; max-width: 290px; }
+.header__session { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header__profile { display: flex; min-width: 0; min-height: 44px; align-items: center; gap: 9px; padding: 6px 10px 6px 6px; border-radius: 26px; background: var(--color-surface); color: var(--color-text); text-decoration: none; }
+.header__profile:hover { background: #283025; }
+.header__avatar { display: grid; width: 32px; height: 32px; flex-shrink: 0; place-items: center; border-radius: 50%; background: var(--color-accent); color: var(--color-bg); }
+.header__identity { display: grid; min-width: 0; max-width: 110px; gap: 3px; }
+.header__username { overflow: hidden; color: var(--color-text); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.header__account-label { color: var(--color-text-secondary); font-size: 11px; }
+.header__logout { flex-shrink: 0; min-height: 42px; padding: 10px 11px; border: 0; border-radius: 9px; background: #1d241d; color: var(--color-text-secondary); font-size: 13px; }
+.header__logout:hover:not(:disabled) { background: #293128; color: var(--color-text); }
+.header__auth-links { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+.header__auth-link { display: inline-flex; min-height: 43px; align-items: center; justify-content: center; padding: 10px 12px; border-radius: 10px; color: var(--color-text-secondary); font-size: 12px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.header__auth-link:hover, .header__auth-link.active { background: #232c21; color: var(--color-accent); }
+.header__auth-link--register { background: var(--color-surface); color: var(--color-text); }
+.header__session-status { color: var(--color-text-secondary); font-size: 12px; }
+.header__session-error { max-width: 290px; padding-top: 9px; color: var(--color-danger); font-size: 11px; line-height: 1.6; }
+.header__session-error p, .account-session__error p { margin: 0; overflow-wrap: anywhere; }
+.header__session-error button, .account-session__error button { display: inline-flex; min-height: 36px; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: transparent; color: var(--color-accent); font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.header__mobile-brand, .header__mobile-account { display: none; }
+.account-session { margin-top: 24px; }
+.account-session__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+.account-session__description { margin: 0 0 18px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.8; }
+.account-session__actions .account-session__description { flex: 1 1 240px; margin: 0; }
+.account-session__error { margin-bottom: 0; font-size: 13px; }
+
+@media (min-width: 900px) and (max-width: 1100px) {
+  .header__inner { gap: 16px; }
+  .header__identity { max-width: 78px; }
+  .header__session { gap: 7px; }
+  .header__logout { padding-inline: 8px; font-size: 13px; }
 }
-@media (max-width: 520px) { .header__identity { max-width: 75px; } .header__session-error { max-width: 165px; } }
-@media (max-width: 360px) { .header__inner { width: calc(100% - 32px); } .header__brand img { width: 88px; } .header__auth-link { padding-inline: 7px; } }
+@media (max-width: 899px) {
+  .header__inner { display: grid; width: calc(100% - 40px); grid-template-columns: minmax(0, 1fr) auto; gap: 15px 14px; padding-block: 20px 17px; }
+  .header__mobile-brand { display: inline-flex; align-items: center; justify-self: start; gap: 10px; text-decoration: none; }
+  .header__mobile-brand img { display: block; width: 112px; height: auto; }
+  .header__mobile-account { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: var(--color-surface); color: var(--color-text); grid-column: 2; grid-row: 1; }
+  .header__mobile-account:hover { color: var(--color-accent); }
+  .header__search { grid-column: 1 / -1; grid-row: 2; max-width: none; }
+  .header__desktop-account { display: none; }
+  .account-session__actions { align-items: flex-start; }
+}
+@media (max-width: 360px) { .header__inner { width: calc(100% - 32px); } }

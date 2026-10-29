@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-19",
+  "environment": "Mutaciones exclusivamente en harness aislado; backendreal solo GET",
+  "tests": [
+    {
+      "test": "Carga personal 40→TMDB329865, metadata y nav activa",
+      "result": "OK"
+    },
+    {
+      "test": "Vista→Pendiente→Vista con clic/teclado; sin cambio optimista y disabled",
+      "result": "OK"
+    },
+    {
+      "test": "RatingDialog teclado 9→9.5; quitar envía null; estado vista independiente",
+      "result": "OK"
+    },
+    {
+      "test": "Favorita true→false→true, mantiene dato hasta confirmación",
+      "result": "OK"
+    },
+    {
+      "test": "PATCH estado falla500 sin alterar Vista; reintento confirma Pendiente",
+      "result": "OK"
+    },
+    {
+      "test": "Rating error500 mantiene diálogo; reintento guarda1 sin cambiar Pendiente",
+      "result": "OK"
+    },
+    {
+      "test": "Rating rango extremos1 y10",
+      "result": "OK"
+    },
+    {
+      "test": "Favorita falla500 conserva true; reintento confirma false",
+      "result": "OK"
+    },
+    {
+      "test": "Confirmación eliminar; Escape cancela sin DELETE",
+      "result": "OK"
+    },
+    {
+      "test": "DELETE500 conserva página y diálogo; reintento204 vuelve a colección con3películas",
+      "result": "OK"
+    },
+    {
+      "test": "TMDB500 conserva datos/control y permitePATCH; recuperar metadata con reintento",
+      "result": "OK"
+    },
+    {
+      "test": "GETindividual500→error con volver/reintento→recuperación",
+      "result": "OK"
+    },
+    {
+      "test": "IDinexistente404, sin metadata ni controles de gestión, volver disponible",
+      "result": "OK"
+    },
+    {
+      "test": "PATCHpendiente→volver inmediatamente: refetchlista traséxito muestraPendiente",
+      "result": "OK"
+    },
+    {
+      "test": "Lista→/coleccion/30 y Descubrir→/pelicula/693134 conservados",
+      "result": "OK"
+    },
+    {
+      "test": "Responsive390 y320 sin desborde; controles44px; RatingDialog entra y Escape restaura foco",
+      "result": "OK"
+    },
+    {
+      "test": "Skeleton GET8s; salir de40→30 antes de cargar: respuesta40 no reemplaza30",
+      "result": "OK"
+    },
+    {
+      "test": "Regresión lista: filtroVistas+búsquedaInterstellar mantienen tarjeta y link personal",
+      "result": "OK"
+    },
+    {
+      "test": "320px título largo,año nulo,pósterroto muestranfallback sinoverflow",
+      "result": "OK"
+    },
+    {
+      "test": "Backendreal GET12+TMDB264660, lista→detalle yrecarga; GETinexistente404",
+      "result": "OK; sinPOST/PATCH/DELETEreales"
+    },
+    {
+      "test": "ID no numérico abc muestra404 sin cargar película",
+      "result": "OK"
+    }
+  ],
+  "mutationLog": [
+    "#1 GET http://127.0.0.1:8000/coleccion/40\nCuerpo: —\nInicio: 149 ms · Duración: 257 ms\nRespuesta: 200",
+    "#2 GET http://127.0.0.1:8000/coleccion/40\nCuerpo: —\nInicio: 150 ms · Duración: 256 ms\nRespuesta: 200",
+    "#3 GET http://127.0.0.1:8000/catalogo/peliculas/329865\nCuerpo: —\nInicio: 410 ms · Duración: 251 ms\nRespuesta: 200",
+    "#4 PATCH http://127.0.0.1:8000/coleccion/40\nCuerpo: {\"estado\":\"pendiente\"}\nInicio: 7674 ms · Duración: 665 ms\nRespuesta: 200",
+    "#5 PATCH http://127.0.0.1:8000/coleccion/40\nCuerpo: {\"estado\":\"vista\"}\nInicio: 14602 ms · Duración: 660 ms\nRespuesta: 200",
+    "#6 PATCH http://127.0.0.1:8000/coleccion/40/puntuacion\nCuerpo: {\"puntuacion_personal\":9.5}\nInicio: 23607 ms · Duración: 658 ms\nRespuesta: 200",
+    "#7 PATCH http://127.0.0.1:8000/coleccion/40/puntuacion\nCuerpo: {\"puntuacion_personal\":null}\nInicio: 24590 ms · Duración: 659 ms\nRespuesta: 200",
+    "#8 PATCH http://127.0.0.1:8000/coleccion/40/favorita\nCuerpo: {\"favorita\":false}\nInicio: 25307 ms · Duración: 662 ms\nRespuesta: 200",
+    "#9 PATCH http://127.0.0.1:8000/coleccion/40/favorita\nCuerpo: {\"favorita\":true}\nInicio: 26027 ms · Duración: 660 ms\nRespuesta: 200",
+    "#10 PATCH http://127.0.0.1:8000/coleccion/40\nCuerpo: {\"estado\":\"pendiente\"}\nInicio: 49209 ms · Duración: 657 ms\nRespuesta: 500 · Fallo simulado del próximo cambio",
+    "#11 PATCH http://127.0.0.1:8000/coleccion/40\nCuerpo: {\"estado\":\"pendiente\"}\nInicio: 49943 ms · Duración: 659 ms\nRespuesta: 200",
+    "#12 PATCH http://127.0.0.1:8000/coleccion/40/puntuacion\nCuerpo: {\"puntuacion_personal\":1}\nInicio: 59629 ms · Duración: 665 ms\nRespuesta: 500 · Fallo simulado del próximo cambio",
+    "#13 PATCH http://127.0.0.1:8000/coleccion/40/puntuacion\nCuerpo: {\"puntuacion_personal\":1}\nInicio: 60374 ms · Duración: 651 ms\nRespuesta: 200",
+    "#14 PATCH http://127.0.0.1:8000/coleccion/40/puntuacion\nCuerpo: {\"puntuacion_personal\":10}\nInicio: 61387 ms · Duración: 657 ms\nRespuesta: 200",
+    "#15 PATCH http://127.0.0.1:8000/coleccion/40/favorita\nCuerpo: {\"favorita\":false}\nInicio: 71577 ms · Duración: 658 ms\nRespuesta: 500 · Fallo simulado del próximo cambio",
+    "#16 PATCH http://127.0.0.1:8000/coleccion/40/favorita\nCuerpo: {\"favorita\":false}\nInicio: 72310 ms · Duración: 654 ms\nRespuesta: 200",
+    "#17 DELETE http://127.0.0.1:8000/coleccion/40\nCuerpo: —\nInicio: 93678 ms · Duración: 661 ms\nRespuesta: 500 · Fallo simulado del próximo cambio",
+    "#18 DELETE http://127.0.0.1:8000/coleccion/40\nCuerpo: —\nInicio: 94410 ms · Duración: 664 ms\nRespuesta: 204",
+    "#19 GET http://127.0.0.1:8000/coleccion/\nCuerpo: —\nInicio: 95100 ms · Duración: 254 ms\nRespuesta: 200",
+    "#20 GET http://127.0.0.1:8000/coleccion/\nCuerpo: —\nInicio: 95101 ms · Duración: 253 ms\nRespuesta: 200"
+  ],
+  "fallbackLog": [
+    "#1 GET http://127.0.0.1:8000/coleccion/40\nCuerpo: —\nInicio: 120 ms · Duración: 263 ms\nRespuesta: 200",
+    "#2 GET http://127.0.0.1:8000/coleccion/40\nCuerpo: —\nInicio: 121 ms · Duración: 262 ms\nRespuesta: 200",
+    "#3 GET http://127.0.0.1:8000/catalogo/peliculas/329865\nCuerpo: —\nInicio: 389 ms · Duración: 257 ms\nRespuesta: 500 · Fallo simulado de metadatos TMDB; la colección personal sigue disponible",
+    "#4 PATCH http://127.0.0.1:8000/coleccion/40\nCuerpo: {\"estado\":\"pendiente\"}\nInicio: 795 ms · Duración: 659 ms\nRespuesta: 200",
+    "#5 GET http://127.0.0.1:8000/catalogo/peliculas/329865\nCuerpo: —\nInicio: 2326 ms · Duración: 261 ms\nRespuesta: 200"
+  ]
+}

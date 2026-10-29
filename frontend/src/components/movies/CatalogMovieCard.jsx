@@ -45,6 +45,7 @@ function CatalogMovieCard({
             <span className="catalog-card__open" aria-hidden="true">Ver película</span>
           </div>
         </Link>
+        {puntuacion && <span className="catalog-card__score" aria-label={`Puntuación TMDB: ${puntuacion} sobre 10`} title={`TMDB: ${puntuacion} / 10`}><Icon name="star" size={12} /><span>{puntuacion}</span></span>}
         <button
           className={`catalog-card__collection-action${accionVisible ? " is-visible" : ""}${guardada ? " is-saved" : ""}${ocupado ? " is-pending" : ""}${fallo ? " is-error" : ""}`}
           type="button"
@@ -62,7 +63,7 @@ function CatalogMovieCard({
         <h3><Link className="catalog-card__title-link" to={detalle}>{pelicula.titulo}</Link></h3>
         <div className="catalog-card__meta">
           <span>{pelicula.anio || "Sin año"}</span>
-          <span className="catalog-card__rating">{puntuacion ? `Catálogo ${puntuacion} / 10` : "Sin valoración"}</span>
+          <span className="catalog-card__rating">{puntuacion ? "TMDB / 10" : "Sin valoración"}</span>
         </div>
         {errorAccion && (
           <p className="catalog-card__error" id={errorId} role="alert">

@@ -1,83 +1,29 @@
-.discover-page {
-  padding-top: 46px;
-  padding-bottom: 42px;
-}
-
-.discover-page__header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 30px;
-}
-
+.discover-page { padding-top: 28px; }
+.discover-page__header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 26px; }
 .discover-page__header .eyebrow { margin-top: 0; }
-
-.discover-page__source {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 4px;
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
-}
-
-.discover-page__section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.discover-page__section-heading h2 {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  scroll-margin-top: 24px;
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-}
-
-.discover-page__section-heading > span {
-  flex-shrink: 0;
-  color: var(--color-text-secondary);
-  font-size: 0.73rem;
-  text-align: right;
-}
-
-.discover-page__collection-error { margin-block: 0 24px; }
-.discover-page__collection-error p { flex: 1 1 300px; margin: 0; font-size: .85rem; line-height: 1.7; }
-.discover-page__collection-error .button { flex-shrink: 0; }
-
-.discover-page__collection-cta {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 24px;
-  margin-top: 42px;
-  background: var(--color-surface);
-  border-radius: 9px;
-}
-
-.discover-page__collection-cta > svg { flex-shrink: 0; color: var(--color-accent); }
-.discover-page__collection-cta > div { flex: 1; }
-.discover-page__collection-cta h2 { margin: 0 0 5px; font-size: 1rem; font-weight: 500; }
-.discover-page__collection-cta p { margin: 0; color: var(--color-text-secondary); font-size: 0.78rem; line-height: 1.65; }
+.discover-page__header .page-description { overflow-wrap: anywhere; }
+.discover-page__header > .button { flex-shrink: 0; }
+.discover-page__catalog { min-width: 0; }
+.discover-page__section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 22px; }
+.discover-page__section-heading h2 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.035em; }
+.discover-page__section-heading p { margin: 7px 0 0; font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+.discover-page__section-heading > span { display: inline-flex; align-items: center; gap: 7px; color: var(--color-text-secondary); font-size: 12px; }
+.discover-page__section-heading > span svg { color: var(--color-accent); }
+.discover-page__collection-error { font-size: 14px; }
+.discover-page__collection-error p { flex: 1 1 350px; margin: 0; }
+.discover-page__collection-cta { display: flex; align-items: center; gap: 20px; padding: 24px 26px; margin-top: 40px; background: var(--color-surface); border-radius: 14px; }
+.discover-page__collection-cta > svg { color: var(--color-accent); }
+.discover-page__collection-cta > div { flex: 1; min-width: 0; }
+.discover-page__collection-cta h2 { margin: 0 0 7px; font-size: 16px; font-weight: 600; }
+.discover-page__collection-cta p { margin: 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.7; }
 .discover-page__collection-cta .button { flex-shrink: 0; }
-
-@media (max-width: 900px) {
-  .discover-page__header { display: block; }
-  .discover-page__source { margin-top: 18px; }
-}
-
-@media (max-width: 600px) {
-  .discover-page { padding-top: 32px; padding-bottom: 32px; }
-  .discover-page__header { margin-bottom: 24px; }
-  .discover-page__section-heading { flex-wrap: wrap; }
-  .discover-page__collection-cta { flex-wrap: wrap; gap: 14px; padding: 20px; margin-top: 32px; }
+@media (max-width: 650px) {
+  .discover-page { padding-top: 22px; }
+  .discover-page__header { align-items: flex-start; flex-wrap: wrap; margin-bottom: 22px; }
+  .discover-page__section-heading { margin-bottom: 18px; }
+  .discover-page__section-heading h2 { font-size: 20px; }
+  .discover-page__section-heading > span { font-size: 12px; }
+  .discover-page__collection-cta { flex-wrap: wrap; gap: 14px; padding: 22px; margin-top: 30px; }
   .discover-page__collection-cta > div { flex-basis: calc(100% - 44px); }
   .discover-page__collection-cta .button { width: 100%; }
 }

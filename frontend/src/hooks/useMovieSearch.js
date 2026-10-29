@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { buscarPeliculas } from "../services/catalogoApi";
+import { searchCatalog } from "../utils/catalogSearchCache";
 import { errorMessage } from "../utils/errorMessage";
 
-export default function useMovieSearch() {
-  const [query, setQueryState] = useState("");
+export default function useMovieSearch(initialQuery = "") {
+  const [query, setQueryState] = useState(initialQuery);
+  const [previousInitial, setPreviousInitial] = useState(initialQuery);
   const [revision, setRevision] = useState(0);
   const [response, setResponse] = useState(null);
   const generation = useRef(0);
+  const forceFresh = useRef(false);
+  if (initialQuery !== previousInitial) {
+    setPreviousInitial(initialQuery);
+    setQueryState(initialQuery);
+    setRevision((value) => value + 1);
+  }
   const eligible = query.trim().length >= 2;
   const current = response?.query === query && response?.revision === revision;
 
@@ -19,6 +26,7 @@ export default function useMovieSearch() {
   }
 
   function retry() {
+    forceFresh.current = true;
     generation.current += 1;
     setRevision((value) => value + 1);
   }
@@ -30,7 +38,9 @@ export default function useMovieSearch() {
 
     const timer = window.setTimeout(async () => {
       try {
-        const results = await buscarPeliculas(query.trim());
+        const fresh = forceFresh.current;
+        forceFresh.current = false;
+        const results = await searchCatalog(query.trim(), { fresh });
         if (!cancelled && generation.current === version) {
           setResponse({ query, revision, status: "success", results, error: null });
         }

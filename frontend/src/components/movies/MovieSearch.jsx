@@ -39,24 +39,35 @@ export default function MovieSearch({ query, onQueryChange, results, status, err
       const dropdown = dropdownRef.current;
       if (!anchor || !dropdown) return;
       const viewport = window.visualViewport;
-      const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
-      const space = Math.max(120, bottom - anchor.getBoundingClientRect().bottom - 20);
+      const viewportBottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+      const navigation = document.querySelector(".bottom-nav")?.getBoundingClientRect();
+      const bottom = navigation?.height > 0 ? Math.min(viewportBottom, navigation.top) : viewportBottom;
+      const space = Math.max(0, bottom - anchor.getBoundingClientRect().bottom - 20);
       dropdown.style.maxHeight = `${Math.min(540, space)}px`;
     }
     fitDropdown();
     window.addEventListener("resize", fitDropdown);
     window.addEventListener("scroll", fitDropdown);
     window.visualViewport?.addEventListener("resize", fitDropdown);
+    window.visualViewport?.addEventListener("scroll", fitDropdown);
     return () => {
       window.removeEventListener("resize", fitDropdown);
       window.removeEventListener("scroll", fitDropdown);
       window.visualViewport?.removeEventListener("resize", fitDropdown);
+      window.visualViewport?.removeEventListener("scroll", fitDropdown);
     };
   }, [open]);
 
   useEffect(() => {
     if (open && activeIndex >= 0) {
-      optionRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
+      const option = optionRefs.current[activeIndex];
+      const dropdown = dropdownRef.current;
+      if (!option || !dropdown || dropdown.clientHeight === 0) return;
+      const optionBounds = option.getBoundingClientRect();
+      const visibleTop = dropdown.getBoundingClientRect().top + dropdown.clientTop;
+      const visibleBottom = visibleTop + dropdown.clientHeight;
+      if (optionBounds.top < visibleTop) dropdown.scrollTop += optionBounds.top - visibleTop;
+      else if (optionBounds.bottom > visibleBottom) dropdown.scrollTop += optionBounds.bottom - visibleBottom;
     }
   }, [activeIndex, open]);
 
@@ -122,7 +133,8 @@ export default function MovieSearch({ query, onQueryChange, results, status, err
             aria-activedescendant={open && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined}
             aria-describedby={hintId}
             autoComplete="off"
-            placeholder="Buscá una película, encontrá tu próxima historia…"
+            maxLength={100}
+            placeholder="Buscar películas por título…"
             value={query}
             onChange={(event) => { onQueryChange(event.target.value); setExpanded(true); setActive(-1); }}
             onFocus={() => setExpanded(true)}

@@ -6,7 +6,7 @@ import {
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
-import Header from "./components/layout/Header";
+import AppLayout from "./components/layout/AppLayout";
 import Footer from "./components/layout/Footer";
 
 import DiscoverPage from "./pages/DiscoverPage";
@@ -17,6 +17,8 @@ import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import RequireAuth from "./auth/RequireAuth";
+import AccountPage from "./pages/AccountPage";
+import CommunityPage from "./pages/CommunityPage";
 
 function RouteScroll() {
   const { pathname } = useLocation();
@@ -29,9 +31,7 @@ function AppContent() {
   return (
     <BrowserRouter>
       <RouteScroll />
-      <div className="app-shell">
-
-        <Header />
+      <AppLayout>
 
         {/* El contenido ocupa todo el espacio disponible */}
         <div className="app-content" id="contenido" tabIndex={-1} key={sessionKey}>
@@ -57,12 +57,14 @@ function AppContent() {
             />
             <Route path="/login" element={<AuthPage mode="login" />} />
             <Route path="/registro" element={<AuthPage mode="register" />} />
+            <Route path="/cuenta" element={<AccountPage />} />
+            <Route path="/comunidad" element={<CommunityPage />} />
           </Routes>
         </div>
 
         <Footer />
 
-      </div>
+      </AppLayout>
     </BrowserRouter>
   );
 }
