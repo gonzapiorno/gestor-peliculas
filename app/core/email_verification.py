@@ -2,6 +2,8 @@ import hashlib
 import hmac
 import os
 import secrets
+import smtplib
+import logging
 
 from datetime import datetime, timedelta, timezone
 
@@ -16,6 +18,17 @@ from app.core.email_sender import enviar_codigo_verificacion
 from dotenv import load_dotenv
 
 load_dotenv()
+
+class VerificacionNoDisponibleError(ValueError):
+    pass
+
+
+class EsperaVerificacionError(ValueError):
+    pass
+
+
+class EnvioVerificacionError(RuntimeError):
+    pass
 
 
 def generar_codigo_verificacion() -> str:
@@ -62,44 +75,53 @@ def comprobar_codigo_verificacion(
 
 
 def emitir_codigo_verificacion(usuario_id: int) -> str:
-    ahora = datetime.now(timezone.utc)
-    codigo = generar_codigo_verificacion()
-
-    nuevo_codigo = insert(CodigoVerificacionEmail).values(
-        usuario_id=usuario_id,
-        codigo_hash=obtener_hash_codigo(usuario_id, codigo),
-        fecha_expiracion=ahora + timedelta(minutes=10),
-        intentos_fallidos=0,
-        fecha_creacion=ahora
-    )
-
-    consulta = nuevo_codigo.on_conflict_do_update(
-        index_elements=[CodigoVerificacionEmail.usuario_id],
-        set_={
-            "codigo_hash": nuevo_codigo.excluded.codigo_hash,
-            "fecha_expiracion": nuevo_codigo.excluded.fecha_expiracion,
-            "intentos_fallidos": 0,
-            "fecha_creacion": nuevo_codigo.excluded.fecha_creacion
-        },
-        where=(
-            CodigoVerificacionEmail.fecha_creacion
-            <= ahora - timedelta(seconds=60)
-        )
-    ).returning(CodigoVerificacionEmail.usuario_id)
 
     with Session(engine) as sesion:
-        usuario = sesion.get(Usuario, usuario_id)
+        usuario = sesion.scalar(
+            select(Usuario)
+            .where(Usuario.id == usuario_id)
+            .with_for_update()
+        )
 
         if usuario is None:
-            raise ValueError("Usuario inexistente")
+            raise VerificacionNoDisponibleError(
+                "No se puede emitir la verificación"
+            )
 
         if usuario.email_verificado:
-            raise ValueError("El correo ya está verificado")
+            raise VerificacionNoDisponibleError(
+                "No se puede emitir la verificación"
+            )
+
+        ahora = datetime.now(timezone.utc)
+        codigo = generar_codigo_verificacion()
+    
+        nuevo_codigo = insert(CodigoVerificacionEmail).values(
+            usuario_id=usuario_id,
+            codigo_hash=obtener_hash_codigo(usuario_id, codigo),
+            fecha_expiracion=ahora + timedelta(minutes=10),
+            intentos_fallidos=0,
+            fecha_creacion=ahora
+        )
+    
+        consulta = nuevo_codigo.on_conflict_do_update(
+            index_elements=[CodigoVerificacionEmail.usuario_id],
+            set_={
+                "codigo_hash": nuevo_codigo.excluded.codigo_hash,
+                "fecha_expiracion": nuevo_codigo.excluded.fecha_expiracion,
+                "intentos_fallidos": 0,
+                "fecha_creacion": nuevo_codigo.excluded.fecha_creacion
+            },
+            where=(
+                CodigoVerificacionEmail.fecha_creacion
+                <= ahora - timedelta(seconds=60)
+            )
+        ).returning(CodigoVerificacionEmail.usuario_id)
 
         resultado = sesion.scalar(consulta)
 
         if resultado is None:
-            raise ValueError(
+            raise EsperaVerificacionError(
                 "Debés esperar 60 segundos antes de solicitar otro código"
             )
 
@@ -121,9 +143,17 @@ def verificar_codigo_email(
     ):
         return False
 
-    ahora = datetime.now(timezone.utc)
 
     with Session(engine) as sesion:
+
+        usuario = sesion.scalar(
+            select(Usuario)
+            .where(Usuario.id == usuario_id)
+            .with_for_update()
+        )
+
+        if usuario is None or usuario.email_verificado:
+            return False
 
         # Bloqueamos el registro durante la comprobación
         registro = sesion.scalar(
@@ -133,6 +163,8 @@ def verificar_codigo_email(
             )
             .with_for_update()
         )
+
+        ahora = datetime.now(timezone.utc)
 
         if registro is None:
             return False
@@ -153,12 +185,6 @@ def verificar_codigo_email(
         ):
             registro.intentos_fallidos += 1
             sesion.commit()
-            return False
-
-        # Obtener el usuario
-        usuario = sesion.get(Usuario, usuario_id)
-
-        if usuario is None or usuario.email_verificado:
             return False
 
         # Activar su correo
@@ -183,14 +209,42 @@ def enviar_verificacion_usuario(usuario_id: int) -> None:
         usuario = sesion.get(Usuario, usuario_id)
 
         if usuario is None:
-            raise ValueError("Usuario inexistente")
+            raise VerificacionNoDisponibleError(
+                "No se puede emitir la verificación"
+            )
 
         email = usuario.email
 
     # Envía el código al correo registrado
-    enviar_codigo_verificacion(
-        destinatario=email,
-        codigo=codigo
-    )
+    try:
+        enviar_codigo_verificacion(
+            destinatario=email,
+            codigo=codigo
+        )
+    except (smtplib.SMTPException, OSError):
+        raise EnvioVerificacionError(
+            "No pudimos enviar el correo. Intentá nuevamente más tarde."
+        ) from None
+
+
+def procesar_reenvio_verificacion(email: str) -> None:
+    email = email.strip().lower()
+
+    with Session(engine) as sesion:
+        usuario_id = sesion.scalar(
+            select(Usuario.id).where(Usuario.email == email)
+        )
+
+    if usuario_id is None:
+        return
+
+    try:
+        enviar_verificacion_usuario(usuario_id)
+    except (VerificacionNoDisponibleError, EsperaVerificacionError):
+        return
+    except EnvioVerificacionError:
+        logging.getLogger(__name__).warning(
+            "No se pudo enviar un correo de verificación."
+        )
 
 

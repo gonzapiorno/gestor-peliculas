@@ -1,0 +1,62 @@
+.auth-experience {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: 20px 24px 14px;
+  background: radial-gradient(ellipse at 50% 5%, #d8e8a405, transparent 48%), var(--color-bg);
+}
+.auth-experience__topbar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  min-height: 44px;
+  margin-inline: auto;
+}
+.auth-experience__brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.auth-experience__brand img { display: block; width: 101px; height: auto; }
+.auth-experience__beta { padding: 4px 6px; border-radius: 5px; background: #293123; color: var(--color-accent); font-size: 10px; font-weight: 700; letter-spacing: .06em; }
+.auth-experience__explore { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding-block: 8px; color: var(--color-text-secondary); font-size: 14px; text-decoration: none; }
+.auth-experience__explore:hover { color: var(--color-accent); }
+.auth-experience__panel { flex: 0 0 auto; width: 100%; max-width: 480px; margin: 18px auto 20px; border: 1px solid #d8e8a420; border-radius: 16px; background: #171b17; }
+.auth-experience__form-panel { min-width: 0; padding: 25px 28px 23px; }
+.auth-experience__heading { margin-bottom: 18px; }
+.auth-experience__heading .eyebrow { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; font-size: 10px; letter-spacing: .12em; }
+.auth-experience__heading .eyebrow > span { width: 4px; height: 4px; border-radius: 50%; background: var(--color-accent); }
+.auth-experience__heading h1 { margin: 0; color: var(--color-text); font-size: 30px; font-weight: 700; line-height: 1.2; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.auth-experience__heading h1:focus { outline: none; }
+.auth-experience__description { margin: 10px 0 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.5; }
+.auth-experience__tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 18px; padding: 4px; border-radius: 10px; background: #101410; }
+.auth-experience__tabs a { display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px; border: 1px solid transparent; border-radius: 7px; color: var(--color-text-secondary); font-size: 14px; font-weight: 600; text-decoration: none; text-align: center; }
+.auth-experience__tabs a[aria-current="page"] { border-color: #d8e8a431; background: #2a3325; color: var(--color-accent); }
+.auth-experience__tabs a:hover { color: var(--color-text); }
+.auth-experience__steps { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; }
+.auth-experience__steps li { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); font-size: 14px; }
+.auth-experience__steps li[aria-current="step"] { color: var(--color-accent); }
+.auth-experience__step-number { display: inline-flex; align-items: center; justify-content: center; width: 23px; height: 23px; border-radius: 50%; background: #293123; font-size: 11px; }
+@media (min-width: 900px) {
+  .auth-experience { padding-block: 12px; }
+  .auth-experience__panel { margin-block: 12px 0; }
+}
+@media (min-width: 900px) and (max-height: 899px) {
+  .auth-experience { padding-block: 8px 6px; }
+  .auth-experience__panel { margin-top: 8px; }
+  .auth-experience__form-panel { padding-block: 8px; }
+  .auth-experience__heading { margin-bottom: 12px; }
+  .auth-experience__description { margin-top: 4px; }
+  .auth-experience__tabs { margin-bottom: 10px; padding: 2px; }
+}
+@media (max-width: 520px) {
+  .auth-experience { padding: 12px 20px 14px; }
+  .auth-experience__topbar { gap: 8px; }
+  .auth-experience__brand img { width: 88px; }
+  .auth-experience__brand { gap: 6px; }
+  .auth-experience__beta { font-size: 9px; }
+  .auth-experience__panel { margin-top: 16px; margin-bottom: 20px; border: 0; border-radius: 0; background: transparent; }
+  .auth-experience__form-panel { padding: 10px 0 0; }
+  .auth-experience__heading h1 { font-size: 28px; }
+  .auth-experience__description { margin-top: 9px; }
+}

@@ -6,13 +6,17 @@ from app.db.session import engine
 from app.db.models import PeliculaColeccion, Usuario
 from app.schemas.coleccion import ColeccionAgregar, ColeccionActualizarEstado, ColeccionActualizarFavorita, ColeccionActualizarPuntuacion
 from app.services.tmdb import obtener_detalle_pelicula
-from app.core.auth import obtener_usuario_actual
+from app.core.auth import (
+    obtener_usuario_actual,
+    exigir_email_verificado,
+)
 from app.core.csrf import verificar_origen, exigir_csrf
 
 
 router = APIRouter(
     prefix="/coleccion",
-    tags=["Colección"]
+    tags=["Colección"],
+    dependencies=[Depends(exigir_email_verificado)]
 )
 
 

@@ -21,3 +21,19 @@ export function registrarUsuario(nombre_usuario, email, password) {
 export function cerrarSesion() {
   return apiRequest("/usuarios/logout", { method: "POST", requiresAuth: true, message: "No se pudo cerrar la sesión" });
 }
+
+export function verificarEmail(email, codigo) {
+  return apiRequest("/usuarios/verificar-email", {
+    method: "POST", body: { email, codigo }, message: "No se pudo verificar tu correo",
+  }).catch((error) => {
+    // El backend responde lo mismo ante código erróneo, vencido o agotado.
+    if (error.status === 400) error.message = "El código es inválido, venció o se agotaron los intentos. Revisalo o solicitá otro";
+    throw error;
+  });
+}
+
+export function reenviarVerificacion(email) {
+  return apiRequest("/usuarios/reenviar-verificacion", {
+    method: "POST", body: { email }, message: "No se pudo solicitar otro código",
+  });
+}

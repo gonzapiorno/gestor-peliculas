@@ -109,12 +109,14 @@ if (persistirColeccion) {
 
 // Cuentas y sesión totalmente sintéticas. No se escriben cookies ni storage de auth.
 const usuariosQa = [
-  { id: 1, nombre_usuario: "cine_qa", email: "cine@muvis.test", fecha_creacion: "2026-10-22T12:00:00Z" },
-  { id: 2, nombre_usuario: "otra_mirada", email: "otra@muvis.test", fecha_creacion: "2026-10-22T12:00:00Z" },
+  { id: 1, nombre_usuario: "cine_qa", email: "cine@muvis.test", email_verificado: true, fecha_creacion: "2026-10-22T12:00:00Z" },
+  { id: 2, nombre_usuario: "otra_mirada", email: "otra@muvis.test", email_verificado: true, fecha_creacion: "2026-10-22T12:00:00Z" },
+  { id: 3, nombre_usuario: "pendiente_qa", email: "pendiente@muvis.test", email_verificado: false, fecha_creacion: "2026-10-22T12:00:00Z" },
 ];
 const coleccionesQa = new Map([
   [1, coleccion],
   [2, [registroColeccion(693134, 70, "pendiente", false, null)]],
+  [3, []],
 ]);
 function siguienteIdColeccionQa() {
   return Math.max(40, ...Array.from(coleccionesQa.values()).flatMap((registros) => registros.map((item) => item.id))) + 1;
@@ -126,10 +128,20 @@ async function resumirClaveQa(valor) {
 // Se conserva sólo un resumen en memoria para poder probar contraseñas incorrectas.
 // Es un mecanismo de fixtures, no una implementación de autenticación para producción.
 const resumenInicial = await resumirClaveQa("MuvisQA-prueba2026");
-const clavesQa = new Map([[1, resumenInicial], [2, resumenInicial]]);
-let usuarioSesionQa = ["auth-anonymous", "auth-login"].includes(scenario)
+const clavesQa = new Map([[1, resumenInicial], [2, resumenInicial], [3, resumenInicial]]);
+// Códigos exclusivos de QA, nunca obtenidos del backend ni mostrados en el panel.
+const codigosQa = new Map([[3, {
+  codigo: "042731", fechaCreacion: Date.now() - 61000,
+  fechaExpiracion: Date.now() + 10 * 60 * 1000, intentos: 0, emisiones: 1,
+}]]);
+const solicitudesReenvioQa = new Map();
+let solicitudesIpReenvioQa = [];
+let solicitudesIpVerificacionQa = [];
+let desconectarProximaVerificacion = scenario === "auth-verification-network";
+let limitarProximaVerificacion = scenario === "auth-verification-rate";
+let usuarioSesionQa = ["auth-anonymous", "auth-login", "auth-pending"].includes(scenario) || scenario.startsWith("auth-verification")
   ? null
-  : usuariosQa[scenario === "auth-session-alt" ? 1 : 0];
+  : usuariosQa[scenario === "auth-pending-session" ? 2 : scenario === "auth-session-alt" ? 1 : 0];
 let revisionSesionQa = 1;
 let csrfQa = null;
 let fallarSesion = scenario === "auth-error";
@@ -158,8 +170,9 @@ function rutaInicial() {
   if (page === "detail") return "/pelicula/693134";
   if (page && /^\/pelicula\/\d+$/.test(page)) return page;
   if (page && /^\/coleccion\/\d+$/.test(page)) return page;
-  if (["/", "/coleccion", "/login", "/registro", "/comunidad", "/cuenta"].includes(page)) return page;
-  if (scenario === "auth-login") return "/login";
+  if (["/", "/coleccion", "/login", "/registro", "/verificar-email", "/comunidad", "/cuenta"].includes(page)) return page;
+  if (["auth-login", "auth-pending"].includes(scenario)) return "/login";
+  if (scenario.startsWith("auth-verification")) return "/verificar-email";
   if (scenario.startsWith("quick-add")) return "/";
   if (scenario === "personal-not-found") return "/coleccion/99999";
   if (scenario.startsWith("personal-")) return "/coleccion/40";
@@ -231,6 +244,14 @@ function crearPanel() {
     ["Cambiar cuenta de fixture", () => reiniciar(usuarioSesionQa?.id === 2 ? "auth-session" : "auth-session-alt")],
     ["Probar sesión anónima", () => reiniciar("auth-anonymous", "/coleccion")],
     ["Probar formulario login", () => reiniciar("auth-login", "/login")],
+    ["Probar cuenta sin verificar", () => reiniciar("auth-pending", "/login")],
+    ["Probar sesión sin verificar", () => reiniciar("auth-pending-session", "/coleccion")],
+    ["Abrir verificación simulada", () => reiniciar("auth-verification", "/verificar-email")],
+    ["Desconectar próxima verificación", () => { desconectarProximaVerificacion = true; feedback.textContent = "La próxima solicitud de verificación o reenvío tendrá un fallo de red simulado."; }],
+    ["Limitar próxima verificación", () => { limitarProximaVerificacion = true; feedback.textContent = "La próxima solicitud de verificación o reenvío devolverá 429 y Retry-After: 60."; }],
+    ["Vencer códigos simulados", () => { codigosQa.forEach((codigo) => { codigo.fechaExpiracion = Date.now() - 1; }); feedback.textContent = "Los códigos de QA están vencidos; no se modificó ningún dato real."; }],
+    ["Agotar intentos simulados", () => { codigosQa.forEach((codigo) => { codigo.intentos = 5; }); feedback.textContent = "Los códigos de QA agotaron sus cinco intentos."; }],
+    ["Habilitar reenvío simulado", () => { codigosQa.forEach((codigo) => { codigo.fechaCreacion = Date.now() - 61000; }); solicitudesReenvioQa.clear(); solicitudesIpReenvioQa = []; feedback.textContent = "La espera y los contadores de reenvío de QA se reiniciaron. El código actual no cambió."; }],
     ["Restablecer conexión", () => { fallarColeccion = false; fallarDetalleColeccion = false; fallarMetadatos = false; fallarSesion = false; feedback.textContent = "Conexión simulada restablecida para sesión, colección y metadatos TMDB. Usa Reintentar en la aplicación para volver a cargar."; }],
     ["Recargar harness", () => reiniciar(scenario)],
     ["Restablecer datos", restablecerDatos],
@@ -307,6 +328,7 @@ window.fetch = async function fetchSimulado(input, init) {
   const desconexionProgramada = request.method === "POST" && url.pathname === "/coleccion/" && desconectarProximoAgregado;
   if (desconexionProgramada) desconectarProximoAgregado = false;
   const esBusqueda = request.method === "GET" && url.pathname === "/catalogo/buscar";
+  const esVerificacion = request.method === "POST" && ["/usuarios/verificar-email", "/usuarios/reenviar-verificacion"].includes(url.pathname);
   const tituloBusqueda = esBusqueda ? url.searchParams.get("titulo") : null;
   const consultaBusqueda = normalizarBusqueda(tituloBusqueda || "");
   let demora = request.method === "GET" ? (scenario === "loading" && !esAuth ? 8000 : 250) : 650;
@@ -317,7 +339,7 @@ window.fetch = async function fetchSimulado(input, init) {
   if (esBusqueda && consultaBusqueda === "rapida") demora = 150;
   await sleep(demora);
 
-  function responder(datos, status = 200, detail = "") {
+  function responder(datos, status = 200, detail = "", headers = {}) {
     entrada.status = status;
     entrada.duracion = Math.round(performance.now()) - entrada.inicio;
     entrada.detail = detail || (esBusqueda && Array.isArray(datos)
@@ -326,10 +348,11 @@ window.fetch = async function fetchSimulado(input, init) {
     actualizarRegistro();
     return new Response(status === 204 ? null : JSON.stringify(datos), {
       status,
-      headers: status === 204 ? undefined : { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      headers: status === 204 ? undefined : { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers },
     });
   }
-  const error = (status, detail) => responder({ detail }, status, detail);
+  const error = (status, detail, headers) => responder({ detail }, status,
+    typeof detail === "string" ? detail : detail?.codigo || "Solicitud rechazada", headers);
   if (request.credentials !== "include") return error(400, "El cliente debe enviar credentials: include");
   const requiereSesion = url.pathname.startsWith("/coleccion/")
     || ["/usuarios/me", "/usuarios/csrf", "/usuarios/logout"].includes(url.pathname);
@@ -339,6 +362,9 @@ window.fetch = async function fetchSimulado(input, init) {
     return error(401, "La sesión ha expirado");
   }
   if (requiereSesion && (!usuarioSolicitud || revisionSolicitud !== revisionSesionQa)) return error(401, "No hay una sesión iniciada");
+  if (url.pathname.startsWith("/coleccion/") && usuarioSolicitud?.email_verificado === false) {
+    return error(403, { codigo: "EMAIL_NO_VERIFICADO", mensaje: "Verificá tu correo electrónico para continuar." });
+  }
   if (mutacion && (url.pathname.startsWith("/coleccion/") || url.pathname === "/usuarios/logout")) {
     if (rechazarProximoCsrf) {
       rechazarProximoCsrf = false;
@@ -353,6 +379,17 @@ window.fetch = async function fetchSimulado(input, init) {
     throw new TypeError("Conexión interrumpida de prueba");
   }
   if (falloProgramado) return error(500, "Fallo simulado del próximo cambio");
+  if (esVerificacion && desconectarProximaVerificacion) {
+    desconectarProximaVerificacion = false;
+    entrada.status = "Sin conexión";
+    entrada.duracion = Math.round(performance.now()) - entrada.inicio;
+    actualizarRegistro();
+    throw new TypeError("Conexión interrumpida de prueba");
+  }
+  if (esVerificacion && limitarProximaVerificacion) {
+    limitarProximaVerificacion = false;
+    return error(429, "Demasiadas solicitudes. Probá nuevamente más tarde.", { "Retry-After": "60" });
+  }
   if (cuerpoInvalido) return error(422, "El cuerpo debe contener JSON válido");
   if (["POST", "PATCH"].includes(request.method) && !request.headers.get("Content-Type")?.includes("application/json")) {
     if (url.pathname !== "/usuarios/logout") return error(422, "Falta Content-Type: application/json");
@@ -370,16 +407,20 @@ window.fetch = async function fetchSimulado(input, init) {
     if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).length !== campos.length || !campos.every((campo) => Object.hasOwn(body, campo))) return error(422, "El registro espera nombre_usuario, email y password");
     if (typeof body.nombre_usuario !== "string" || !/^[a-zA-Z0-9_]{3,30}$/.test(body.nombre_usuario)
       || typeof body.email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)
-      || typeof body.password !== "string" || body.password.length < 12 || body.password.length > 128) return error(422, "Datos de registro fuera del contrato");
+      || typeof body.password !== "string" || Array.from(body.password).length < 12 || Array.from(body.password).length > 128) return error(422, "Datos de registro fuera del contrato");
     const nombreUsuario = body.nombre_usuario.toLocaleLowerCase("es");
     const email = body.email.toLocaleLowerCase("es");
     if (usuariosQa.some((usuario) => usuario.nombre_usuario === nombreUsuario || usuario.email === email)) return error(409, "El nombre de usuario o correo ya está registrado");
-    const usuario = { id: Math.max(...usuariosQa.map((item) => item.id)) + 1, nombre_usuario: nombreUsuario, email, fecha_creacion: "2026-10-22T12:00:00Z" };
+    const usuario = { id: Math.max(...usuariosQa.map((item) => item.id)) + 1, nombre_usuario: nombreUsuario, email, email_verificado: false, fecha_creacion: "2026-10-22T12:00:00Z" };
     const resumen = await resumirClaveQa(body.password);
     body = null;
     usuariosQa.push(usuario);
     clavesQa.set(usuario.id, resumen);
     coleccionesQa.set(usuario.id, []);
+    codigosQa.set(usuario.id, {
+      codigo: "042731", fechaCreacion: Date.now(),
+      fechaExpiracion: Date.now() + 10 * 60 * 1000, intentos: 0, emisiones: 1,
+    });
     return responder({ ...usuario }, 201);
   }
   if (request.method === "POST" && url.pathname === "/usuarios/login") {
@@ -389,6 +430,7 @@ window.fetch = async function fetchSimulado(input, init) {
     const resumen = await resumirClaveQa(body.password);
     body = null;
     if (!usuario || clavesQa.get(usuario.id) !== resumen) return error(401, "Correo electrónico o contraseña incorrectos");
+    if (!usuario.email_verificado) return error(403, { codigo: "EMAIL_NO_VERIFICADO", mensaje: "Verificá tu correo electrónico para continuar." });
     cambiarSesionQa(usuario);
     return responder({ mensaje: "Inicio de sesión correcto" });
   }
@@ -396,6 +438,51 @@ window.fetch = async function fetchSimulado(input, init) {
     if (body != null) return error(422, "Logout no debe enviar un cuerpo");
     cambiarSesionQa(null);
     return responder(null, 204);
+  }
+
+  if (request.method === "POST" && url.pathname === "/usuarios/verificar-email") {
+    if (!body || typeof body !== "object" || Array.isArray(body)
+      || typeof body.email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)
+      || typeof body.codigo !== "string" || !/^[0-9]{6}$/.test(body.codigo)) return error(422, "La verificación requiere email y seis dígitos ASCII");
+    const ahora = Date.now();
+    solicitudesIpVerificacionQa = solicitudesIpVerificacionQa.filter((fecha) => fecha > ahora - 60000);
+    if (solicitudesIpVerificacionQa.length >= 10) return error(429, "Demasiadas solicitudes", { "Retry-After": "60" });
+    solicitudesIpVerificacionQa.push(ahora);
+    const usuario = usuariosQa.find((item) => item.email === body.email.trim().toLocaleLowerCase("es"));
+    const registro = codigosQa.get(usuario?.id);
+    const codigo = body.codigo;
+    body = null;
+    if (!usuario || usuario.email_verificado || !registro || registro.fechaExpiracion <= ahora || registro.intentos >= 5) return error(400, "Código inválido o vencido");
+    if (codigo !== registro.codigo) {
+      registro.intentos += 1;
+      return error(400, "Código inválido o vencido");
+    }
+    usuario.email_verificado = true;
+    codigosQa.delete(usuario.id);
+    return responder({ mensaje: "Correo verificado correctamente" });
+  }
+  if (request.method === "POST" && url.pathname === "/usuarios/reenviar-verificacion") {
+    if (!tieneUnicoCampo(body, "email") || typeof body.email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) return error(422, "El reenvío requiere únicamente email");
+    const ahora = Date.now();
+    const email = body.email.trim().toLocaleLowerCase("es");
+    body = null;
+    solicitudesIpReenvioQa = solicitudesIpReenvioQa.filter((fecha) => fecha > ahora - 3600000);
+    if (solicitudesIpReenvioQa.length >= 10 || solicitudesIpReenvioQa.filter((fecha) => fecha > ahora - 60000).length >= 3) return error(429, "Demasiadas solicitudes", { "Retry-After": "60" });
+    solicitudesIpReenvioQa.push(ahora);
+    const solicitudesEmail = (solicitudesReenvioQa.get(email) || []).filter((fecha) => fecha > ahora - 3600000);
+    if (solicitudesEmail.length >= 5) return error(429, "Demasiadas solicitudes", { "Retry-After": "3600" });
+    solicitudesEmail.push(ahora);
+    solicitudesReenvioQa.set(email, solicitudesEmail);
+    const usuario = usuariosQa.find((item) => item.email === email);
+    const anterior = codigosQa.get(usuario?.id);
+    if (usuario && !usuario.email_verificado && (!anterior || anterior.fechaCreacion <= ahora - 60000)) {
+      const emisiones = (anterior?.emisiones || 0) + 1;
+      codigosQa.set(usuario.id, {
+        codigo: emisiones % 2 === 0 ? "581204" : "042731",
+        fechaCreacion: ahora, fechaExpiracion: ahora + 10 * 60 * 1000, intentos: 0, emisiones,
+      });
+    }
+    return responder({ mensaje: "Si corresponde, se intentará enviar un código de verificación. Revisá tu correo y esperá al menos 60 segundos antes de volver a solicitarlo." }, 202);
   }
 
   if (esBusqueda) {
@@ -465,7 +552,11 @@ window.fetch = async function fetchSimulado(input, init) {
   return error(404, "Ruta o método fuera del contrato simulado. No se contactó el backend.");
 };
 
-window.history.replaceState(null, "", `${rutaInicial()}?qa=1`);
+const paginaInicial = rutaInicial();
+const estadoInicial = paginaInicial === "/verificar-email" || scenario === "auth-pending"
+  ? { usr: { email: "pendiente@muvis.test", from: "/coleccion" } }
+  : null;
+window.history.replaceState(estadoInicial, "", `${paginaInicial}?qa=1`);
 // Un reload de Vite debe volver a la entrada aislada, nunca a la API real.
 if (import.meta.hot) {
   import.meta.hot.on("vite:beforeFullReload", () => {

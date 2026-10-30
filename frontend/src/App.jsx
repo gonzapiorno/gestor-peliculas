@@ -4,7 +4,7 @@ import {
   Routes
 } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 
 import AppLayout from "./components/layout/AppLayout";
 import Footer from "./components/layout/Footer";
@@ -14,6 +14,7 @@ import CollectionPage from "./pages/CollectionPage";
 import MovieDetailPage from "./pages/MovieDetailPage";
 import CollectionMovieDetailPage from "./pages/CollectionMovieDetailPage";
 import AuthPage from "./pages/AuthPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import RequireAuth from "./auth/RequireAuth";
@@ -22,7 +23,9 @@ import CommunityPage from "./pages/CommunityPage";
 
 function RouteScroll() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  const authRoute = /^\/(login|registro|verificar-email)\/?$/.test(pathname);
+  useLayoutEffect(() => { if (authRoute) window.scrollTo({ top: 0, left: 0, behavior: "instant" }); }, [pathname, authRoute]);
+  useEffect(() => { if (!authRoute) window.scrollTo(0, 0); }, [pathname, authRoute]);
   return null;
 }
 
@@ -57,6 +60,7 @@ function AppContent() {
             />
             <Route path="/login" element={<AuthPage mode="login" />} />
             <Route path="/registro" element={<AuthPage mode="register" />} />
+            <Route path="/verificar-email" element={<VerifyEmailPage />} />
             <Route path="/cuenta" element={<AccountPage />} />
             <Route path="/comunidad" element={<CommunityPage />} />
           </Routes>

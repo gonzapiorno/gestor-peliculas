@@ -14,7 +14,8 @@ function notificar(cambio) {
 }
 
 export default function useCatalogCollection() {
-  const { status, sessionKey } = useAuth();
+  const { status, user, sessionKey } = useAuth();
+  const verified = user?.email_verificado === true;
   const navigate = useNavigate();
   const pendientes = useCallback(() => new Set([...altasEnCurso].filter(([, scope]) => scope === sessionKey).map(([id]) => id)), [sessionKey]);
   const [guardadas, setGuardadas] = useState(new Set());
@@ -53,7 +54,7 @@ export default function useCatalogCollection() {
   }, [sessionKey, pendientes]);
 
   useEffect(() => {
-    if (status !== "authenticated") {
+    if (status !== "authenticated" || !verified) {
       consultaRef.current = null;
       estadoRef.current = status === "loading" ? "loading" : "anonymous";
       setEstadoColeccion(estadoRef.current);
@@ -80,7 +81,7 @@ export default function useCatalogCollection() {
       setErrorColeccion(errorMessage(error));
     });
     return () => { vigente = false; };
-  }, [intento, status, sessionKey, pendientes]);
+  }, [intento, status, sessionKey, pendientes, verified]);
 
   useEffect(() => {
     function refrescarColeccion(event) {
@@ -105,6 +106,10 @@ export default function useCatalogCollection() {
   }
 
   async function agregar(pelicula) {
+    if (status === "authenticated" && !verified) {
+      navigate("/verificar-email", { state: { email: user.email, from: "/" } });
+      return;
+    }
     if (status !== "authenticated") {
       navigate("/login", { state: { from: "/" } });
       return;

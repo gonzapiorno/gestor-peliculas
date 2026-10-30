@@ -66,9 +66,33 @@ Las cuentas, sesiones y protección CSRF de esta sección son fixtures en memori
 
 Se puede añadir `&page=/login`, `&page=/registro`, `&page=/coleccion/40` o las otras rutas previamente admitidas. Las cuentas iniciales son **cine@muvis.test** y **otra@muvis.test**; la clave sintética de ambas es **MuvisQA-prueba2026**. Son valores exclusivos de prueba, no credenciales de personas ni del backend. Cualquier otra clave devuelve 401. Cada cuenta tiene su propia colección; por ejemplo, `/coleccion/40` devuelve 404 para la segunda cuenta.
 
-El registro exige exactamente `nombre_usuario`, `email` y `password`, usuario ASCII de 3–30 caracteres y clave de 12–128. Responde 201 con los campos públicos, **sin iniciar sesión automáticamente**. Los duplicados devuelven 409. Se puede iniciar sesión después con esa nueva cuenta y clave dentro de la misma ejecución del harness; su colección empieza vacía. Para comparar claves se conserva solo un resumen SHA-256 de fixture en memoria, nunca la contraseña en claro. Esto sirve para la simulación; no representa ni recomienda el almacenamiento de contraseñas de producción.
+El registro exige exactamente `nombre_usuario`, `email` y `password`, usuario ASCII de 3–30 caracteres y clave de 12–128. Responde 201 con los campos públicos, **sin iniciar sesión automáticamente**. Los duplicados devuelven 409. Después de verificar su correo, se puede iniciar sesión con esa nueva cuenta y clave dentro de la misma ejecución del harness; su colección empieza vacía. Para comparar claves se conserva solo un resumen SHA-256 de fixture en memoria, nunca la contraseña en claro. Esto sirve para la simulación; no representa ni recomienda el almacenamiento de contraseñas de producción.
 
 El cliente debe enviar `credentials: "include"` en todas las peticiones de API; de lo contrario el harness devuelve 400. `GET /usuarios/me` responde usuario o 401; `GET /usuarios/csrf` entrega un string sintético asociado a la revisión de la sesión. Las mutaciones de colección y `POST /usuarios/logout` exigen sesión y `X-CSRF-Token` válido; faltante/inválido devuelve 403. Logout responde 204 y elimina la sesión simulada. No se simulan atributos de cookie, CORS del navegador ni la firma HMAC real del backend.
+
+## Verificación de correo aislada
+
+Las cuentas iniciales `cine@muvis.test` y `otra@muvis.test` están verificadas. La cuenta adicional **pendiente@muvis.test**, nombre `pendiente_qa`, usa la misma contraseña sintética de QA y comienza sin verificar. Ninguno de estos registros existe por efecto del harness en PostgreSQL.
+
+| Escenario | Inicio y comportamiento |
+| --- | --- |
+| `auth-pending` | Sesión anónima, login con el correo pendiente precargado. Con credenciales correctas responde `403` y `detail.codigo = EMAIL_NO_VERIFICADO`. |
+| `auth-pending-session` | Sesión anterior sin verificar; `/usuarios/me`, CSRF y logout disponibles, colección bloqueada con `403 EMAIL_NO_VERIFICADO`. |
+| `auth-verification` | Abre `/verificar-email` con el correo pendiente en el estado de navegación; sesión anónima. |
+| `auth-verification-network` | Igual, pero la primera solicitud de verificación o reenvío simula un fallo de red. |
+| `auth-verification-rate` | Igual, pero la primera solicitud de verificación o reenvío devuelve `429` y `Retry-After: 60`. |
+
+También se admite `&page=/verificar-email`. La navegación inicial de React recibe el correo del fixture a través de su estado, no de parámetros con credenciales. Recargar desde el panel vuelve a la entrada aislada. No recargar manualmente una ruta de producto si se pretende mantener la simulación.
+
+**Código sintético inicial de QA: `042731`.** Conserva el cero inicial para comprobar escritura, pegado y autocompletado de seis dígitos. No es un código real ni se muestra en la interfaz o en los registros. El primer reenvío que efectivamente emite otro código cambia el fixture a **`581204`**; emisiones posteriores alternan ambos valores. Esta secuencia determinista sirve para comprobar el rechazo del código anterior. No representa la generación aleatoria del servidor.
+
+El registro ahora devuelve `email_verificado: false`, crea un código inicial en memoria y nunca inicia sesión. Para completar el flujo: registrar una dirección sintética distinta, ingresar el código inicial, verificar, volver al login e ingresar con esa cuenta. Su colección comienza vacía.
+
+`POST /usuarios/verificar-email` exige email y código de seis dígitos ASCII, preserva ceros iniciales, rechaza registros vencidos o agotados con el mensaje genérico `Código inválido o vencido`, cuenta cinco intentos incorrectos y consume el código al acertar. No crea sesión. El simulador aplica diez solicitudes de verificación por minuto.
+
+`POST /usuarios/reenviar-verificacion` admite únicamente email y responde `202` genérico para direcciones inexistentes, verificadas, en espera o que admiten un envío. Cambia el código únicamente cuando pasan 60 segundos desde la última emisión; reinicia sus cinco intentos y diez minutos de vigencia. Los límites de solicitudes simulados son tres por minuto y diez por hora para la IP de la pestaña, y cinco por hora por dirección (incluidas las inexistentes). Los errores `429` incluyen un `Retry-After` sintético. Esto no prueba contadores compartidos, concurrencia, SMTP ni recepción real.
+
+Controles adicionales del panel: **Desconectar próxima verificación**, **Limitar próxima verificación**, **Vencer códigos simulados**, **Agotar intentos simulados** y **Habilitar reenvío simulado**. El último modifica únicamente las fechas y contadores de QA para no esperar un minuto entre pruebas; no cambia el código actual ni demuestra que la aplicación real pueda eludir las restricciones del backend. Los cuerpos de todas las solicitudes `/usuarios/*` siguen omitidos en el panel.
 
 Los cuerpos enviados a `/usuarios/*` se guardan en el panel como **`[omitido]`**; tampoco se registran query strings de esas rutas, headers ni respuestas con el token. El contador **GET CSRF** muestra cuántas consultas se hicieron, sin valores de seguridad. El código del harness no imprime credenciales ni tokens en consola.
 

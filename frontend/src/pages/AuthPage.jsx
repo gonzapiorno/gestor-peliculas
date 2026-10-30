@@ -1,182 +1,117 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../auth/useAuth";
+import AuthLayout from "../components/auth/AuthLayout";
+import PasswordField from "../components/auth/PasswordField";
+import GoogleAccess from "../components/auth/GoogleAccess";
+import FieldFeedback from "../components/auth/FieldFeedback";
+import { focusAuthField } from "../utils/authFocus";
 import Icon from "../components/ui/Icon";
+import { safeAuthDestination, validateAuthFields, verificationCooldown } from "../utils/authFlow";
 import { errorMessage } from "../utils/errorMessage";
 import "./AuthPage.css";
 
-function destinoSeguro(from) {
-  const ruta = typeof from === "string" ? from : from && typeof from.pathname === "string"
-    ? `${from.pathname}${typeof from.search === "string" ? from.search : ""}${typeof from.hash === "string" ? from.hash : ""}`
-    : "";
-  if (!ruta.startsWith("/") || ruta.startsWith("//") || ruta.includes("\\") || [...ruta].some((char) => char.charCodeAt(0) < 32)) return "/coleccion";
-
-  try {
-    const destino = new URL(ruta, window.location.origin);
-    const pathname = decodeURIComponent(destino.pathname).replace(/\/+$/, "").toLowerCase();
-    if (destino.origin !== window.location.origin || pathname.startsWith("//") || ["/login", "/registro"].includes(pathname)) return "/coleccion";
-    return `${destino.pathname}${destino.search}${destino.hash}`;
-  } catch {
-    return "/coleccion";
-  }
-}
-
 function AuthForm({ mode }) {
-  const registro = mode === "register";
+  const register = mode === "register";
   const auth = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const activoRef = useRef(false);
-  const operacionRef = useRef(null);
-  const [campos, setCampos] = useState({
-    nombre_usuario: "",
-    email: typeof location.state?.email === "string" ? location.state.email : "",
-    password: "",
-  });
-  const [errores, setErrores] = useState({});
-  const [errorEnvio, setErrorEnvio] = useState("");
-  const [pendiente, setPendiente] = useState(null);
-  const destino = destinoSeguro(location.state?.from);
-  const ocupado = pendiente !== null || auth.status === "loading";
+  const mounted = useRef(false);
+  const pending = useRef(false);
+  const [fields, setFields] = useState({ nombre_usuario: "", email: typeof location.state?.email === "string" ? location.state.email : "", password: "", confirmacion: "" });
+  const [errors, setErrors] = useState({});
+  const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const destination = safeAuthDestination(location.state?.from);
+  const disabled = busy || auth.status === "loading";
+  const navigationState = { from: destination, email: fields.email.trim() };
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
-  useEffect(() => {
-    activoRef.current = true;
-    return () => { activoRef.current = false; };
-  }, []);
-
-  function cambiarCampo(event) {
+  function change(event) {
     const { name, value } = event.target;
-    setCampos((anteriores) => ({ ...anteriores, [name]: value }));
-    setErrores((anteriores) => ({ ...anteriores, [name]: undefined }));
-    setErrorEnvio("");
+    setFields((previous) => ({ ...previous, [name]: value }));
+    setErrors((previous) => ({ ...previous, [name]: undefined }));
+    setError(""); setNeedsVerification(false);
   }
 
-  async function enviar(event) {
+  async function submit(event) {
     event.preventDefault();
-    if (operacionRef.current || auth.status === "loading") return;
-
-    const validacion = {};
-    const nombre = campos.nombre_usuario.trim();
-    const email = campos.email.trim();
-    if (registro && !/^[a-zA-Z0-9_]{3,30}$/.test(nombre)) validacion.nombre_usuario = "Usá entre 3 y 30 letras, números o guiones bajos, sin espacios ni acentos.";
-    const emailInput = event.currentTarget.elements.namedItem("email");
-    if (!email || emailInput.validity.typeMismatch) validacion.email = "Ingresá un email válido.";
-    const longitudPassword = Array.from(campos.password).length;
-    if (!campos.password) validacion.password = "Ingresá tu contraseña.";
-    else if (registro && (longitudPassword < 12 || longitudPassword > 128)) validacion.password = "La contraseña debe tener entre 12 y 128 caracteres.";
-
-    setErrores(validacion);
-    setErrorEnvio("");
-    if (Object.keys(validacion).length > 0) {
-      event.currentTarget.elements.namedItem(Object.keys(validacion)[0])?.focus();
+    if (pending.current || auth.status === "loading") return;
+    const validation = validateAuthFields(fields, register);
+    if (event.currentTarget.elements.namedItem("email").validity.typeMismatch) validation.email = "Ingresá un correo electrónico válido.";
+    setErrors(validation); setError(""); setNeedsVerification(false);
+    if (Object.keys(validation).length) {
+      if (!register) setError(validation[Object.keys(validation)[0]]);
+      focusAuthField(event.currentTarget.elements.namedItem(Object.keys(validation)[0]), true);
       return;
     }
-
-    const operacion = {};
-    operacionRef.current = operacion;
-    setPendiente("submit");
+    pending.current = true; setBusy(true);
+    const email = fields.email.trim();
     try {
-      if (registro) {
-        await auth.register(nombre, email, campos.password);
-        if (activoRef.current) navigate("/login", { replace: true, state: { email, registered: true, from: destino } });
+      if (register) {
+        await auth.register(fields.nombre_usuario.trim(), email, fields.password);
+        verificationCooldown.start(email);
+        if (mounted.current) {
+          navigate("/verificar-email", { replace: true, state: { email, from: destination, registered: true } });
+        }
       } else {
-        await auth.login(email, campos.password);
-        if (activoRef.current) navigate(destino, { replace: true });
+        await auth.login(email, fields.password);
+        if (mounted.current) navigate(destination, { replace: true });
       }
     } catch (cause) {
-      if (activoRef.current) setErrorEnvio(errorMessage(cause));
+      if (mounted.current) {
+        setError(errorMessage(cause));
+        setNeedsVerification(cause.code === "EMAIL_NO_VERIFICADO");
+      }
     } finally {
-      if (operacionRef.current === operacion) {
-        operacionRef.current = null;
-        if (activoRef.current) setPendiente(null);
-      }
+      pending.current = false;
+      if (mounted.current) setBusy(false);
     }
   }
 
-  async function reintentarSesion() {
-    if (operacionRef.current || auth.status === "loading") return;
-    const operacion = {};
-    operacionRef.current = operacion;
-    setPendiente("session");
-    setErrorEnvio("");
+  async function retrySession() {
+    if (pending.current) return;
+    pending.current = true; setBusy(true);
     try { await auth.retrySession(); }
-    catch (cause) { if (activoRef.current) setErrorEnvio(errorMessage(cause)); }
-    finally {
-      if (operacionRef.current === operacion) {
-        operacionRef.current = null;
-        if (activoRef.current) setPendiente(null);
-      }
-    }
+    finally { pending.current = false; if (mounted.current) setBusy(false); }
   }
 
-  if (auth.status === "authenticated" && auth.user) return <Navigate to={destino} replace />;
-
-  const prefix = registro ? "register" : "login";
-  const estadoError = typeof auth.error === "string" ? auth.error : errorMessage(auth.error);
-
-  return (
-    <main className="auth-page page-container">
-      <header className="page-heading auth-page__heading">
-        <p className="eyebrow">Tu historia de cine</p>
-        <h1 className="page-title">{registro ? "Crear cuenta" : "Iniciar sesión"}</h1>
-        <p className="page-description">{registro ? "Un lugar para guardar las películas que se quedan contigo." : "Volvé a tus películas, tus favoritas y las historias que esperan su momento."}</p>
-      </header>
-
-      <div className="auth-page__card">
-        {!registro && location.state?.registered === true && (
-          <p className="auth-page__success" role="status"><Icon name="check" size={18} />Tu cuenta está creada. Iniciá sesión para empezar tu colección.</p>
-        )}
-        {!registro && location.state?.registered !== true && (auth.expired || location.state?.expired) && (
-          <p className="auth-page__session-status" role="status">Tu sesión terminó. Iniciá sesión para continuar con tu colección.</p>
-        )}
-        {auth.status === "loading" && <p className="auth-page__session-status" role="status">Comprobando tu sesión…</p>}
-        {auth.status === "error" && !errorEnvio && (
-          <div className="inline-error auth-page__error" role="alert">
-            <p>No pudimos comprobar tu sesión. {estadoError}.</p>
-            <button className="button" type="button" disabled={ocupado} onClick={reintentarSesion}><Icon name="refresh" size={16} />Reintentar conexión</button>
-          </div>
-        )}
-
-        <form className="auth-form" onSubmit={enviar} noValidate aria-busy={pendiente === "submit"}>
-          {registro && (
-            <div className="auth-form__field">
-              <label htmlFor={`${prefix}-username`}>Nombre de usuario</label>
-              <input id={`${prefix}-username`} name="nombre_usuario" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} minLength={3} maxLength={30} pattern="[a-zA-Z0-9_]+" required value={campos.nombre_usuario} onChange={cambiarCampo} disabled={ocupado} aria-invalid={Boolean(errores.nombre_usuario)} aria-describedby={`${prefix}-username-hint${errores.nombre_usuario ? ` ${prefix}-username-error` : ""}`} />
-              <p className="auth-form__hint" id={`${prefix}-username-hint`}>De 3 a 30 letras, números o guiones bajos.</p>
-              {errores.nombre_usuario && <p className="auth-form__field-error" id={`${prefix}-username-error`}>{errores.nombre_usuario}</p>}
-            </div>
-          )}
-          <div className="auth-form__field">
-            <label htmlFor={`${prefix}-email`}>Email</label>
-            <input id={`${prefix}-email`} name="email" type="email" autoComplete={registro ? "email" : "username"} autoCapitalize="none" spellCheck={false} required value={campos.email} onChange={cambiarCampo} disabled={ocupado} aria-invalid={Boolean(errores.email)} aria-describedby={errores.email ? `${prefix}-email-error` : undefined} />
-            {errores.email && <p className="auth-form__field-error" id={`${prefix}-email-error`}>{errores.email}</p>}
-          </div>
-          <div className="auth-form__field">
-            <label htmlFor={`${prefix}-password`}>Contraseña</label>
-            <input id={`${prefix}-password`} name="password" type="password" autoComplete={registro ? "new-password" : "current-password"} required value={campos.password} onChange={cambiarCampo} disabled={ocupado} aria-invalid={Boolean(errores.password)} aria-describedby={[registro ? `${prefix}-password-hint` : "", errores.password ? `${prefix}-password-error` : ""].filter(Boolean).join(" ") || undefined} />
-            {registro && <p className="auth-form__hint" id={`${prefix}-password-hint`}>Entre 12 y 128 caracteres. Podés usar una frase que recuerdes.</p>}
-            {errores.password && <p className="auth-form__field-error" id={`${prefix}-password-error`}>{errores.password}</p>}
-          </div>
-
-          {errorEnvio && <p className="inline-error auth-page__error" role="alert"><Icon name="alert" size={17} />{errorEnvio}</p>}
-          <button className="button button--primary auth-form__submit" type="submit" disabled={ocupado}>
-            {pendiente === "submit" ? registro ? "Creando cuenta…" : "Ingresando…" : registro ? "Crear mi cuenta" : "Iniciar sesión"}
-            {pendiente !== "submit" && <Icon name="arrow-right" size={17} />}
-          </button>
-        </form>
-
-        <p className="auth-page__alternate">
-          {registro ? "¿Ya tenés una cuenta?" : "¿Todavía no tenés cuenta?"}{" "}
-          <Link to={registro ? "/login" : "/registro"} state={{ from: destino, email: campos.email.trim() }}>{registro ? "Iniciá sesión" : "Creá tu cuenta"}</Link>
-        </p>
+  if (auth.status === "authenticated" && auth.user) return <Navigate replace to={auth.user.email_verificado !== true ? "/verificar-email" : destination} state={{ email: auth.user.email, from: destination }} />;
+  const prefix = register ? "register" : "login";
+  const statusMessage = auth.status === "loading" ? "Comprobando tu sesión…" : !register && location.state?.verified ? "Correo verificado. Ya podés iniciar sesión." : !register && (auth.expired || location.state?.expired) ? "Tu sesión terminó. Iniciá sesión para continuar." : "";
+  return <AuthLayout mode={mode} navigationState={navigationState}
+    title={register ? "Creá tu cinemateca." : "Bienvenido a Muvis."}
+    description={register ? "Un lugar para las películas que viste y las que todavía te esperan." : "Volvé a tu colección. Tu próxima gran historia empieza acá."}>
+    <form className="auth-form" onSubmit={submit} noValidate aria-busy={busy}>
+      {register && <div className="auth-form__field">
+        <label htmlFor="register-username">Nombre de usuario</label>
+        <input id="register-username" name="nombre_usuario" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={30} required value={fields.nombre_usuario} onChange={change} disabled={disabled} aria-invalid={Boolean(errors.nombre_usuario)} aria-describedby="username-feedback" />
+        <FieldFeedback id="username-feedback" error={errors.nombre_usuario ? "Usá 3–30 letras, números o guiones bajos." : null} hint="3–30 letras, números o guiones bajos." />
+      </div>}
+      <div className="auth-form__field">
+        <label htmlFor={`${prefix}-email`}>Correo electrónico</label>
+        <input id={`${prefix}-email`} name="email" type="email" autoComplete={register ? "email" : "username"} autoCapitalize="none" spellCheck={false} required value={fields.email} onChange={change} disabled={disabled} aria-invalid={Boolean(errors.email)} aria-describedby="email-feedback" />
+        <FieldFeedback id="email-feedback" error={errors.email} />
       </div>
-      <Link className="auth-page__back" to="/"><Icon name="arrow-left" size={15} />Volver a descubrir</Link>
-    </main>
-  );
+      <PasswordField id={`${prefix}-password`} name="password" label="Contraseña" value={fields.password} onChange={change} disabled={disabled} required error={errors.password?.includes("entre") ? "Usá entre 12 y 128 caracteres." : errors.password} hint={register ? "Entre 12 y 128 caracteres." : undefined} autoComplete={register ? "new-password" : "current-password"} />
+      {!register && <div className="auth-form__recovery"><button className="auth-text-button" type="button" disabled aria-describedby="recovery-unavailable">¿Olvidaste tu contraseña?</button><span id="recovery-unavailable">Próximamente</span></div>}
+      {register && <PasswordField id="register-confirm" name="confirmacion" label="Confirmar contraseña" value={fields.confirmacion} onChange={change} disabled={disabled} required error={errors.confirmacion} autoComplete="new-password" />}
+      <div className="auth-form__actions">
+        <div className="auth-page__feedback" aria-live="polite">
+          {!error && auth.status !== "error" && statusMessage && <p className="auth-page__status" role="status">{statusMessage}</p>}
+          {error && <div className="auth-page__error" role="alert"><p>{needsVerification ? "Correo sin verificar." : error}</p>{needsVerification && <Link className="auth-page__verification-link" to="/verificar-email" state={navigationState}>Verificar mi correo</Link>}</div>}
+          {auth.status === "error" && !error && <div className="auth-page__error" role="alert"><p>Sesión sin comprobar.</p><button type="button" className="auth-text-button" disabled={disabled} onClick={retrySession}>Reintentar conexión</button></div>}
+        </div>
+        <button className="button button--primary auth-form__submit" type="submit" disabled={disabled}>{busy ? register ? "Creando cuenta…" : "Ingresando…" : register ? "Crear mi cuenta" : "Iniciar sesión"}{!busy && <Icon name="arrow-right" size={17} />}</button>
+      </div>
+    </form>
+    <div className="auth-divider"><span>O continuá con</span></div>
+    <GoogleAccess />
+    <p className="auth-page__alternate">{register ? "¿Ya tenés una cuenta?" : "¿Primera vez por acá?"} <Link to={register ? "/login" : "/registro"} state={navigationState}>{register ? "Iniciá sesión" : "Creá tu cuenta"}</Link></p>
+  </AuthLayout>;
 }
 
 export default function AuthPage({ mode = "login" }) {
-  const formMode = mode === "register" ? "register" : "login";
-  return <AuthForm key={formMode} mode={formMode} />;
+  return <AuthForm key={mode} mode={mode} />;
 }

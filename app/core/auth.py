@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import Cookie, HTTPException
+from fastapi import Cookie, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -52,4 +52,20 @@ def obtener_usuario_actual(
             )
 
         return usuario
+
+
+def exigir_email_verificado(
+    usuario: Usuario = Depends(obtener_usuario_actual)
+) -> None:
+    if not usuario.email_verificado:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "codigo": "EMAIL_NO_VERIFICADO",
+                "mensaje": "Verificá tu correo electrónico para continuar."
+            }
+        )
+
+
+
 

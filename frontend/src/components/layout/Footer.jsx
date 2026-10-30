@@ -7,6 +7,7 @@ function Attribution() {
 
 function Footer() {
   const { pathname } = useLocation();
+  if (["/login", "/registro", "/verificar-email"].includes(pathname.replace(/\/+$/, ""))) return null;
   const compact = pathname === "/comunidad" || pathname === "/cuenta";
   return (
     <footer className={compact ? "footer footer--compact" : "footer"}>

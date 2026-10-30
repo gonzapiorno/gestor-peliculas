@@ -23,9 +23,15 @@ class UsuarioRespuesta(BaseModel):
     id: int
     nombre_usuario: str
     email: EmailStr
+    email_verificado: bool
     fecha_creacion: datetime
 
 class UsuarioLogin(BaseModel):
     email: EmailStr
     password: str
+
+class ReenviarVerificacionSolicitud(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr
 

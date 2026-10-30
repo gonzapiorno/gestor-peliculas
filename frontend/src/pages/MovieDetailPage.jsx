@@ -16,7 +16,8 @@ function formatearNota(nota) {
 }
 
 function MovieDetailPage() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
+  const pendingVerification = status === "authenticated" && user?.email_verificado !== true;
   const { id } = useParams();
   const idActual = useRef(id);
   const detalleRequestRef = useRef(null);
@@ -70,7 +71,7 @@ function MovieDetailPage() {
 
   // La comprobación es independiente: un fallo de colección no oculta el detalle.
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated" || pendingVerification) return;
     let cancelado = false;
 
     async function comprobarColeccion() {
@@ -97,7 +98,7 @@ function MovieDetailPage() {
 
     comprobarColeccion();
     return () => { cancelado = true; };
-  }, [id, reintentosColeccion, status]);
+  }, [id, reintentosColeccion, status, pendingVerification]);
 
   async function manejarAgregar() {
     if (!pelicula || agregando || enColeccion || !coleccionComprobada) return;
@@ -218,7 +219,7 @@ function MovieDetailPage() {
                 : "Guárdala en tu colección para marcarla como vista, elegir tus favoritas y dejar tu puntuación personal."}
               </p>
             </div>
-            {status === "anonymous" || status === "error" ? (
+            {pendingVerification ? <Link className="button button--primary" to="/verificar-email" state={{ email: user.email, from: `/pelicula/${id}` }}>Verificar correo para guardar</Link> : status === "anonymous" || status === "error" ? (
               <Link className="button button--primary" to="/login" state={{ from: `/pelicula/${id}` }}>Iniciar sesión para guardar</Link>
             ) : <button
               type="button"

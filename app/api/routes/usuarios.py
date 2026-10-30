@@ -1,4 +1,12 @@
-from fastapi import APIRouter, HTTPException, Response, Depends, Cookie, Request
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    HTTPException,
+    Response,
+    Depends,
+    Cookie,
+    Request,
+)
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -10,13 +18,24 @@ from datetime import datetime, timedelta, timezone
 
 from app.db.session import engine
 from app.db.models import Usuario, SesionUsuario
-from app.schemas.usuarios import UsuarioRegistro, UsuarioRespuesta, UsuarioLogin
+from app.schemas.usuarios import (
+    UsuarioRegistro,
+    UsuarioRespuesta,
+    UsuarioLogin,
+    ReenviarVerificacionSolicitud,
+)
 from app.core.security import hash_password, verify_password, generar_token_sesion, hash_token_sesion
-from app.core.auth import obtener_usuario_actual
+from app.core.auth import (
+    obtener_usuario_actual,
+    exigir_email_verificado,
+)
 from app.core.csrf import verificar_origen, generar_token_csrf, exigir_csrf
-from app.core.rate_limit import limiter
+from app.core.rate_limit import limiter, permitir_reenvio_email
 from app.core.login_attempts import (esta_bloqueado_login, registrar_fallo_login, limpiar_intentos_login)
-from app.core.email_verification import verificar_codigo_email
+from app.core.email_verification import (
+    verificar_codigo_email,
+    procesar_reenvio_verificacion,
+)
 
 router = APIRouter(
     prefix="/usuarios",
@@ -40,14 +59,14 @@ class VerificarEmailSolicitud(BaseModel):
 )
 @limiter.limit("10/hour")
 def registrar_usuario(
-    datos: UsuarioRegistro, 
-    request: Request
+    datos: UsuarioRegistro,
+    request: Request,
+    background_tasks: BackgroundTasks
 ):
     nombre_usuario = datos.nombre_usuario.lower()
     email = str(datos.email).lower()
 
     with Session(engine) as sesion:
-
         existe = sesion.scalar(
             select(Usuario).where(
                 (Usuario.nombre_usuario == nombre_usuario) |
@@ -71,7 +90,6 @@ def registrar_usuario(
 
         try:
             sesion.commit()
-
         except IntegrityError:
             sesion.rollback()
             raise HTTPException(
@@ -80,6 +98,11 @@ def registrar_usuario(
             )
 
         sesion.refresh(nuevo_usuario)
+
+    background_tasks.add_task(
+        procesar_reenvio_verificacion,
+        email
+    )
 
     return nuevo_usuario
 
@@ -94,30 +117,23 @@ def login_usuario(
     response: Response,
     request: Request
 ):
-
     email = str(datos.email).lower()
 
     with Session(engine) as sesion:
-
-        # Verificamos si existe una espera activa.
         if esta_bloqueado_login(sesion, email):
             raise HTTPException(
                 status_code=429,
                 detail="Demasiados intentos. Probá nuevamente más tarde."
             )
 
-        # Buscamos al usuario.
         usuario = sesion.scalar(
             select(Usuario).where(Usuario.email == email)
         )
 
-        # Comprobamos las credenciales.
         if usuario is None or not verify_password(
             datos.password,
             usuario.password_hash
         ):
-
-            # Registramos el intento fallido.
             intentos, bloqueado = registrar_fallo_login(
                 sesion,
                 email
@@ -134,13 +150,11 @@ def login_usuario(
                 detail="Correo electrónico o contraseña incorrectos"
             )
 
-        # Las credenciales son correctas.
-        # Limpiamos los intentos fallidos.
+        exigir_email_verificado(usuario)
+
         limpiar_intentos_login(sesion, email)
 
-        # Generamos el token de sesión.
         token = generar_token_sesion()
-
         expiracion = datetime.now(timezone.utc) + timedelta(days=21)
 
         nueva_sesion = SesionUsuario(
@@ -152,7 +166,6 @@ def login_usuario(
         sesion.add(nueva_sesion)
         sesion.commit()
 
-        # Enviamos la cookie.
         response.set_cookie(
             key="muvis_session",
             value=token,
@@ -268,6 +281,38 @@ def verificar_email(
 
     return {
         "mensaje": "Correo verificado correctamente"
+    }
+
+
+@router.post(
+    "/reenviar-verificacion",
+    status_code=202,
+    dependencies=[Depends(verificar_origen)]
+)
+@limiter.limit("3/minute;10/hour")
+def reenviar_verificacion(
+    datos: ReenviarVerificacionSolicitud,
+    request: Request,
+    response: Response,
+    background_tasks: BackgroundTasks
+):
+    email = str(datos.email).lower()
+
+    if not permitir_reenvio_email(email):
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiadas solicitudes. Probá nuevamente más tarde."
+        )
+
+    background_tasks.add_task(procesar_reenvio_verificacion, email)
+    response.headers["Cache-Control"] = "no-store"
+
+    return {
+        "mensaje": (
+            "Si corresponde, se intentará enviar un código de verificación. "
+            "Revisá tu correo y esperá al menos 60 segundos "
+            "antes de volver a solicitarlo."
+        )
     }
 
 

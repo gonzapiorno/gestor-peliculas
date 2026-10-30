@@ -6,10 +6,12 @@ if (!["http:", "https:"].includes(base.protocol) || base.username || base.passwo
 export const API_URL = base.href.replace(/\/+$/, "");
 
 export class ApiError extends Error {
-  constructor(message, status = 0) {
+  constructor(message, status = 0, { code = null, retryAfter = null } = {}) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code === "EMAIL_NO_VERIFICADO" ? code : null;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -35,14 +37,33 @@ function expireSession(revision) {
   sessionListeners.forEach((listener) => listener());
 }
 
-function responseMessage(status, detail, fallback) {
+function responseMessage(status, detail, fallback, code) {
   if (status >= 500) return "El servidor no pudo completar la operación. Intentá de nuevo";
   if (status === 401) return "Tu sesión terminó. Iniciá sesión para continuar";
+  if (status === 403 && code === "EMAIL_NO_VERIFICADO") return "Verificá tu correo electrónico para continuar";
   if (status === 403) return detail === "Origen de la petición no permitido"
     ? "El servidor no permite este origen. Revisá que estés usando la dirección de React autorizada"
     : "No se pudo verificar la seguridad de esta operación. Actualizá la página e intentá de nuevo";
   if (status === 422) return "Revisá los datos ingresados y los requisitos de cada campo";
+  if (status === 429) return "Demasiadas solicitudes. Esperá un momento antes de volver a intentar";
   return fallback;
+}
+
+// Sólo conservamos el código público conocido y una espera acotada. Nunca el
+// cuerpo de error remoto, que puede incluir credenciales o detalles internos.
+function retryAfterSeconds(response) {
+  const value = response.headers?.get?.("Retry-After")?.trim();
+  if (!value) return null;
+  let seconds;
+  if (/^\d+$/.test(value)) seconds = Number(value);
+  else {
+    if (!/^[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(value)) return null;
+    const date = Date.parse(value);
+    if (!Number.isFinite(date)) return null;
+    seconds = Math.ceil((date - Date.now()) / 1000);
+  }
+  if (!Number.isFinite(seconds)) return null;
+  return Math.min(86400, Math.max(0, seconds));
 }
 
 async function getCsrfToken() {
@@ -91,7 +112,10 @@ export async function apiRequest(path, {
     if (response.status === 401 && requiresAuth && notifyUnauthorized) expireSession(revision);
     // Un 403 nunca repite una escritura automáticamente.
     if (response.status === 403) csrfToken = null;
-    throw new ApiError(responseMessage(response.status, detail, message), response.status);
+    const code = response.status === 403 && detail?.codigo === "EMAIL_NO_VERIFICADO" ? "EMAIL_NO_VERIFICADO" : null;
+    throw new ApiError(responseMessage(response.status, detail, message, code), response.status, {
+      code, retryAfter: retryAfterSeconds(response),
+    });
   }
   if (response.status === 204) return null;
   let data;

@@ -20,6 +20,11 @@ export default function AppLayout({ children }) {
   const [feedbackAbierto, setFeedbackAbierto] = useState(false);
   const layoutRef = useRef(null);
   const bottomNavRef = useRef(null);
+  const enDetalleCatalogo = Boolean(useMatch("/pelicula/:id"));
+  const enLogin = Boolean(useMatch("/login"));
+  const enRegistro = Boolean(useMatch("/registro"));
+  const enVerificacion = Boolean(useMatch("/verificar-email"));
+  const authRoute = enLogin || enRegistro || enVerificacion;
 
   useEffect(() => {
     const navigation = bottomNavRef.current;
@@ -36,10 +41,9 @@ export default function AppLayout({ children }) {
       observer?.disconnect();
       window.removeEventListener("resize", reserveNavigationSpace);
     };
-  }, []);
-  const enDetalleCatalogo = Boolean(useMatch("/pelicula/:id"));
-  const enLogin = Boolean(useMatch("/login"));
-  const enRegistro = Boolean(useMatch("/registro"));
+  }, [authRoute]);
+
+  if (authRoute) return <div className="auth-route"><a href="#contenido" className="skip-link">Saltar al contenido</a>{children}</div>;
 
   return (
     <div className="app-layout" ref={layoutRef}>
