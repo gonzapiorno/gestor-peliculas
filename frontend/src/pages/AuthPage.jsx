@@ -79,7 +79,11 @@ function AuthForm({ mode }) {
 
   if (auth.status === "authenticated" && auth.user) return <Navigate replace to={auth.user.email_verificado !== true ? "/verificar-email" : destination} state={{ email: auth.user.email, from: destination }} />;
   const prefix = register ? "register" : "login";
-  const statusMessage = auth.status === "loading" ? "Comprobando tu sesión…" : !register && location.state?.verified ? "Correo verificado. Ya podés iniciar sesión." : !register && (auth.expired || location.state?.expired) ? "Tu sesión terminó. Iniciá sesión para continuar." : "";
+  let statusMessage = "";
+  if (auth.status === "loading") statusMessage = "Comprobando tu sesión…";
+  else if (!register && location.state?.passwordReset) statusMessage = "Contraseña actualizada. Iniciá sesión con la nueva.";
+  else if (!register && location.state?.verified) statusMessage = "Correo verificado. Ya podés iniciar sesión.";
+  else if (!register && (auth.expired || location.state?.expired)) statusMessage = "Tu sesión terminó. Iniciá sesión para continuar.";
   return <AuthLayout mode={mode} navigationState={navigationState}
     title={register ? "Creá tu cinemateca." : "Bienvenido a Muvis."}
     description={register ? "Un lugar para las películas que viste y las que todavía te esperan." : "Volvé a tu colección. Tu próxima gran historia empieza acá."}>
@@ -95,7 +99,7 @@ function AuthForm({ mode }) {
         <FieldFeedback id="email-feedback" error={errors.email} />
       </div>
       <PasswordField id={`${prefix}-password`} name="password" label="Contraseña" value={fields.password} onChange={change} disabled={disabled} required error={errors.password?.includes("entre") ? "Usá entre 12 y 128 caracteres." : errors.password} hint={register ? "Entre 12 y 128 caracteres." : undefined} autoComplete={register ? "new-password" : "current-password"} />
-      {!register && <div className="auth-form__recovery"><button className="auth-text-button" type="button" disabled aria-describedby="recovery-unavailable">¿Olvidaste tu contraseña?</button><span id="recovery-unavailable">Próximamente</span></div>}
+      {!register && <div><Link className="auth-text-button" to="/recuperar-password" state={navigationState}>¿Olvidaste tu contraseña?</Link></div>}
       {register && <PasswordField id="register-confirm" name="confirmacion" label="Confirmar contraseña" value={fields.confirmacion} onChange={change} disabled={disabled} required error={errors.confirmacion} autoComplete="new-password" />}
       <div className="auth-form__actions">
         <div className="auth-page__feedback" aria-live="polite">

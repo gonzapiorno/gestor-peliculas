@@ -74,6 +74,23 @@ test("GET usa cookies del navegador y no solicita CSRF", async () => {
   assert.equal(count("/usuarios/csrf"), 0);
 });
 
+test("recuperación y cambio de clave usan el contrato público y aceptan 202 y 204", async () => {
+  const email = "cine@example.invalid";
+  const token = "r".repeat(43);
+  const password = "clave de prueba";
+  respond = (call) => call.path === "/usuarios/recuperar-password"
+    ? response(202, { mensaje: "Solicitud recibida" })
+    : { ...response(204), json: () => { throw new Error("204 no tiene cuerpo"); } };
+
+  await auth.solicitarRecuperacionPassword(email);
+  assert.equal(await auth.restablecerPassword(token, password), null);
+  assert.deepEqual(calls.map((call) => [call.path, call.method, JSON.parse(call.body)]), [
+    ["/usuarios/recuperar-password", "POST", { email }],
+    ["/usuarios/restablecer-password", "POST", { token, password }],
+  ]);
+  assert.ok(calls.every((call) => !call.headers.has("X-CSRF-Token")));
+});
+
 test("login 401 y bootstrap 401 no anuncian expiración de una sesión activa", async () => {
   const expired = listen();
   respond = () => response(401, { detail: "Dato remoto que no se debe mostrar" });

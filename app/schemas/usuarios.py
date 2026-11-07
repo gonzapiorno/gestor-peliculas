@@ -35,3 +35,17 @@ class ReenviarVerificacionSolicitud(BaseModel):
 
     email: EmailStr
 
+
+class SolicitudRecuperacionPassword(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr
+
+
+
+class RestablecerPasswordSolicitud(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    token: str = Field(pattern=r"^[A-Za-z0-9_-]{43}$")
+    password: str = Field(min_length=12, max_length=128)
+

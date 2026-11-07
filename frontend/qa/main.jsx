@@ -139,7 +139,9 @@ let solicitudesIpReenvioQa = [];
 let solicitudesIpVerificacionQa = [];
 let desconectarProximaVerificacion = scenario === "auth-verification-network";
 let limitarProximaVerificacion = scenario === "auth-verification-rate";
-let usuarioSesionQa = ["auth-anonymous", "auth-login", "auth-pending"].includes(scenario) || scenario.startsWith("auth-verification")
+const tokenRecuperacionQa = "r".repeat(43);
+let usuarioRecuperacionQa = ["auth-reset", "auth-reset-session"].includes(scenario) ? usuariosQa[0] : null;
+let usuarioSesionQa = ["auth-anonymous", "auth-login", "auth-pending", "auth-reset", "auth-reset-invalid"].includes(scenario) || scenario.startsWith("auth-verification")
   ? null
   : usuariosQa[scenario === "auth-pending-session" ? 2 : scenario === "auth-session-alt" ? 1 : 0];
 let revisionSesionQa = 1;
@@ -170,9 +172,10 @@ function rutaInicial() {
   if (page === "detail") return "/pelicula/693134";
   if (page && /^\/pelicula\/\d+$/.test(page)) return page;
   if (page && /^\/coleccion\/\d+$/.test(page)) return page;
-  if (["/", "/coleccion", "/login", "/registro", "/verificar-email", "/comunidad", "/cuenta"].includes(page)) return page;
+  if (["/", "/coleccion", "/login", "/registro", "/verificar-email", "/recuperar-password", "/restablecer-password", "/comunidad", "/cuenta"].includes(page)) return page;
   if (["auth-login", "auth-pending"].includes(scenario)) return "/login";
   if (scenario.startsWith("auth-verification")) return "/verificar-email";
+  if (scenario.startsWith("auth-reset")) return "/restablecer-password";
   if (scenario.startsWith("quick-add")) return "/";
   if (scenario === "personal-not-found") return "/coleccion/99999";
   if (scenario.startsWith("personal-")) return "/coleccion/40";
@@ -485,6 +488,27 @@ window.fetch = async function fetchSimulado(input, init) {
     return responder({ mensaje: "Si corresponde, se intentará enviar un código de verificación. Revisá tu correo y esperá al menos 60 segundos antes de volver a solicitarlo." }, 202);
   }
 
+  if (request.method === "POST" && url.pathname === "/usuarios/recuperar-password") {
+    if (!tieneUnicoCampo(body, "email") || typeof body.email !== "string") return error(422, "Ingresá un correo válido");
+    const email = body.email.trim().toLowerCase();
+    const usuario = usuariosQa.find((item) => item.email === email && item.email_verificado);
+    if (usuario) usuarioRecuperacionQa = usuario;
+    return responder({ mensaje: "Si la cuenta puede recuperarse, te enviaremos un enlace por correo." }, 202);
+  }
+
+  if (request.method === "POST" && url.pathname === "/usuarios/restablecer-password") {
+    if (!body || Object.keys(body).length !== 2 || typeof body.token !== "string" || typeof body.password !== "string"
+      || body.token.length !== 43 || Array.from(body.password).length < 12 || Array.from(body.password).length > 128) {
+      return error(422, "Revisá el enlace y la contraseña");
+    }
+    if (body.token !== tokenRecuperacionQa || !usuarioRecuperacionQa) return error(400, "El enlace no es válido o venció");
+    const usuario = usuarioRecuperacionQa;
+    usuarioRecuperacionQa = null;
+    clavesQa.set(usuario.id, await resumirClaveQa(body.password));
+    if (usuarioSesionQa?.id === usuario.id) cambiarSesionQa(null);
+    return responder(null, 204);
+  }
+
   if (esBusqueda) {
     if (tituloBusqueda == null) return error(422, "Falta el parámetro titulo");
     if (consultaBusqueda === "error") return error(500, "Fallo simulado de búsqueda");
@@ -556,7 +580,9 @@ const paginaInicial = rutaInicial();
 const estadoInicial = paginaInicial === "/verificar-email" || scenario === "auth-pending"
   ? { usr: { email: "pendiente@muvis.test", from: "/coleccion" } }
   : null;
-window.history.replaceState(estadoInicial, "", `${paginaInicial}?qa=1`);
+const fragmentoInicial = paginaInicial === "/restablecer-password" && scenario.startsWith("auth-reset")
+  ? `#token=${tokenRecuperacionQa}` : "";
+window.history.replaceState(estadoInicial, "", `${paginaInicial}?qa=1${fragmentoInicial}`);
 // Un reload de Vite debe volver a la entrada aislada, nunca a la API real.
 if (import.meta.hot) {
   import.meta.hot.on("vite:beforeFullReload", () => {

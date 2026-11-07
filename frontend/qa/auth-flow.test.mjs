@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   createVerificationCooldown,
   normalizeVerificationCode,
+  readPasswordResetToken,
   safeAuthDestination,
   validateAuthFields,
 } from "../src/utils/authFlow.js";
@@ -38,6 +39,20 @@ test("destinos evitan bucles hacia login, registro y verificacion incluso con es
   assert.equal(safeAuthDestination({ pathname: "/login", search: "?email=fixture" }, origin), "/coleccion");
   for (const value of [null, undefined, false, 42, {}, { pathname: 42 }]) {
     assert.equal(safeAuthDestination(value, origin), "/coleccion");
+  }
+});
+
+test("recuperación y restablecimiento no son destinos posteriores al login", () => {
+  for (const route of ["/recuperar-password", "/restablecer-password#token=fixture", "/restablecer%2Dpassword/otro"]) {
+    assert.equal(safeAuthDestination(route, origin), "/coleccion");
+  }
+});
+
+test("el enlace de recuperación sólo acepta un token URL-safe de 43 caracteres en el fragmento", () => {
+  const token = "aZ_0-".repeat(8) + "xyz";
+  assert.equal(readPasswordResetToken(`#token=${token}`), token);
+  for (const hash of ["", `?token=${token}`, `#token=${token}&token=${token}`, `#token=${token}%0A`, `#token=${token.slice(1)}`, `#token=${token.slice(1)}%2B`]) {
+    assert.equal(readPasswordResetToken(hash), "");
   }
 });
 

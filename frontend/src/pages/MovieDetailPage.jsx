@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import Icon from "../components/ui/Icon";
 import PageState from "../components/ui/PageState";
@@ -10,6 +10,7 @@ import { agregarAColeccion, obtenerColeccion } from "../services/coleccionApi";
 import "./MovieDetailPage.css";
 import { errorMessage } from "../utils/errorMessage";
 import { useAuth } from "../auth/useAuth";
+import { catalogResultsUrl, isPlainLinkClick } from "../utils/catalogNavigation";
 
 function formatearNota(nota) {
   return nota.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -17,6 +18,8 @@ function formatearNota(nota) {
 
 function MovieDetailPage() {
   const { status, user } = useAuth();
+  const navigate = useNavigate();
+  const { state } = useLocation();
   const pendingVerification = status === "authenticated" && user?.email_verificado !== true;
   const { id } = useParams();
   const idActual = useRef(id);
@@ -130,9 +133,17 @@ function MovieDetailPage() {
     }
   }
 
+  const resultadosUrl = catalogResultsUrl(state?.catalogSearch?.query);
+  function volverAlCatalogo(event) {
+    if (resultadosUrl && state.catalogSearch.fromResults === true && isPlainLinkClick(event)) {
+      event.preventDefault();
+      navigate(-1);
+    }
+  }
+
   const volver = (
-    <Link className="movie-detail__back" to="/">
-      <Icon name="arrow-left" size={16} />Volver a descubrir
+    <Link className="movie-detail__back" to={resultadosUrl || "/"} onClick={volverAlCatalogo}>
+      <Icon name="arrow-left" size={16} />{resultadosUrl ? "Volver a resultados" : "Volver a descubrir"}
     </Link>
   );
 

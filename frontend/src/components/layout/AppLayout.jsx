@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useMatch } from "react-router-dom";
+import { NavLink, useLocation, useMatch } from "react-router-dom";
 
 import FeedbackPanel from "../ui/FeedbackPanel";
 import Icon from "../ui/Icon";
 import Header from "./Header";
+import { isAuthRoute } from "../../utils/authFlow";
 import "./AppLayout.css";
 
 function NavigationLink({ to, icon, children, soon = false, active = false, mobile = false, end = false }) {
@@ -23,8 +24,7 @@ export default function AppLayout({ children }) {
   const enDetalleCatalogo = Boolean(useMatch("/pelicula/:id"));
   const enLogin = Boolean(useMatch("/login"));
   const enRegistro = Boolean(useMatch("/registro"));
-  const enVerificacion = Boolean(useMatch("/verificar-email"));
-  const authRoute = enLogin || enRegistro || enVerificacion;
+  const authRoute = isAuthRoute(useLocation().pathname);
 
   useEffect(() => {
     const navigation = bottomNavRef.current;

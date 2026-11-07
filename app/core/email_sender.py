@@ -1,17 +1,14 @@
 import os
 import smtplib
 import ssl
-
 from email.message import EmailMessage
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
-def enviar_codigo_verificacion(
-    destinatario: str,
-    codigo: str
-) -> None:
+def _enviar_correo(destinatario: str, asunto: str, cuerpo: str) -> None:
     es_desarrollo = os.getenv("APP_ENV") == "development"
     configuracion_tls = os.getenv("SMTP_STARTTLS", "false").strip().lower()
 
@@ -31,16 +28,10 @@ def enviar_codigo_verificacion(
         )
 
     mensaje = EmailMessage()
-    mensaje["Subject"] = "Tu código de verificación de Muvis"
+    mensaje["Subject"] = asunto
     mensaje["From"] = os.environ["SMTP_FROM"]
     mensaje["To"] = destinatario
-
-    mensaje.set_content(
-        f"¡Bienvenido a Muvis!\n\n"
-        f"Tu código de verificación es: {codigo}\n\n"
-        f"Este código vence en 10 minutos.\n\n"
-        f"Si no solicitaste este código, ignorá este mensaje."
-    )
+    mensaje.set_content(cuerpo)
 
     servidor = os.environ["SMTP_HOST"]
     puerto = int(os.environ["SMTP_PORT"])
@@ -54,3 +45,25 @@ def enviar_codigo_verificacion(
             smtp.login(usuario, password)
 
         smtp.send_message(mensaje)
+
+
+def enviar_codigo_verificacion(destinatario: str, codigo: str) -> None:
+    _enviar_correo(
+        destinatario,
+        "Tu código de verificación de Muvis",
+        "¡Bienvenido a Muvis!\n\n"
+        f"Tu código de verificación es: {codigo}\n\n"
+        "Este código vence en 10 minutos.\n\n"
+        "Si no solicitaste este código, ignorá este mensaje.",
+    )
+
+
+def enviar_enlace_recuperacion(destinatario: str, enlace: str) -> None:
+    _enviar_correo(
+        destinatario,
+        "Restablecé tu contraseña de Muvis",
+        "Abrí este enlace para elegir una contraseña nueva:\n\n"
+        f"{enlace}\n\n"
+        "El enlace es temporal y se puede usar una sola vez.\n\n"
+        "Si no solicitaste el cambio, ignorá este mensaje.",
+    )

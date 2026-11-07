@@ -1,11 +1,13 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { catalogQuery, rememberResultPosition } from "../../utils/catalogNavigation";
 import Icon from "../ui/Icon";
 import Poster from "../ui/Poster";
 import "./MovieSearch.css";
 
 export default function MovieSearch({ query, onQueryChange, results, status, error, onRetry, onViewAll }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const id = useId();
   const formRef = useRef(null);
   const anchorRef = useRef(null);
@@ -78,7 +80,10 @@ export default function MovieSearch({ query, onQueryChange, results, status, err
 
   function select(movie) {
     close();
-    navigate(`/pelicula/${movie.id_tmdb}`);
+    const title = query.trim();
+    const fromResults = catalogQuery(location) === title;
+    if (fromResults) rememberResultPosition(location.key);
+    navigate(`/pelicula/${movie.id_tmdb}`, { state: { catalogSearch: { query: title, fromResults } } });
   }
 
   function viewAll() {

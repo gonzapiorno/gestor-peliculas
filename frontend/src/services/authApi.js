@@ -37,3 +37,15 @@ export function reenviarVerificacion(email) {
     method: "POST", body: { email }, message: "No se pudo solicitar otro código",
   });
 }
+
+export function solicitarRecuperacionPassword(email) {
+  return apiRequest("/usuarios/recuperar-password", {
+    method: "POST", body: { email }, message: "No se pudo solicitar el enlace",
+  });
+}
+
+export function restablecerPassword(token, password) {
+  return apiRequest("/usuarios/restablecer-password", {
+    method: "POST", body: { token, password }, message: "No se pudo actualizar la contraseña",
+  });
+}

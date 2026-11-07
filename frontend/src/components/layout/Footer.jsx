@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { isAuthRoute } from "../../utils/authFlow";
 import "./Footer.css";
 
 function Attribution() {
@@ -7,7 +8,7 @@ function Attribution() {
 
 function Footer() {
   const { pathname } = useLocation();
-  if (["/login", "/registro", "/verificar-email"].includes(pathname.replace(/\/+$/, ""))) return null;
+  if (isAuthRoute(pathname)) return null;
   const compact = pathname === "/comunidad" || pathname === "/cuenta";
   return (
     <footer className={compact ? "footer footer--compact" : "footer"}>

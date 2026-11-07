@@ -121,6 +121,32 @@ class CodigoVerificacionEmail(Base):
     )
 
 
+class TokenRecuperacionPassword(Base):
+    __tablename__ = "tokens_recuperacion_password"
+
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    token_hash: Mapped[str] = mapped_column(
+        String(64),
+        unique=True,
+        nullable=False,
+    )
+
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    fecha_expiracion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+
 class SesionUsuario(Base):
     __tablename__ = "sesiones"
 

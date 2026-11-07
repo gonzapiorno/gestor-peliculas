@@ -1,5 +1,6 @@
 import { useId } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { catalogQuery, isPlainLinkClick, rememberResultPosition } from "../../utils/catalogNavigation";
 import Icon from "../ui/Icon";
 import Poster from "../ui/Poster";
 import "./CatalogMovieCard.css";
@@ -14,6 +15,13 @@ function CatalogMovieCard({
   onAgregar,
 }) {
   const errorId = useId();
+  const location = useLocation();
+  const query = catalogQuery(location);
+  const searchState = query.length >= 2 ? { catalogSearch: { query, fromResults: true } } : undefined;
+
+  function rememberPosition(event) {
+    if (searchState && isPlainLinkClick(event)) rememberResultPosition(location.key);
+  }
   const puntuacion = Number.isFinite(pelicula.puntuacion)
     ? pelicula.puntuacion.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })
     : null;
@@ -39,7 +47,7 @@ function CatalogMovieCard({
   return (
     <article className="catalog-card">
       <div className="catalog-card__poster-slot">
-        <Link className="catalog-card__link" to={detalle} aria-label={`Ver detalles de ${pelicula.titulo}`}>
+        <Link className="catalog-card__link" to={detalle} state={searchState} onClick={rememberPosition} aria-label={`Ver detalles de ${pelicula.titulo}`}>
           <div className="catalog-card__poster">
             <Poster src={pelicula.poster} title={pelicula.titulo} loading="lazy" />
             <span className="catalog-card__open" aria-hidden="true">Ver película</span>
@@ -60,7 +68,7 @@ function CatalogMovieCard({
         </button>
       </div>
       <div className="catalog-card__info">
-        <h3><Link className="catalog-card__title-link" to={detalle}>{pelicula.titulo}</Link></h3>
+        <h3><Link className="catalog-card__title-link" to={detalle} state={searchState} onClick={rememberPosition}>{pelicula.titulo}</Link></h3>
         <div className="catalog-card__meta">
           <span>{pelicula.anio || "Sin año"}</span>
           <span className="catalog-card__rating">{puntuacion ? "TMDB / 10" : "Sin valoración"}</span>

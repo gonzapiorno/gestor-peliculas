@@ -23,19 +23,16 @@ from app.schemas.usuarios import (
     UsuarioRespuesta,
     UsuarioLogin,
     ReenviarVerificacionSolicitud,
+    SolicitudRecuperacionPassword,
+    RestablecerPasswordSolicitud,
 )
 from app.core.security import hash_password, verify_password, generar_token_sesion, hash_token_sesion
-from app.core.auth import (
-    obtener_usuario_actual,
-    exigir_email_verificado,
-)
+from app.core.auth import obtener_usuario_actual,exigir_email_verificado
 from app.core.csrf import verificar_origen, generar_token_csrf, exigir_csrf
-from app.core.rate_limit import limiter, permitir_reenvio_email
-from app.core.login_attempts import (esta_bloqueado_login, registrar_fallo_login, limpiar_intentos_login)
-from app.core.email_verification import (
-    verificar_codigo_email,
-    procesar_reenvio_verificacion,
-)
+from app.core.rate_limit import limiter, permitir_reenvio_email, permitir_recuperacion_email
+from app.core.login_attempts import esta_bloqueado_login, registrar_fallo_login, limpiar_intentos_login
+from app.core.email_verification import verificar_codigo_email, procesar_reenvio_verificacion
+from app.core.password_reset import procesar_solicitud_recuperacion, restablecer_password_con_token
 
 router = APIRouter(
     prefix="/usuarios",
@@ -127,7 +124,9 @@ def login_usuario(
             )
 
         usuario = sesion.scalar(
-            select(Usuario).where(Usuario.email == email)
+            select(Usuario)
+            .where(Usuario.email == email)
+            .with_for_update()
         )
 
         if usuario is None or not verify_password(
@@ -314,5 +313,71 @@ def reenviar_verificacion(
             "antes de volver a solicitarlo."
         )
     }
+
+
+@router.post(
+    "/recuperar-password",
+    status_code=202,
+    dependencies=[Depends(verificar_origen)],
+)
+@limiter.limit("3/minute;10/hour")
+def solicitar_recuperacion_password(
+    datos: SolicitudRecuperacionPassword,
+    request: Request,
+    response: Response,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    email = str(datos.email).strip().lower()
+
+    if permitir_recuperacion_email(email):
+        background_tasks.add_task(procesar_solicitud_recuperacion, email)
+
+    response.headers["Cache-Control"] = "no-store"
+
+    return {
+        "mensaje": (
+            "Si la cuenta puede recuperarse, "
+            "te enviaremos un enlace por correo."
+        )
+    }
+
+
+async def leer_solicitud_restablecimiento(
+    request: Request,
+) -> RestablecerPasswordSolicitud:
+    try:
+        cuerpo = await request.json()
+        return RestablecerPasswordSolicitud.model_validate(cuerpo)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail="Revisá el enlace y usá una contraseña de 12 a 128 caracteres.",
+            headers={"Cache-Control": "no-store"},
+        ) from None
+
+
+@router.post(
+    "/restablecer-password",
+    status_code=204,
+    response_class=Response,
+    dependencies=[Depends(verificar_origen)],
+)
+@limiter.limit("10/minute")
+def restablecer_password(
+    request: Request,
+    datos: RestablecerPasswordSolicitud = Depends(
+        leer_solicitud_restablecimiento
+    ),
+) -> Response:
+    headers = {"Cache-Control": "no-store"}
+
+    if not restablecer_password_con_token(datos.token, datos.password):
+        raise HTTPException(
+            status_code=400,
+            detail="El enlace no es válido o venció. Solicitá uno nuevo.",
+            headers=headers,
+        )
+
+    return Response(status_code=204, headers=headers)
 
 

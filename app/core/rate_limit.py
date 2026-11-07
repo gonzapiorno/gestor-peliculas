@@ -20,3 +20,17 @@ def permitir_reenvio_email(email: str) -> bool:
         "reenvio-verificacion-email",
         identificador
     )
+
+
+LIMITE_RECUPERACION_EMAIL = parse("5/hour")
+
+
+def permitir_recuperacion_email(email: str) -> bool:
+    return limiter.limiter.hit(
+        LIMITE_RECUPERACION_EMAIL,
+        "recuperacion-password-email",
+        hash_email_login(email),
+    )
+
+
+

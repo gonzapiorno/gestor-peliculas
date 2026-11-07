@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigationType, useSearchParams } from "react-router-dom";
 
 import CatalogMovieGrid from "../components/movies/CatalogMovieGrid";
 import Icon from "../components/ui/Icon";
@@ -10,6 +10,7 @@ import "./DiscoverPage.css";
 import { errorMessage } from "../utils/errorMessage";
 import useMovieSearch from "../hooks/useMovieSearch";
 import useCatalogCollection from "../hooks/useCatalogCollection";
+import { resultPosition } from "../utils/catalogNavigation";
 
 function DiscoverPage() {
   const [peliculas, setPeliculas] = useState([]);
@@ -20,6 +21,16 @@ function DiscoverPage() {
   const search = useMovieSearch(searchParams.get("buscar") || "");
   const coleccion = useCatalogCollection();
   const catalogRequestRef = useRef(null);
+  const { key } = useLocation();
+  const navigationType = useNavigationType();
+  const restoredEntry = useRef(null);
+
+  useLayoutEffect(() => {
+    if (navigationType !== "POP" || search.status !== "success" || restoredEntry.current === key) return;
+    restoredEntry.current = key;
+    const top = resultPosition(key);
+    if (top !== undefined) window.scrollTo({ top, left: 0, behavior: "instant" });
+  }, [key, navigationType, search.status]);
 
   useEffect(() => {
     let cancelado = false;

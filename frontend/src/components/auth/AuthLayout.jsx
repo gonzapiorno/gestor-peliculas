@@ -3,6 +3,7 @@ import Icon from "../ui/Icon";
 import "./AuthLayout.css";
 
 export default function AuthLayout({ children, title, description, eyebrow = "Tu historia de cine", mode = "login", navigationState, verified = false }) {
+  const showTabs = mode === "login" || mode === "register";
   return (
     <div className={`auth-experience auth-experience--${mode}`}>
       <header className="auth-experience__topbar">
@@ -21,10 +22,11 @@ export default function AuthLayout({ children, title, description, eyebrow = "Tu
             {description && <p className="auth-experience__description">{description}</p>}
           </header>
 
-          {mode !== "verify" ? <nav className="auth-experience__tabs" aria-label="Acceso a Muvis">
+          {showTabs && <nav className="auth-experience__tabs" aria-label="Acceso a Muvis">
             <Link to="/login" state={navigationState} aria-current={mode === "login" ? "page" : undefined}>Iniciar sesión</Link>
             <Link to="/registro" state={navigationState} aria-current={mode === "register" ? "page" : undefined}>Crear cuenta</Link>
-          </nav> : <ol className="auth-experience__steps" aria-label="Activación de tu cuenta">
+          </nav>}
+          {mode === "verify" && <ol className="auth-experience__steps" aria-label="Activación de tu cuenta">
             <li><Icon name="check" size={14} /><span>Cuenta</span></li>
             <li aria-current={!verified ? "step" : undefined}>{verified ? <Icon name="check" size={14} /> : <span className="auth-experience__step-number">2</span>}<span>Verificación</span></li>
             <li aria-current={verified ? "step" : undefined}><span className="auth-experience__step-number">3</span><span>Entrar</span></li>

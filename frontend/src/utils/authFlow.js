@@ -1,3 +1,9 @@
+const authPaths = new Set(["/login", "/registro", "/verificar-email", "/recuperar-password", "/restablecer-password"]);
+
+export function isAuthRoute(pathname) {
+  return authPaths.has(pathname.toLowerCase().replace(/\/+$/, ""));
+}
+
 export function safeAuthDestination(from, origin = globalThis.location?.origin || "http://muvis.local") {
   const route = typeof from === "string" ? from : from && typeof from.pathname === "string"
     ? `${from.pathname}${typeof from.search === "string" ? from.search : ""}${typeof from.hash === "string" ? from.hash : ""}` : "";
@@ -7,7 +13,7 @@ export function safeAuthDestination(from, origin = globalThis.location?.origin |
     const url = new URL(route, origin);
     const path = decodeURIComponent(url.pathname).replace(/\/+$/, "");
     if (url.origin !== origin || path.startsWith("//") || unsafe(path)
-      || /^\/(login|registro|verificar-email)(\/|$)/i.test(path)) return "/coleccion";
+      || isAuthRoute(path.split("/", 2).join("/"))) return "/coleccion";
     return `${url.pathname}${url.search}${url.hash}`;
   } catch { return "/coleccion"; }
 }
@@ -16,10 +22,26 @@ export function validateAuthFields(fields, register = false) {
   const errors = {};
   if (register && !/^[a-zA-Z0-9_]{3,30}$/.test(fields.nombre_usuario.trim())) errors.nombre_usuario = "Usá entre 3 y 30 letras, números o guiones bajos, sin espacios ni acentos.";
   if (!/^[^\s@]+@[^\s@]+$/.test(fields.email.trim())) errors.email = "Ingresá un correo electrónico válido.";
-  if (!fields.password) errors.password = "Ingresá tu contraseña.";
-  else if (register && (Array.from(fields.password).length < 12 || Array.from(fields.password).length > 128)) errors.password = "La contraseña debe tener entre 12 y 128 caracteres.";
-  if (register && fields.confirmacion !== fields.password) errors.confirmacion = "Las contraseñas no coinciden.";
+  if (register) Object.assign(errors, validateNewPassword(fields.password, fields.confirmacion));
+  else if (!fields.password) errors.password = "Ingresá tu contraseña.";
   return errors;
+}
+
+export function validateNewPassword(password, confirmation) {
+  const errors = {};
+  const length = Array.from(password).length;
+  if (!length) errors.password = "Ingresá tu contraseña.";
+  else if (length < 12 || length > 128) errors.password = "La contraseña debe tener entre 12 y 128 caracteres.";
+  if (confirmation !== password) errors.confirmacion = "Las contraseñas no coinciden.";
+  return errors;
+}
+
+export function readPasswordResetToken(hash) {
+  if (!hash.startsWith("#")) return "";
+  const tokens = new URLSearchParams(hash.slice(1)).getAll("token");
+  if (tokens.length !== 1) return "";
+  const [token] = tokens;
+  return token.length === 43 && /^[A-Za-z0-9_-]+$/.test(token) ? token : "";
 }
 
 export function normalizeVerificationCode(value) { return value.replace(/[^0-9]/g, "").slice(0, 6); }
