@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.catalogo import router as catalogo_router
 from app.api.routes.coleccion import router as coleccion_router
 from app.api.routes.usuarios import router as usuarios_router
+from app.api.routes.google import router as google_router
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter
@@ -41,6 +42,7 @@ app.add_middleware(
 app.include_router(catalogo_router)
 app.include_router(coleccion_router)
 app.include_router(usuarios_router)
+app.include_router(google_router)
 
 
 # Primera ruta de prueba

@@ -49,3 +49,54 @@ export function restablecerPassword(token, password) {
     method: "POST", body: { token, password }, message: "No se pudo actualizar la contraseña",
   });
 }
+
+
+export function iniciarIntentoGoogle() {
+  return apiRequest("/usuarios/google/intento", {
+    method: "POST",
+    message: "No se pudo preparar el acceso con Google",
+  });
+}
+
+export function enviarCredencialGoogle(credencial) {
+  return apiRequest("/usuarios/google/credencial", {
+    method: "POST",
+    body: { credencial },
+    message: "No se pudo iniciar sesión con Google",
+  });
+}
+
+
+export function completarAltaGoogle(nombreUsuario) {
+  return apiRequest("/usuarios/google/alta", {
+    method: "POST",
+    body: { nombre_usuario: nombreUsuario },
+    message: "No se pudo crear tu cuenta con Google",
+  });
+}
+
+export function obtenerEstadoVinculacionGoogle() {
+  return apiRequest("/usuarios/google/vincular", {
+    requiresAuth: true,
+    message: "No se pudo comprobar el vínculo con Google",
+  });
+}
+
+export function iniciarVinculacionGoogle() {
+  return apiRequest("/usuarios/google/vincular/intento", {
+    method: "POST",
+    requiresAuth: true,
+    message: "No se pudo iniciar la vinculación con Google",
+  });
+}
+
+export function confirmarVinculacionGoogle(credencial, password) {
+  return apiRequest("/usuarios/google/vincular", {
+    method: "POST",
+    requiresAuth: true,
+    body: { credencial, password },
+    message: "No se pudo vincular esta cuenta de Google",
+  });
+}
+
+

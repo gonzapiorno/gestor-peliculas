@@ -5,12 +5,22 @@ if (!["http:", "https:"].includes(base.protocol) || base.username || base.passwo
 }
 export const API_URL = base.href.replace(/\/+$/, "");
 
+const codigosAltaGoogle = new Set(["NOMBRE_USUARIO_OCUPADO", "GOOGLE_REINICIAR"]);
+const codigosVinculacionGoogle = new Set([
+  "GOOGLE_REINICIAR",
+  "GOOGLE_CORREO_NO_VALIDO",
+  "PASSWORD_INCORRECTA",
+]);
+
 export class ApiError extends Error {
   constructor(message, status = 0, { code = null, retryAfter = null } = {}) {
     super(message);
     this.name = "ApiError";
     this.status = status;
-    this.code = code === "EMAIL_NO_VERIFICADO" ? code : null;
+    const codigoConocido = code === "EMAIL_NO_VERIFICADO"
+      || codigosAltaGoogle.has(code)
+      || codigosVinculacionGoogle.has(code);
+    this.code = codigoConocido ? code : null;
     this.retryAfter = retryAfter;
   }
 }
@@ -112,7 +122,26 @@ export async function apiRequest(path, {
     if (response.status === 401 && requiresAuth && notifyUnauthorized) expireSession(revision);
     // Un 403 nunca repite una escritura automáticamente.
     if (response.status === 403) csrfToken = null;
-    const code = response.status === 403 && detail?.codigo === "EMAIL_NO_VERIFICADO" ? "EMAIL_NO_VERIFICADO" : null;
+    let code = null;
+    if (response.status === 403 && detail?.codigo === "EMAIL_NO_VERIFICADO") {
+      code = "EMAIL_NO_VERIFICADO";
+    }
+    if (
+      path === "/usuarios/google/alta" &&
+      response.status === 409 &&
+      codigosAltaGoogle.has(detail?.codigo)
+    ) {
+      code = detail.codigo;
+    }
+
+    if (
+      path === "/usuarios/google/vincular" &&
+      response.status === 400 &&
+      codigosVinculacionGoogle.has(detail?.codigo)
+    ) {
+      code = detail.codigo;
+    }
+
     throw new ApiError(responseMessage(response.status, detail, message, code), response.status, {
       code, retryAfter: retryAfterSeconds(response),
     });

@@ -37,7 +37,7 @@ def emitir_token_recuperacion(email: str) -> tuple[str, str] | None:
             .where(Usuario.email == email)
             .with_for_update()
         )
-        if usuario is None or not usuario.email_verificado:
+        if usuario is None or not usuario.email_verificado or usuario.password_hash is None:
             return None
 
         ahora = datetime.now(timezone.utc)
@@ -122,7 +122,7 @@ def restablecer_password_con_token(token: str, nueva_password: str) -> bool:
             return False
 
         usuario = sesion.get(Usuario, usuario_id, with_for_update=True)
-        if usuario is None or not usuario.email_verificado:
+        if usuario is None or not usuario.email_verificado or usuario.password_hash is None:
             return False
 
         registro = sesion.get(TokenRecuperacionPassword, usuario_id)

@@ -1,21 +1,25 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+
+NombreUsuario = Annotated[
+    str,
+    Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]+$"),
+]
 
 
 class UsuarioRegistro(BaseModel):
-
-    nombre_usuario: str = Field(
-        min_length=3,
-        max_length=30,
-        pattern=r"^[a-zA-Z0-9_]+$"
-    )
-
+    nombre_usuario: NombreUsuario
     email: EmailStr
+    password: str = Field(min_length=12, max_length=128)
 
-    password: str = Field(
-        min_length=12,
-        max_length=128
-    )
+
+class AltaGoogleSolicitud(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    nombre_usuario: NombreUsuario
 
 class UsuarioRespuesta(BaseModel):
     model_config = ConfigDict(from_attributes=True)

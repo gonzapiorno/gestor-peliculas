@@ -1,12 +1,13 @@
-from datetime import datetime, timezone
+import os
+from datetime import datetime, timedelta, timezone
 
-from fastapi import Cookie, HTTPException, Depends
+from fastapi import Cookie, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import generar_token_sesion, hash_token_sesion
+from app.db.models import SesionUsuario, Usuario
 from app.db.session import engine
-from app.db.models import Usuario, SesionUsuario
-from app.core.security import hash_token_sesion
 
 
 def obtener_usuario_actual(
@@ -66,6 +67,32 @@ def exigir_email_verificado(
             }
         )
 
+def crear_sesion_usuario(
+    sesion: Session,
+    usuario_id: int,
+    response: Response,
+) -> None:
+    token = generar_token_sesion()
+    duracion = timedelta(days=21)
+
+    sesion.add(
+        SesionUsuario(
+            usuario_id=usuario_id,
+            token_hash=hash_token_sesion(token),
+            fecha_expiracion=datetime.now(timezone.utc) + duracion,
+        )
+    )
+    sesion.commit()
+
+    response.set_cookie(
+        key="muvis_session",
+        value=token,
+        httponly=True,
+        secure=os.getenv("APP_ENV") != "development",
+        samesite="lax",
+        max_age=int(duracion.total_seconds()),
+        path="/",
+    )
 
 
 

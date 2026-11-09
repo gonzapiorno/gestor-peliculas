@@ -8,3 +8,5 @@ alembic
 pwdlib[argon2]
 slowapi
 pydantic[email]
+google-auth
+requests

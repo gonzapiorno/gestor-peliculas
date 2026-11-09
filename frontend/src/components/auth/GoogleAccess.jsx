@@ -1,16 +1,168 @@
+import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useAuth } from "../../auth/useAuth";
+import { enviarCredencialGoogle, iniciarIntentoGoogle } from "../../services/authApi";
+import { errorMessage } from "../../utils/errorMessage";
+import GoogleUsernameForm from "./GoogleUsernameForm";
 import "./GoogleAccess.css";
 
-export default function GoogleAccess() {
-  return <div className="auth-google">
-    <button className="auth-google__button" type="button" disabled aria-describedby="google-unavailable">
-      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94a11.1 11.1 0 0 1-4.78 7.18l7.73 6C44.4 38.03 46.98 31.91 46.98 24.55Z" />
-        <path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.78 24c0-1.59.27-3.13.75-4.59l-7.98-6.19A23.8 23.8 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19Z" />
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.16 1.45-4.95 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
-      </svg>
-      <span>Continuar con Google</span><span className="auth-google__soon">Próximamente</span>
-    </button>
-    <p className="visually-hidden" id="google-unavailable">El acceso con Google todavía no está disponible.</p>
-  </div>;
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
+const mensajeInicial = "Preparando acceso con Google…";
+
+const mensajesPorPaso = {
+  vincular: "Ya tenés una cuenta de Muvis con ese correo. Iniciá sesión con tu contraseña.",
+  verificar_correo: "Para usar este correo, por ahora registrate con correo y contraseña.",
+};
+
+let cargaGoogle;
+const intentosPendientes = new Map();
+
+function cargarGoogle() {
+  if (window.google?.accounts?.id) {
+    return Promise.resolve(window.google.accounts.id);
+  }
+
+  cargaGoogle ??= new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+
+    function fallar() {
+      script.remove();
+      reject(new Error("No se pudo cargar el botón de Google"));
+    }
+
+    script.onload = () => {
+      const googleId = window.google?.accounts?.id;
+      if (googleId) resolve(googleId);
+      else fallar();
+    };
+    script.onerror = fallar;
+    document.head.appendChild(script);
+  }).catch((error) => {
+    cargaGoogle = undefined;
+    throw error;
+  });
+
+  return cargaGoogle;
+}
+
+function prepararIntento(iniciar) {
+  let pendiente = intentosPendientes.get(iniciar);
+  if (!pendiente) {
+    pendiente = iniciar().finally(() => intentosPendientes.delete(iniciar));
+    intentosPendientes.set(iniciar, pendiente);
+  }
+  return pendiente;
+}
+
+export default function GoogleAccess({ iniciar = iniciarIntentoGoogle, onCredential }) {
+  const { retrySession } = useAuth();
+  const boton = useRef(null);
+  const [intento, setIntento] = useState(0);
+  const [mensaje, setMensaje] = useState(mensajeInicial);
+  const [error, setError] = useState("");
+  const [elegirNombre, setElegirNombre] = useState(false);
+  const actualizarSesion = useEffectEvent(() => retrySession());
+  const esVinculacion = typeof onCredential === "function";
+  const entregarCredencial = useEffectEvent((credential) => onCredential(credential));
+
+  useEffect(() => {
+    if (!clientId) return;
+
+    const contenedor = boton.current;
+    let activo = true;
+    let procesando = false;
+
+    async function prepararBoton() {
+      const googleId = await cargarGoogle();
+      if (!activo) return;
+
+      const { nonce } = await prepararIntento(iniciar);
+      if (!activo) return;
+
+      googleId.initialize({
+        client_id: clientId,
+        nonce,
+        ux_mode: "popup",
+        callback: async ({ credential }) => {
+          if (!activo || procesando || !credential) return;
+
+          procesando = true;
+          contenedor.replaceChildren();
+          if (esVinculacion) {
+            entregarCredencial(credential);
+            return;
+          }
+          setMensaje("Verificando tu cuenta de Google…");
+
+          try {
+            const { paso } = await enviarCredencialGoogle(credential);
+            if (!activo) return;
+
+            if (paso === "elegir_nombre") {
+              setMensaje("");
+              setElegirNombre(true);
+              return;
+            }
+
+            if (paso === "entrar") {
+              await actualizarSesion();
+              if (activo) setMensaje("");
+              return;
+            }
+
+            const siguienteMensaje = mensajesPorPaso[paso];
+            if (typeof siguienteMensaje !== "string") {
+              throw new Error("Muvis devolvió un paso de acceso desconocido");
+            }
+            setMensaje(siguienteMensaje);
+          } catch (cause) {
+            if (activo) setError(errorMessage(cause));
+          }
+        },
+      });
+
+      googleId.renderButton(contenedor, {
+        theme: "filled_black",
+        size: "large",
+        text: "continue_with",
+        locale: "es",
+      });
+      setMensaje("");
+    }
+
+    prepararBoton().catch((cause) => {
+      if (activo) setError(errorMessage(cause));
+    });
+
+    return () => {
+      activo = false;
+      contenedor.replaceChildren();
+    };
+  }, [iniciar, intento, esVinculacion]);
+
+  function reintentar() {
+    setElegirNombre(false);
+    setError("");
+    setMensaje(mensajeInicial);
+    setIntento((anterior) => anterior + 1);
+  }
+
+  if (!clientId) return <p className="auth-page__status">Acceso con Google próximamente.</p>;
+
+  return (
+    <div className="auth-google">
+      <div ref={boton} />
+      {elegirNombre && <GoogleUsernameForm onRestart={reintentar} />}
+      {mensaje && !error && <p className="auth-page__status" role="status">{mensaje}</p>}
+      {error && (
+        <div className="auth-page__error">
+          <p role="alert">{error}</p>
+          <button className="auth-text-button" type="button" onClick={reintentar}>
+            Reintentar con Google
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }

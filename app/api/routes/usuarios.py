@@ -12,10 +12,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, Field
 
-import os
-
-from datetime import datetime, timedelta, timezone
-
 from app.db.session import engine
 from app.db.models import Usuario, SesionUsuario
 from app.schemas.usuarios import (
@@ -26,8 +22,8 @@ from app.schemas.usuarios import (
     SolicitudRecuperacionPassword,
     RestablecerPasswordSolicitud,
 )
-from app.core.security import hash_password, verify_password, generar_token_sesion, hash_token_sesion
-from app.core.auth import obtener_usuario_actual,exigir_email_verificado
+from app.core.security import hash_password, verify_password, hash_token_sesion
+from app.core.auth import crear_sesion_usuario, obtener_usuario_actual, exigir_email_verificado
 from app.core.csrf import verificar_origen, generar_token_csrf, exigir_csrf
 from app.core.rate_limit import limiter, permitir_reenvio_email, permitir_recuperacion_email
 from app.core.login_attempts import esta_bloqueado_login, registrar_fallo_login, limpiar_intentos_login
@@ -129,9 +125,10 @@ def login_usuario(
             .with_for_update()
         )
 
-        if usuario is None or not verify_password(
-            datos.password,
-            usuario.password_hash
+        if (
+            usuario is None
+            or usuario.password_hash is None
+            or not verify_password(datos.password, usuario.password_hash)
         ):
             intentos, bloqueado = registrar_fallo_login(
                 sesion,
@@ -153,27 +150,7 @@ def login_usuario(
 
         limpiar_intentos_login(sesion, email)
 
-        token = generar_token_sesion()
-        expiracion = datetime.now(timezone.utc) + timedelta(days=21)
-
-        nueva_sesion = SesionUsuario(
-            usuario_id=usuario.id,
-            token_hash=hash_token_sesion(token),
-            fecha_expiracion=expiracion
-        )
-
-        sesion.add(nueva_sesion)
-        sesion.commit()
-
-        response.set_cookie(
-            key="muvis_session",
-            value=token,
-            httponly=True,
-            secure=os.getenv("APP_ENV") != "development",
-            samesite="lax",
-            max_age=21 * 24 * 60 * 60,
-            path="/"
-        )
+        crear_sesion_usuario(sesion, usuario.id, response)
 
     return {"mensaje": "Inicio de sesión correcto"}
 

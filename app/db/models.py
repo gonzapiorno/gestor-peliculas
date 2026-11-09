@@ -78,9 +78,9 @@ class Usuario(Base):
         nullable=True
     )
 
-    password_hash: Mapped[str] = mapped_column(
+    password_hash: Mapped[str | None] = mapped_column(
         String(255),
-        nullable=False
+        nullable=True,
     )
 
     fecha_creacion: Mapped[datetime] = mapped_column(
@@ -88,6 +88,41 @@ class Usuario(Base):
     server_default=func.now(),
     nullable=False
     )
+
+
+class IdentidadExterna(Base):
+    __tablename__ = "identidades_externas"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "proveedor",
+            "sujeto",
+            name="uq_identidades_externas_proveedor_sujeto",
+        ),
+    )
+
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    proveedor: Mapped[str] = mapped_column(String(32), primary_key=True)
+    sujeto: Mapped[str] = mapped_column(String(255), nullable=False)
+
+
+class IntentoGoogle(Base):
+    __tablename__ = "intentos_google"
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    nonce: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    fecha_expiracion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )
+    sujeto: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    paso: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
 
 class CodigoVerificacionEmail(Base):
     __tablename__ = "codigos_verificacion_email"

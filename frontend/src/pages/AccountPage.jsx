@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import { AccountSession } from "../components/layout/Header";
+import GoogleVinculacion from "../components/auth/GoogleVinculacion";
 import FeedbackPanel from "../components/ui/FeedbackPanel";
 import Icon from "../components/ui/Icon";
 import "./AccountPage.css";
@@ -24,6 +25,9 @@ export default function AccountPage() {
           </dl>
         )}
         <AccountSession variant="page" compact />
+        {user?.email_verificado === true && import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+          <GoogleVinculacion key={user.id} />
+        )}
       </section>
 
       <section className="account-page__feedback" aria-labelledby="account-feedback-heading">
