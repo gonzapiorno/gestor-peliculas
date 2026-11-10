@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useMatch } from "react-router-dom";
-
+import { useAuth } from "../../auth/useAuth";
 import FeedbackPanel from "../ui/FeedbackPanel";
 import Icon from "../ui/Icon";
 import Header from "./Header";
@@ -18,7 +18,8 @@ function NavigationLink({ to, icon, children, soon = false, active = false, mobi
 }
 
 export default function AppLayout({ children }) {
-  const [feedbackAbierto, setFeedbackAbierto] = useState(false);
+  const { user, sessionKey } = useAuth();
+  const [sesionFeedback, setSesionFeedback] = useState(null);
   const layoutRef = useRef(null);
   const bottomNavRef = useRef(null);
   const enDetalleCatalogo = Boolean(useMatch("/pelicula/:id"));
@@ -64,7 +65,12 @@ export default function AppLayout({ children }) {
             <NavigationLink to="/cuenta" icon="user" active={enLogin || enRegistro}>Mi cuenta</NavigationLink>
           </div>
         </nav>
-        <button className="sidebar__feedback" type="button" onClick={() => setFeedbackAbierto(true)}><Icon name="message" size={19} /><span>Dar feedback Beta</span></button>
+        {user && (
+          <button className="sidebar__feedback" type="button" onClick={() => setSesionFeedback(sessionKey)}>
+            <Icon name="message" size={19} />
+            <span>Dar feedback Beta</span>
+          </button>
+        )}
       </aside>
 
       <div className="app-layout__main">
@@ -79,7 +85,9 @@ export default function AppLayout({ children }) {
         <NavigationLink to="/cuenta" icon="user" mobile active={enLogin || enRegistro}>Cuenta</NavigationLink>
       </nav>
 
-      {feedbackAbierto && <FeedbackPanel onClose={() => setFeedbackAbierto(false)} />}
+      {user && sesionFeedback === sessionKey && (
+        <FeedbackPanel onClose={() => setSesionFeedback(null)} />
+      )}
     </div>
   );
 }

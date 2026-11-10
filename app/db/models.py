@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import String, Boolean, Numeric, DateTime, func, Integer, false, ForeignKey
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from decimal import Decimal
 from app.db.session import Base
@@ -233,4 +233,26 @@ class IntentoLogin(Base):
         DateTime(timezone=True),
         nullable=True
     )
+
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    __table_args__ = (
+        CheckConstraint("tipo IN ('error', 'sugerencia')", name="ck_feedback_tipo"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False)
+    descripcion: Mapped[str] = mapped_column(String(1000), nullable=False)
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
 

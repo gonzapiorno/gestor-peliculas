@@ -32,5 +32,15 @@ def permitir_recuperacion_email(email: str) -> bool:
         hash_email_login(email),
     )
 
+LIMITE_FEEDBACK = parse("5/hour")
+
+
+def permitir_envio_feedback(usuario_id: int) -> bool:
+    return limiter.limiter.hit(
+        LIMITE_FEEDBACK,
+        "envio-feedback",
+        str(usuario_id),
+    )
+
 
 

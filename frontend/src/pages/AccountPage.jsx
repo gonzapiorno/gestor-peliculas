@@ -30,12 +30,19 @@ export default function AccountPage() {
         )}
       </section>
 
-      <section className="account-page__feedback" aria-labelledby="account-feedback-heading">
-        <span className="account-page__feedback-icon"><Icon name="message" size={23} /></span>
-        <div><h2 id="account-feedback-heading">Muvis está en Beta</h2><p>Tus ideas nos ayudan a mejorar. El envío estará disponible pronto.</p></div>
-        <button className="button" type="button" onClick={() => setFeedbackAbierto(true)}>Dar feedback Beta</button>
-      </section>
-      {feedbackAbierto && <FeedbackPanel onClose={() => setFeedbackAbierto(false)} />}
+      {user && (
+        <section className="account-page__feedback" aria-labelledby="account-feedback-heading">
+          <span className="account-page__feedback-icon"><Icon name="message" size={23} /></span>
+          <div>
+            <h2 id="account-feedback-heading">Muvis está en Beta</h2>
+            <p>Tus ideas nos ayudan a mejorar.</p>
+          </div>
+          <button className="button" type="button" onClick={() => setFeedbackAbierto(true)}>
+            Dar feedback Beta
+          </button>
+          {feedbackAbierto && <FeedbackPanel onClose={() => setFeedbackAbierto(false)} />}
+        </section>
+      )}
     </main>
   );
 }
