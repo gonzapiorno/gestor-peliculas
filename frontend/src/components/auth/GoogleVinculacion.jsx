@@ -6,12 +6,12 @@ import {
 } from "../../services/authApi";
 import { errorMessage } from "../../utils/errorMessage";
 import Dialog from "../ui/Dialog";
+import Icon from "../ui/Icon";
 import GoogleAccess from "./GoogleAccess";
 import PasswordField from "./PasswordField";
 
 export default function GoogleVinculacion() {
   const [estado, setEstado] = useState(null);
-  const [abierto, setAbierto] = useState(false);
   const [credencial, setCredencial] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +26,6 @@ export default function GoogleVinculacion() {
   }, []);
 
   function cerrar() {
-    setAbierto(false);
     setCredencial("");
     setPassword("");
     setError("");
@@ -62,41 +61,44 @@ export default function GoogleVinculacion() {
   }
 
   if (!estado) return error ? <p role="alert">{error}</p> : null;
-  if (estado.vinculado) return <p role="status">Google vinculado.</p>;
+  if (estado.vinculado) return <p className="google-link__status" role="status"><Icon name="check" size={17} />Google vinculado.</p>;
   if (!estado.puede_vincular) return null;
 
   return (
-    <>
-      <button className="button" type="button" onClick={() => setAbierto(true)}>
-        Vincular Google
-      </button>
-      {abierto && (
+    <div className="google-link">
+      {credencial ? (
         <Dialog
+          className="google-account-dialog"
           title="Vincular Google"
-          description="Elegí el mismo correo que usás en Muvis y confirmá tu contraseña."
+          description="Confirmá tu contraseña de Muvis para vincular tu cuenta de Google."
           onClose={cerrar}
           busy={guardando}
         >
           {error && <p className="auth-page__error" role="alert">{error}</p>}
-          {credencial ? (
-            <form className="auth-form" onSubmit={submit}>
-              <PasswordField
-                id="google-link-password"
-                label="Contraseña de Muvis"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                disabled={guardando}
-                maxLength={128}
-              />
-              <button className="button button--primary" type="submit" disabled={guardando}>
-                {guardando ? "Vinculando…" : "Confirmar vinculación"}
-              </button>
-            </form>
-          ) : (
-            <GoogleAccess iniciar={iniciarVinculacionGoogle} onCredential={setCredencial} />
-          )}
+          <form className="auth-form" onSubmit={submit}>
+            <PasswordField
+              id="google-link-password"
+              label="Contraseña de Muvis"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              disabled={guardando}
+              maxLength={128}
+              focusOnOpen
+            />
+            <button className="button button--primary" type="submit" disabled={guardando}>
+              {guardando ? "Vinculando…" : "Confirmar vinculación"}
+            </button>
+          </form>
         </Dialog>
+      ) : (
+        <>
+          {error && <p className="auth-page__error" role="alert">{error}</p>}
+          <GoogleAccess iniciar={iniciarVinculacionGoogle} onCredential={(credential) => {
+            setError("");
+            setCredencial(credential);
+          }} />
+        </>
       )}
-    </>
+    </div>
   );
 }

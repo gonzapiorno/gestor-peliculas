@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import String, Boolean, Numeric, DateTime, func, Integer, false, ForeignKey
-from sqlalchemy import CheckConstraint, UniqueConstraint
+from sqlalchemy import CheckConstraint, LargeBinary, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from decimal import Decimal
 from app.db.session import Base
@@ -59,6 +59,12 @@ class Usuario(Base):
         unique=True,
         nullable=False
     )
+
+    nombre_visible: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    bio: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    avatar: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    foto_perfil: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
+    foto_perfil_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     email: Mapped[str] = mapped_column(
         String(255),

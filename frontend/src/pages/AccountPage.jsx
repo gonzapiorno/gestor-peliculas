@@ -4,11 +4,14 @@ import { AccountSession } from "../components/layout/Header";
 import GoogleVinculacion from "../components/auth/GoogleVinculacion";
 import FeedbackPanel from "../components/ui/FeedbackPanel";
 import Icon from "../components/ui/Icon";
+import ProfileEditDialog from "../components/account/ProfileEditDialog";
+import ProfileAvatar from "../components/account/ProfileAvatar";
 import "./AccountPage.css";
 
 export default function AccountPage() {
-  const { user } = useAuth();
+  const { user, guardarPerfil } = useAuth();
   const [feedbackAbierto, setFeedbackAbierto] = useState(false);
+  const [perfilAbierto, setPerfilAbierto] = useState(false);
 
   return (
     <main className="account-page page-container">
@@ -18,11 +21,37 @@ export default function AccountPage() {
       </header>
 
       <section className="account-page__profile" aria-labelledby="account-profile-heading">
-        <div className="account-page__profile-heading"><span className="account-page__avatar"><Icon name="user" size={28} /></span><h2 id="account-profile-heading">{user ? <><span className="visually-hidden">Nombre de usuario: </span>{user.nombre_usuario || "No disponible"}</> : "Tu cine, en un solo lugar"}</h2></div>
+        <div className="account-page__profile-heading">
+          <ProfileAvatar user={user} className="account-page__avatar" iconSize={40} />
+          <div>
+            <h2 id="account-profile-heading">
+              {user
+                ? user.nombre_visible || user.nombre_usuario || "No disponible"
+                : "Tu cine, en un solo lugar"}
+            </h2>
+            {user?.nombre_visible && (
+              <p className="account-page__handle">@{user.nombre_usuario}</p>
+            )}
+          </div>
+        </div>
+
         {user && (
-          <dl className="account-page__data">
-            <div><dt>Email</dt><dd>{user.email || "No disponible"}</dd></div>
-          </dl>
+          <>
+            {user.bio && <p className="account-page__bio">{user.bio}</p>}
+            <dl className="account-page__data">
+              <div><dt>Email</dt><dd>{user.email || "No disponible"}</dd></div>
+            </dl>
+            <button className="button" type="button" onClick={() => setPerfilAbierto(true)}>
+              Editar perfil
+            </button>
+            {perfilAbierto && (
+              <ProfileEditDialog
+                user={user}
+                onSave={guardarPerfil}
+                onClose={() => setPerfilAbierto(false)}
+              />
+            )}
+          </>
         )}
         <AccountSession variant="page" compact />
         {user?.email_verificado === true && import.meta.env.VITE_GOOGLE_CLIENT_ID && (
@@ -37,7 +66,7 @@ export default function AccountPage() {
             <h2 id="account-feedback-heading">Muvis está en Beta</h2>
             <p>Tus ideas nos ayudan a mejorar.</p>
           </div>
-          <button className="button" type="button" onClick={() => setFeedbackAbierto(true)}>
+          <button className="button button--feedback" type="button" onClick={() => setFeedbackAbierto(true)}>
             Dar feedback Beta
           </button>
           {feedbackAbierto && <FeedbackPanel onClose={() => setFeedbackAbierto(false)} />}

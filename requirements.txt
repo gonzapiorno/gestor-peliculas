@@ -10,3 +10,4 @@ slowapi
 pydantic[email]
 google-auth
 requests
+Pillow

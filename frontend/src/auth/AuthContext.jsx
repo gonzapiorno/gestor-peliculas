@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cerrarSesion, iniciarSesion, obtenerUsuarioActual, registrarUsuario } from "../services/authApi";
+import {
+  cambiarFotoPerfil,
+  cerrarSesion,
+  editarPerfil,
+  iniciarSesion,
+  obtenerUsuarioActual,
+  registrarUsuario,
+} from "../services/authApi";
 import { ApiError, onSessionExpired, resetSessionSecurity } from "../services/apiClient";
 
 import { AuthContext } from "./useAuth";
@@ -98,11 +105,53 @@ export function AuthProvider({ children }) {
     } finally { busyRef.current = false; }
   }
 
+
+  async function guardarDatosCuenta(operacion) {
+    if (busyRef.current) {
+      throw new ApiError("Ya hay una operación de sesión en curso");
+    }
+
+    const usuarioId = identityRef.current;
+    if (usuarioId === null) {
+      throw new ApiError("Iniciá sesión para editar tu perfil", 401);
+    }
+
+    busyRef.current = true;
+
+    try {
+      const user = await operacion();
+      if (!mountedRef.current || identityRef.current !== usuarioId || user.id !== usuarioId) {
+        throw new ApiError("La sesión cambió. Volvé a intentarlo.", 401);
+      }
+
+      ++actionRef.current;
+      bootstrapRef.current = Promise.resolve(user);
+      setSession((previous) => ({ ...previous, user }));
+    } finally {
+      busyRef.current = false;
+    }
+  }
+
+  function guardarPerfil(cambios) {
+    return guardarDatosCuenta(() => editarPerfil(cambios));
+  }
+
+  function guardarFotoPerfil(foto) {
+    return guardarDatosCuenta(() => cambiarFotoPerfil(foto));
+  }
+
+
   function retrySession() {
     if (busyRef.current) return Promise.resolve();
     setSession((previous) => ({ ...previous, status: "loading", error: null }));
     return recover(true);
   }
 
-  return <AuthContext.Provider value={{ ...session, login, register, logout, retrySession }}>{children}</AuthContext.Provider>;
+    return (
+    <AuthContext.Provider
+      value={{ ...session, login, register, logout, retrySession, guardarPerfil, guardarFotoPerfil }}
+    >
+      {children}
+    </AuthContext.Provider>
+    );
 }

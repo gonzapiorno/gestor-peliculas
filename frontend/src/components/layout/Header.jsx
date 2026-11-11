@@ -5,6 +5,7 @@ import { useAuth } from "../../auth/useAuth";
 import GlobalSearch from "../movies/GlobalSearch";
 import Icon from "../ui/Icon";
 import { errorMessage } from "../../utils/errorMessage";
+import ProfileAvatar from "../account/ProfileAvatar";
 import "./Header.css";
 
 function SessionActions({ auth, variant, compact }) {
@@ -50,14 +51,14 @@ function SessionActions({ auth, variant, compact }) {
             !compact && <p className="account-session__description">Tu colección está vinculada a esta cuenta.</p>
           ) : (
             <Link to="/cuenta" className="header__profile" aria-label={"Mi cuenta: " + (user.nombre_usuario || user.email)}>
-              <span className="header__avatar"><Icon name="user" size={19} /></span>
+              <ProfileAvatar user={user} className="header__avatar" iconSize={19} />
               <span className="header__identity">
                 <span className="header__username" title={user.nombre_usuario || user.email}>{user.nombre_usuario || user.email}</span>
                 <span className="header__account-label">Mi cuenta</span>
               </span>
             </Link>
           )}
-          <button className={esPagina ? "button" : "header__logout"} type="button" disabled={ocupado} onClick={() => ejecutar("logout")}>{pendiente === "logout" ? "Cerrando sesión…" : "Cerrar sesión"}</button>
+          <button className={`button button--logout${esPagina ? "" : " header__logout"}`} type="button" disabled={ocupado} onClick={() => ejecutar("logout")}>{pendiente === "logout" ? "Cerrando sesión…" : "Cerrar sesión"}</button>
         </div>
       ) : status === "loading" ? (
         <span className="header__session-status" role="status">Comprobando sesión…</span>
@@ -87,6 +88,7 @@ export function AccountSession({ variant = "header", compact = false }) {
 }
 
 export default function Header() {
+  const { user } = useAuth();
   return (
     <header className="header">
       <div className="header__inner">
@@ -95,7 +97,9 @@ export default function Header() {
         </NavLink>
         <div className="header__search"><GlobalSearch /></div>
         <div className="header__desktop-account"><AccountSession /></div>
-        <Link className="header__mobile-account" to="/cuenta" aria-label="Ir a mi cuenta"><Icon name="user" size={21} /></Link>
+        <Link className="header__mobile-account" to="/cuenta" aria-label="Ir a mi cuenta">
+          <ProfileAvatar user={user} className="profile-avatar--mobile" iconSize={21} />
+        </Link>
       </div>
     </header>
   );

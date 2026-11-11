@@ -32,9 +32,6 @@
 .movie-detail__collection-error { width: 100%; }
 .movie-detail__collection-error p { margin: 0 0 12px; font-size: 13px; line-height: 1.7; }
 .movie-detail__collection-error .button { font-size: 13px; }
-.movie-detail__message { display: flex; gap: 8px; align-items: flex-start; color: var(--color-accent); font-size: 14px; line-height: 1.7; }
-.movie-detail__message > svg { margin-top: 3px; }
-.movie-detail__message.inline-error { color: var(--color-danger); justify-content: flex-start; flex-wrap: nowrap; }
 .movie-detail__personal { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; margin-top: 20px; }
 .movie-detail__personal p { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; font-size: 13px; }
 .movie-detail__personal p span { color: var(--color-text-secondary); }

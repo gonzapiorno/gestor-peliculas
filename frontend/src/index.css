@@ -56,6 +56,10 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .button--primary:hover:not(:disabled) { background: #E6F1C3; }
 .button--danger { color: var(--color-danger); background: #362321; }
 .button--danger:hover:not(:disabled) { background: #492B27; }
+.button--logout { background: #8d3936; color: #fff; }
+.button--logout:hover:not(:disabled) { background: #a6423d; }
+.button--feedback { background: #365c39; color: #fff; }
+.button--feedback:hover:not(:disabled) { background: #406a44; }
 .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; flex-shrink: 0; border: 0; border-radius: var(--radius-control); background: var(--color-surface-raised); color: var(--color-text-secondary); }
 .icon-button:hover:not(:disabled) { color: var(--color-text); background: var(--color-surface-hover); }
 .search-field { display: flex; align-items: center; gap: 12px; padding-inline: 16px; min-height: 46px; border: 0; border-radius: var(--radius-control); background: var(--color-surface-raised); color: var(--color-text-secondary); }

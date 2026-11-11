@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigationType, useSearchParams } from "react-router-dom";
 
 import CatalogMovieGrid from "../components/movies/CatalogMovieGrid";
+import CatalogAddDialog from "../components/movies/CatalogAddDialog";
 import Icon from "../components/ui/Icon";
 import PageState, { MovieSkeleton } from "../components/ui/PageState";
 import { obtenerPopulares } from "../services/catalogoApi";
@@ -20,6 +21,7 @@ function DiscoverPage() {
   const [searchParams] = useSearchParams();
   const search = useMovieSearch(searchParams.get("buscar") || "");
   const coleccion = useCatalogCollection();
+  const [peliculaParaAgregar, setPeliculaParaAgregar] = useState(null);
   const catalogRequestRef = useRef(null);
   const { key } = useLocation();
   const navigationType = useNavigationType();
@@ -110,7 +112,9 @@ function DiscoverPage() {
             </button>
           </PageState>
         ) : (
-          <CatalogMovieGrid peliculas={peliculasVisibles} guardadas={coleccion.guardadas} guardandoIds={coleccion.guardandoIds} errores={coleccion.errores} estadoColeccion={coleccion.estadoColeccion} onAgregar={coleccion.agregar} />
+          <CatalogMovieGrid peliculas={peliculasVisibles} guardadas={coleccion.guardadas} guardandoIds={coleccion.guardandoIds} errores={coleccion.errores} estadoColeccion={coleccion.estadoColeccion} onAgregar={(pelicula) => {
+            if (coleccion.puedeAgregar(pelicula)) setPeliculaParaAgregar(pelicula);
+          }} />
         )}
       </section>
 
@@ -122,6 +126,9 @@ function DiscoverPage() {
         </div>
         <Link className="button" to="/coleccion"><Icon name="arrow-right" size={17} />Ir a mi colección</Link>
       </aside>
+      {peliculaParaAgregar && (
+        <CatalogAddDialog pelicula={peliculaParaAgregar} onAdd={coleccion.agregar} onClose={() => setPeliculaParaAgregar(null)} />
+      )}
     </main>
   );
 }

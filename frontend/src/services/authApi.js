@@ -4,6 +4,26 @@ export function obtenerUsuarioActual() {
   return apiRequest("/usuarios/me", { requiresAuth: true, notifyUnauthorized: false, message: "No se pudo recuperar tu sesión" });
 }
 
+export function editarPerfil(cambios) {
+  return apiRequest("/usuarios/me", {
+    method: "PATCH",
+    body: cambios,
+    requiresAuth: true,
+    message: "No se pudo guardar tu perfil",
+  });
+}
+
+export function cambiarFotoPerfil(foto) {
+  return apiRequest("/usuarios/me/foto", {
+    method: foto === null ? "DELETE" : "POST",
+    body: foto === null ? undefined : foto,
+    requiresAuth: true,
+    message: foto === null
+      ? "No se pudo quitar tu foto"
+      : "No se pudo guardar tu foto",
+  });
+}
+
 export function iniciarSesion(email, password) {
   return apiRequest("/usuarios/login", { method: "POST", body: { email, password }, message: "No se pudo iniciar sesión" }).catch((error) => {
     if (error.status === 401) error.message = "Correo electrónico o contraseña incorrectos";

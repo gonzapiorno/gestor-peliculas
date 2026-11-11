@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Icon from "../ui/Icon";
 import "./AuthLayout.css";
 
-export default function AuthLayout({ children, title, description, eyebrow = "Tu historia de cine", mode = "login", navigationState, verified = false }) {
+export default function AuthLayout({ children, title, description, eyebrow = "Tu historia de cine", mode = "login", navigationState }) {
   const showTabs = mode === "login" || mode === "register";
   return (
     <div className={`auth-experience auth-experience--${mode}`}>
@@ -28,8 +28,8 @@ export default function AuthLayout({ children, title, description, eyebrow = "Tu
           </nav>}
           {mode === "verify" && <ol className="auth-experience__steps" aria-label="Activación de tu cuenta">
             <li><Icon name="check" size={14} /><span>Cuenta</span></li>
-            <li aria-current={!verified ? "step" : undefined}>{verified ? <Icon name="check" size={14} /> : <span className="auth-experience__step-number">2</span>}<span>Verificación</span></li>
-            <li aria-current={verified ? "step" : undefined}><span className="auth-experience__step-number">3</span><span>Entrar</span></li>
+            <li aria-current="step"><span className="auth-experience__step-number">2</span><span>Verificación</span></li>
+            <li><span className="auth-experience__step-number">3</span><span>Entrar</span></li>
           </ol>}
 
           {children}

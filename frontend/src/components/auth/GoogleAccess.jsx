@@ -72,6 +72,8 @@ export default function GoogleAccess({ iniciar = iniciarIntentoGoogle, onCredent
     const contenedor = boton.current;
     let activo = true;
     let procesando = false;
+    let observarAncho;
+    let frameAncho;
 
     async function prepararBoton() {
       const googleId = await cargarGoogle();
@@ -122,12 +124,33 @@ export default function GoogleAccess({ iniciar = iniciarIntentoGoogle, onCredent
         },
       });
 
-      googleId.renderButton(contenedor, {
-        theme: "filled_black",
-        size: "large",
-        text: "continue_with",
-        locale: "es",
-      });
+      let anchoAnterior = 0;
+      function renderizarBoton() {
+        const ancho = Math.min(400, contenedor.clientWidth);
+        if (!activo || procesando || ancho === 0 || ancho === anchoAnterior) return;
+        anchoAnterior = ancho;
+        contenedor.replaceChildren();
+        googleId.renderButton(contenedor, {
+          theme: "outline_dark",
+          shape: "pill",
+          size: "large",
+          width: String(ancho),
+          text: "continue_with",
+          locale: "es",
+        });
+      }
+
+      renderizarBoton();
+      if (typeof ResizeObserver === "function") {
+        observarAncho = new ResizeObserver(() => {
+          if (frameAncho !== undefined || contenedor.clientWidth === anchoAnterior) return;
+          frameAncho = window.requestAnimationFrame(() => {
+            frameAncho = undefined;
+            renderizarBoton();
+          });
+        });
+        observarAncho.observe(contenedor);
+      }
       setMensaje("");
     }
 
@@ -137,6 +160,8 @@ export default function GoogleAccess({ iniciar = iniciarIntentoGoogle, onCredent
 
     return () => {
       activo = false;
+      observarAncho?.disconnect();
+      if (frameAncho !== undefined) window.cancelAnimationFrame(frameAncho);
       contenedor.replaceChildren();
     };
   }, [iniciar, intento, esVinculacion]);
@@ -151,8 +176,8 @@ export default function GoogleAccess({ iniciar = iniciarIntentoGoogle, onCredent
   if (!clientId) return <p className="auth-page__status">Acceso con Google próximamente.</p>;
 
   return (
-    <div className="auth-google">
-      <div ref={boton} />
+    <div className={`auth-google${esVinculacion ? " auth-google--link" : ""}`}>
+      <div className="auth-google__button-slot" ref={boton} />
       {elegirNombre && <GoogleUsernameForm onRestart={reintentar} />}
       {mensaje && !error && <p className="auth-page__status" role="status">{mensaje}</p>}
       {error && (

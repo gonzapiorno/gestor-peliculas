@@ -99,7 +99,12 @@ export async function apiRequest(path, {
 } = {}) {
   const revision = sessionRevision;
   const headers = new Headers();
-  if (body !== undefined) headers.set("Content-Type", "application/json");
+  const esArchivo = body instanceof Blob;
+  if (body !== undefined) {
+    headers.set("Content-Type", esArchivo
+      ? body.type || "application/octet-stream"
+      : "application/json");
+  }
   if (csrf) headers.set("X-CSRF-Token", await getCsrfToken());
   if (requiresAuth && revision !== sessionRevision) throw new ApiError("La sesión cambió. Intentá de nuevo", 401);
   let response;
@@ -107,7 +112,7 @@ export async function apiRequest(path, {
     response = await fetch(`${API_URL}${path}`, {
       method, headers, credentials: "include", cache: "no-store",
       signal: AbortSignal.timeout(20000),
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined ? {} : { body: esArchivo ? body : JSON.stringify(body) }),
     });
   } catch (error) {
     throw new ApiError(error.name === "TimeoutError" || error.name === "AbortError"

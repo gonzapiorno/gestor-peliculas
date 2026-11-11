@@ -10,12 +10,12 @@ function VisibilityIcon({ visible }) {
   </svg>;
 }
 
-export default function PasswordField({ id, name = "password", label = "Contraseña", value, onChange, disabled, error, hint, autoComplete = "current-password", required = true, minLength, maxLength }) {
+export default function PasswordField({ id, name = "password", label = "Contraseña", value, onChange, disabled, error, hint, autoComplete = "current-password", required = true, minLength, maxLength, focusOnOpen }) {
   const [visible, setVisible] = useState(false);
   return <div className="auth-form__field">
     <label htmlFor={id}>{label}</label>
     <div className="auth-password">
-      <input id={id} name={name} type={visible ? "text" : "password"} value={value} onChange={onChange} disabled={disabled} autoComplete={autoComplete} required={required} minLength={minLength} maxLength={maxLength} aria-invalid={Boolean(error)} aria-describedby={`${id}-feedback`} />
+      <input id={id} name={name} type={visible ? "text" : "password"} value={value} onChange={onChange} disabled={disabled} autoComplete={autoComplete} required={required} minLength={minLength} maxLength={maxLength} data-autofocus={focusOnOpen ? "" : undefined} aria-invalid={Boolean(error)} aria-describedby={`${id}-feedback`} />
       <button type="button" className="auth-password__toggle" disabled={disabled} aria-label={`${visible ? "Ocultar" : "Mostrar"} ${label.toLowerCase()}`} aria-pressed={visible} aria-controls={id} onClick={() => setVisible((previous) => !previous)}><VisibilityIcon visible={visible} /></button>
     </div>
     <FieldFeedback id={`${id}-feedback`} error={error} hint={hint} />

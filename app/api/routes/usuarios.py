@@ -21,6 +21,8 @@ from app.schemas.usuarios import (
     ReenviarVerificacionSolicitud,
     SolicitudRecuperacionPassword,
     RestablecerPasswordSolicitud,
+    EditarPerfilSolicitud,
+    PerfilRespuesta
 )
 from app.core.security import hash_password, verify_password, hash_token_sesion
 from app.core.auth import crear_sesion_usuario, obtener_usuario_actual, exigir_email_verificado
@@ -29,6 +31,11 @@ from app.core.rate_limit import limiter, permitir_reenvio_email, permitir_recupe
 from app.core.login_attempts import esta_bloqueado_login, registrar_fallo_login, limpiar_intentos_login
 from app.core.email_verification import verificar_codigo_email, procesar_reenvio_verificacion
 from app.core.password_reset import procesar_solicitud_recuperacion, restablecer_password_con_token
+from uuid import uuid4
+
+from starlette.concurrency import run_in_threadpool
+
+from app.core.foto_perfil import preparar_foto_perfil
 
 router = APIRouter(
     prefix="/usuarios",
@@ -155,14 +162,98 @@ def login_usuario(
     return {"mensaje": "Inicio de sesión correcto"}
 
 
-@router.get(
-    "/me", 
-    response_model=UsuarioRespuesta
-)
+@router.get("/me", response_model=PerfilRespuesta)
 def obtener_mi_perfil(
-    usuario: Usuario = Depends(obtener_usuario_actual)
+    usuario: Usuario = Depends(obtener_usuario_actual),
 ):
     return usuario
+
+
+@router.patch(
+    "/me",
+    response_model=PerfilRespuesta,
+    dependencies=[Depends(exigir_csrf)],
+)
+def editar_mi_perfil(
+    datos: EditarPerfilSolicitud,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    cambios = datos.model_dump(exclude_unset=True)
+
+    with Session(engine) as sesion:
+        perfil = sesion.get(Usuario, usuario.id)
+
+        if perfil is None:
+            raise HTTPException(status_code=401, detail="Sesión inválida")
+
+        for campo, valor in cambios.items():
+            setattr(perfil, campo, valor)
+
+        sesion.commit()
+        sesion.refresh(perfil)
+        return perfil
+
+
+MAX_BYTES_FOTO_PERFIL = 8 * 1024 * 1024
+
+
+def guardar_foto_perfil(usuario_id: int, foto: bytes | None) -> Usuario:
+    with Session(engine) as sesion:
+        perfil = sesion.get(Usuario, usuario_id)
+        if perfil is None:
+            raise HTTPException(401, "Sesión inválida")
+
+        perfil.foto_perfil = foto
+        perfil.foto_perfil_version = uuid4().hex if foto is not None else None
+        sesion.commit()
+        sesion.refresh(perfil)
+        return perfil
+
+
+@router.get("/me/foto")
+def obtener_mi_foto(usuario: Usuario = Depends(obtener_usuario_actual)):
+    with Session(engine) as sesion:
+        foto = sesion.scalar(
+            select(Usuario.foto_perfil).where(Usuario.id == usuario.id)
+        )
+
+    if foto is None:
+        raise HTTPException(404, "Todavía no tenés una foto de perfil")
+
+    return Response(
+        content=foto,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "private, no-store"},
+    )
+
+
+@router.post(
+    "/me/foto",
+    response_model=PerfilRespuesta,
+    dependencies=[Depends(exigir_csrf)],
+)
+@limiter.limit("6/minute")
+async def subir_mi_foto(
+    request: Request,
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    contenido = bytearray()
+    async for fragmento in request.stream():
+        if len(contenido) + len(fragmento) > MAX_BYTES_FOTO_PERFIL:
+            raise HTTPException(413, "La imagen supera los 8 MiB")
+        contenido.extend(fragmento)
+
+    foto = await run_in_threadpool(preparar_foto_perfil, bytes(contenido))
+    return await run_in_threadpool(guardar_foto_perfil, usuario.id, foto)
+
+
+@router.delete(
+    "/me/foto",
+    response_model=PerfilRespuesta,
+    dependencies=[Depends(exigir_csrf)],
+)
+def quitar_mi_foto(usuario: Usuario = Depends(obtener_usuario_actual)):
+    return guardar_foto_perfil(usuario.id, None)
 
 
 @router.get("/csrf")

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { completarAltaGoogle } from "../../services/authApi";
 import { errorMessage } from "../../utils/errorMessage";
+import Dialog from "../ui/Dialog";
 
 export default function GoogleUsernameForm({ onRestart }) {
   const { retrySession } = useAuth();
@@ -35,41 +36,44 @@ export default function GoogleUsernameForm({ onRestart }) {
   }
 
   return (
-    <form className="auth-form" onSubmit={submit} aria-busy={guardando}>
-      <div className="auth-form__field">
-        <label htmlFor="google-username">Elegí tu nombre de usuario</label>
-        <input
-          id="google-username"
-          name="nombre_usuario"
-          autoComplete="username"
-          autoCapitalize="none"
-          value={nombre}
-          onChange={(event) => {
-            setNombre(event.target.value);
-            setError("");
-          }}
-          minLength={3}
-          maxLength={30}
-          pattern="[a-zA-Z0-9_]{3,30}"
-          required
+    <Dialog className="google-account-dialog" title="Elegí tu nombre de usuario" description="Tu cuenta de Google ya está confirmada." onClose={onRestart} busy={guardando}>
+      <form className="auth-form" onSubmit={submit}>
+        <div className="auth-form__field">
+          <label htmlFor="google-username">Nombre de usuario</label>
+          <input
+            id="google-username"
+            name="nombre_usuario"
+            autoComplete="username"
+            autoCapitalize="none"
+            value={nombre}
+            onChange={(event) => {
+              setNombre(event.target.value);
+              setError("");
+            }}
+            minLength={3}
+            maxLength={30}
+            pattern="[a-zA-Z0-9_]{3,30}"
+            required
+            data-autofocus
+            disabled={guardando || requiereReinicio}
+            aria-describedby="google-username-hint"
+          />
+          <p id="google-username-hint" className="auth-form__hint">
+            Usá de 3 a 30 letras, números o guiones bajos.
+          </p>
+        </div>
+        {error && <p className="auth-page__error" role="alert">{error}</p>}
+        <button
+          type="submit"
+          className="button button--primary auth-form__submit"
           disabled={guardando || requiereReinicio}
-          aria-describedby="google-username-hint"
-        />
-        <p id="google-username-hint" className="auth-form__hint">
-          Usá de 3 a 30 letras, números o guiones bajos.
-        </p>
-      </div>
-      {error && <p className="auth-page__error" role="alert">{error}</p>}
-      <button
-        type="submit"
-        className="button button--primary auth-form__submit"
-        disabled={guardando || requiereReinicio}
-      >
-        {guardando ? "Creando cuenta…" : "Crear mi cuenta con Google"}
-      </button>
-      <button type="button" className="auth-text-button" onClick={onRestart} disabled={guardando}>
-        Volver a Google
-      </button>
-    </form>
+        >
+          {guardando ? "Creando cuenta…" : "Crear mi cuenta con Google"}
+        </button>
+        <button type="button" className="auth-text-button" onClick={onRestart} disabled={guardando}>
+          Volver a Google
+        </button>
+      </form>
+    </Dialog>
   );
 }

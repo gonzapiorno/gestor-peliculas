@@ -65,14 +65,14 @@
   margin: 16px auto 0;
   background: none;
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: .85rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
   cursor: pointer;
 }
 
-.rating-dialog__clear:hover {
+.rating-dialog__clear:hover:not(:disabled) {
   color: var(--color-text);
-  text-decoration: underline;
-  text-underline-offset: 4px;
 }
 
 @media (max-width: 380px) {

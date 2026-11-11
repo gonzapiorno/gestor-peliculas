@@ -47,7 +47,7 @@ export default function AppLayout({ children }) {
   if (authRoute) return <div className="auth-route"><a href="#contenido" className="skip-link">Saltar al contenido</a>{children}</div>;
 
   return (
-    <div className="app-layout" ref={layoutRef}>
+    <div className={`app-layout${user ? " app-layout--feedback" : ""}`} ref={layoutRef}>
       <a href="#contenido" className="skip-link">Saltar al contenido</a>
       <aside className="sidebar" aria-label="Navegación de Muvis">
         <NavLink to="/" className="sidebar__brand" aria-label="Muvis Beta · Ir a descubrir">
@@ -66,7 +66,7 @@ export default function AppLayout({ children }) {
           </div>
         </nav>
         {user && (
-          <button className="sidebar__feedback" type="button" onClick={() => setSesionFeedback(sessionKey)}>
+          <button className="button button--feedback sidebar__feedback" type="button" onClick={() => setSesionFeedback(sessionKey)}>
             <Icon name="message" size={19} />
             <span>Dar feedback Beta</span>
           </button>
@@ -85,6 +85,11 @@ export default function AppLayout({ children }) {
         <NavigationLink to="/cuenta" icon="user" mobile active={enLogin || enRegistro}>Cuenta</NavigationLink>
       </nav>
 
+      {user && (
+        <button className="button button--feedback floating-feedback" type="button" aria-label="Dar feedback Beta" onClick={() => setSesionFeedback(sessionKey)}>
+          <Icon name="message" size={22} />
+        </button>
+      )}
       {user && sesionFeedback === sessionKey && (
         <FeedbackPanel onClose={() => setSesionFeedback(null)} />
       )}

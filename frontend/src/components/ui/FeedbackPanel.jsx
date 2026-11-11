@@ -31,58 +31,61 @@ export default function FeedbackPanel({ onClose }) {
     }
   }
 
+  if (enviado) {
+    return (
+      <Dialog
+        key="enviado"
+        className="feedback-confirmation"
+        title="Recibimos tu feedback. Gracias por ayudarnos a mejorar."
+        onClose={onClose}
+      />
+    );
+  }
+
   return (
     <Dialog
+      key="formulario"
       title="Dar feedback Beta"
       description="Contanos qué podríamos mejorar en Muvis."
       onClose={onClose}
       busy={enviando}
     >
-      {enviado ? (
-        <>
-          <p role="status">Gracias, recibimos tu feedback.</p>
-          <div className="dialog__actions">
-            <button className="button" type="button" onClick={onClose}>Cerrar</button>
-          </div>
-        </>
-      ) : (
-        <form className="feedback-panel" onSubmit={enviar}>
-          <label htmlFor={`${id}-type`}>Tipo de feedback</label>
-          <select
-            id={`${id}-type`}
-            value={tipo}
-            onChange={(event) => setTipo(event.target.value)}
-            disabled={enviando}
-            data-autofocus
-          >
-            <option value="error">Encontré un error</option>
-            <option value="sugerencia">Tengo una sugerencia</option>
-          </select>
+      <form className="feedback-panel" onSubmit={enviar}>
+        <label htmlFor={`${id}-type`}>Tipo de feedback</label>
+        <select
+          id={`${id}-type`}
+          value={tipo}
+          onChange={(event) => setTipo(event.target.value)}
+          disabled={enviando}
+          data-autofocus
+        >
+          <option value="error">Encontré un error</option>
+          <option value="sugerencia">Tengo una sugerencia</option>
+        </select>
 
-          <label htmlFor={`${id}-description`}>Descripción</label>
-          <textarea
-            id={`${id}-description`}
-            rows={5}
-            value={descripcion}
-            onChange={(event) => setDescripcion(event.target.value)}
-            placeholder="¿Qué pasó o qué te gustaría mejorar?"
-            maxLength={1000}
-            required
-            disabled={enviando}
-          />
+        <label htmlFor={`${id}-description`}>Descripción</label>
+        <textarea
+          id={`${id}-description`}
+          rows={5}
+          value={descripcion}
+          onChange={(event) => setDescripcion(event.target.value)}
+          placeholder="¿Qué pasó o qué te gustaría mejorar?"
+          maxLength={1000}
+          required
+          disabled={enviando}
+        />
 
-          {error && <p className="inline-error" role="alert">{error}</p>}
+        {error && <p className="inline-error" role="alert">{error}</p>}
 
-          <div className="dialog__actions">
-            <button className="button" type="button" onClick={onClose} disabled={enviando}>
-              Cerrar
-            </button>
-            <button className="button button--primary" type="submit" disabled={enviando || !descripcion.trim()}>
-              {enviando ? "Enviando…" : "Enviar feedback"}
-            </button>
-          </div>
-        </form>
-      )}
+        <div className="dialog__actions">
+          <button className="button" type="button" onClick={onClose} disabled={enviando}>
+            Cerrar
+          </button>
+          <button className="button button--primary" type="submit" disabled={enviando || !descripcion.trim()}>
+            {enviando ? "Enviando…" : "Enviar feedback"}
+          </button>
+        </div>
+      </form>
     </Dialog>
   );
 }
