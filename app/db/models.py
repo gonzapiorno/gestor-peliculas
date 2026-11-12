@@ -18,10 +18,15 @@ class PeliculaColeccion(Base):
     __tablename__ = "coleccion"
 
     __table_args__ = (
+        UniqueConstraint("usuario_id", "id_tmdb", name="uq_coleccion_usuario_tmdb"),
         UniqueConstraint(
             "usuario_id",
-            "id_tmdb",
-            name="uq_coleccion_usuario_tmdb"
+            "posicion_destacada",
+            name="uq_coleccion_usuario_posicion_destacada",
+        ),
+        CheckConstraint(
+            "posicion_destacada BETWEEN 1 AND 4",
+            name="ck_coleccion_posicion_destacada",
         ),
     )
 
@@ -47,6 +52,7 @@ class PeliculaColeccion(Base):
         Numeric(3, 1),
         nullable=True
     )
+    posicion_destacada: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class Usuario(Base):

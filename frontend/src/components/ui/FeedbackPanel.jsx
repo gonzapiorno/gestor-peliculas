@@ -35,7 +35,7 @@ export default function FeedbackPanel({ onClose }) {
     return (
       <Dialog
         key="enviado"
-        className="feedback-confirmation"
+        className="feedback-confirmation dialog--enter"
         title="Recibimos tu feedback. Gracias por ayudarnos a mejorar."
         onClose={onClose}
       />
@@ -45,6 +45,7 @@ export default function FeedbackPanel({ onClose }) {
   return (
     <Dialog
       key="formulario"
+      className="dialog--enter"
       title="Dar feedback Beta"
       description="Contanos qué podríamos mejorar en Muvis."
       onClose={onClose}

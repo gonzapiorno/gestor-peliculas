@@ -73,7 +73,7 @@ export default function CatalogAddDialog({ pelicula, onAdd, onClose }) {
   const etiquetaGuardar = estado === "pendiente" ? "Guardar en pendientes" : "Guardar como vista";
 
   return (
-    <Dialog className="catalog-add-dialog" title="Agregar a mi colección" description={pelicula.titulo} onClose={onClose} busy={guardando}>
+    <Dialog className="catalog-add-dialog dialog--enter" title="Agregar a mi colección" description={pelicula.titulo} onClose={onClose} busy={guardando}>
       {existente ? (
         <>
           <p role="status">Esta película ya está en tu colección.</p>

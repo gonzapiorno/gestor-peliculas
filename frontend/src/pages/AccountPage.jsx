@@ -6,6 +6,7 @@ import FeedbackPanel from "../components/ui/FeedbackPanel";
 import Icon from "../components/ui/Icon";
 import ProfileEditDialog from "../components/account/ProfileEditDialog";
 import ProfileAvatar from "../components/account/ProfileAvatar";
+import ProfileFeaturedMovies from "../components/account/ProfileFeaturedMovies";
 import "./AccountPage.css";
 
 export default function AccountPage() {
@@ -58,6 +59,8 @@ export default function AccountPage() {
           <GoogleVinculacion key={user.id} />
         )}
       </section>
+
+      {user && <ProfileFeaturedMovies key={user.id} />}
 
       {user && (
         <section className="account-page__feedback" aria-labelledby="account-feedback-heading">

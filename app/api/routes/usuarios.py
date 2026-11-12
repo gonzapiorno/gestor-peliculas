@@ -6,14 +6,15 @@ from fastapi import (
     Depends,
     Cookie,
     Request,
+    Path,
 )
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, Field
 
 from app.db.session import engine
-from app.db.models import Usuario, SesionUsuario
+from app.db.models import Usuario, SesionUsuario, PeliculaColeccion
 from app.schemas.usuarios import (
     UsuarioRegistro,
     UsuarioRespuesta,
@@ -22,7 +23,9 @@ from app.schemas.usuarios import (
     SolicitudRecuperacionPassword,
     RestablecerPasswordSolicitud,
     EditarPerfilSolicitud,
-    PerfilRespuesta
+    PerfilRespuesta,
+    EditarPeliculaDestacadaSolicitud,
+    PeliculaDestacadaRespuesta,
 )
 from app.core.security import hash_password, verify_password, hash_token_sesion
 from app.core.auth import crear_sesion_usuario, obtener_usuario_actual, exigir_email_verificado
@@ -192,6 +195,78 @@ def editar_mi_perfil(
         sesion.commit()
         sesion.refresh(perfil)
         return perfil
+
+
+@router.get(
+    "/me/peliculas-destacadas",
+    response_model=list[PeliculaDestacadaRespuesta],
+)
+def listar_peliculas_destacadas(
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    with Session(engine) as sesion:
+        consulta = (
+            select(PeliculaColeccion)
+            .where(
+                PeliculaColeccion.usuario_id == usuario.id,
+                PeliculaColeccion.posicion_destacada.is_not(None),
+            )
+            .order_by(PeliculaColeccion.posicion_destacada)
+        )
+        return sesion.scalars(consulta).all()
+
+
+@router.patch(
+    "/me/peliculas-destacadas/{posicion}",
+    status_code=204,
+    dependencies=[Depends(exigir_csrf)],
+)
+def editar_pelicula_destacada(
+    datos: EditarPeliculaDestacadaSolicitud,
+    posicion: int = Path(..., ge=1, le=4),
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    with Session(engine) as sesion:
+        usuario_id = sesion.scalar(
+            select(Usuario.id).where(Usuario.id == usuario.id).with_for_update()
+        )
+        if usuario_id is None:
+            raise HTTPException(401, "Sesión inválida")
+
+        pelicula = None
+        if datos.pelicula_id is not None:
+            pelicula = sesion.scalar(
+                select(PeliculaColeccion)
+                .where(
+                    PeliculaColeccion.id == datos.pelicula_id,
+                    PeliculaColeccion.usuario_id == usuario_id,
+                )
+                .with_for_update()
+            )
+            if pelicula is None:
+                raise HTTPException(404, "No encontramos esa película en tu colección")
+
+            if pelicula.posicion_destacada == posicion:
+                return Response(status_code=204)
+
+            if pelicula.posicion_destacada is not None:
+                raise HTTPException(409, "Esa película ya ocupa otro lugar en tu perfil")
+
+        sesion.execute(
+            update(PeliculaColeccion)
+            .where(
+                PeliculaColeccion.usuario_id == usuario_id,
+                PeliculaColeccion.posicion_destacada == posicion,
+            )
+            .values(posicion_destacada=None)
+        )
+
+        if pelicula is not None:
+            pelicula.posicion_destacada = posicion
+
+        sesion.commit()
+
+    return Response(status_code=204)
 
 
 MAX_BYTES_FOTO_PERFIL = 8 * 1024 * 1024

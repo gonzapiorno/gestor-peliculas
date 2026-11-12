@@ -56,6 +56,23 @@ class EditarPerfilSolicitud(BaseModel):
             return valor.strip() or None
         return valor
 
+
+class PeliculaDestacadaRespuesta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    titulo: str
+    anio: int | None
+    poster: str | None
+    posicion_destacada: int
+
+
+class EditarPeliculaDestacadaSolicitud(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pelicula_id: Annotated[int, Field(strict=True, gt=0)] | None
+
+
 class UsuarioLogin(BaseModel):
     email: EmailStr
     password: str

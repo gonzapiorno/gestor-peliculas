@@ -24,6 +24,24 @@ export function cambiarFotoPerfil(foto) {
   });
 }
 
+
+export function obtenerPeliculasDestacadas() {
+  return apiRequest("/usuarios/me/peliculas-destacadas", {
+    requiresAuth: true,
+    message: "No se pudieron cargar tus películas destacadas",
+  });
+}
+
+export function guardarPeliculaDestacada(posicion, peliculaId) {
+  return apiRequest(`/usuarios/me/peliculas-destacadas/${posicion}`, {
+    method: "PATCH",
+    requiresAuth: true,
+    body: { pelicula_id: peliculaId },
+    message: "No se pudo guardar el cambio",
+  });
+}
+
+
 export function iniciarSesion(email, password) {
   return apiRequest("/usuarios/login", { method: "POST", body: { email, password }, message: "No se pudo iniciar sesión" }).catch((error) => {
     if (error.status === 401) error.message = "Correo electrónico o contraseña incorrectos";

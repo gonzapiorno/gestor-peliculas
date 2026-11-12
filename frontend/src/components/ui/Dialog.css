@@ -6,3 +6,16 @@
 .dialog__description { margin: 0 0 25px; color: var(--color-text-secondary); line-height: 1.7; overflow-wrap: anywhere; }
 .dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 @media (max-width: 480px) { .dialog__body { padding: 26px 22px; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog--enter[open] {
+    /* Keep the same rendering layer when the entrance finishes. */
+    will-change: transform, opacity;
+    animation: dialog-enter 280ms cubic-bezier(.2, .55, .3, 1) both;
+  }
+
+  @keyframes dialog-enter {
+    from { opacity: .4; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
