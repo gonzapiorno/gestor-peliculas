@@ -1,5 +1,5 @@
 const configuredUrl = import.meta.env?.VITE_API_URL || "http://127.0.0.1:8000";
-const base = new URL(configuredUrl);
+const base = new URL(configuredUrl, globalThis.location?.origin);
 if (!["http:", "https:"].includes(base.protocol) || base.username || base.password || base.search || base.hash) {
   throw new Error("VITE_API_URL debe ser una URL HTTP(S) sin credenciales, parámetros ni fragmentos");
 }

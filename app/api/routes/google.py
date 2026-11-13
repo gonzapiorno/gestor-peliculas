@@ -35,7 +35,13 @@ class CredencialGoogleSolicitud(BaseModel):
 class VincularGoogleSolicitud(CredencialGoogleSolicitud):
     password: SecretStr
 
-def guardar_cookie_intento(response: Response, token: str, vigencia: int) -> None:
+def ruta_cookie_intento(request: Request) -> str:
+    return request.scope.get("root_path", "").rstrip("/") + RUTA_GOOGLE
+
+
+def guardar_cookie_intento(
+    request: Request, response: Response, token: str, vigencia: int
+) -> None:
     response.set_cookie(
         key=COOKIE_INTENTO,
         value=token,
@@ -43,7 +49,7 @@ def guardar_cookie_intento(response: Response, token: str, vigencia: int) -> Non
         secure=os.getenv("APP_ENV") != "development",
         samesite="lax",
         max_age=vigencia,
-        path=RUTA_GOOGLE,
+        path=ruta_cookie_intento(request),
     )
 
 
@@ -52,6 +58,7 @@ def hash_intento_vinculacion(token: str, token_sesion: str) -> str:
 
 
 def preparar_intento_google(
+    request: Request,
     response: Response,
     token_sesion: str | None = None,
 ) -> dict[str, str]:
@@ -83,14 +90,14 @@ def preparar_intento_google(
         sesion.commit()
 
     response.headers["Cache-Control"] = "no-store"
-    guardar_cookie_intento(response, token, VIGENCIA_INTENTO)
+    guardar_cookie_intento(request, response, token, VIGENCIA_INTENTO)
     return {"nonce": nonce}
 
 
 @router.post("/intento")
 @limiter.limit("10/minute")
 def iniciar_intento_google(request: Request, response: Response):
-    return preparar_intento_google(response)
+    return preparar_intento_google(request, response)
 
 
 @router.post("/vincular/intento", dependencies=[Depends(exigir_csrf)])
@@ -102,6 +109,7 @@ def iniciar_vinculacion_google(
 ):
     exigir_email_verificado(usuario)
     return preparar_intento_google(
+        request,
         response,
         token_sesion=request.cookies["muvis_session"],
     )
@@ -156,7 +164,7 @@ def recibir_credencial_google(
             intento.paso = paso
             intento.fecha_expiracion = ahora + timedelta(seconds=VIGENCIA_ALTA)
             sesion.commit()
-            guardar_cookie_intento(response, token, VIGENCIA_ALTA)
+            guardar_cookie_intento(request, response, token, VIGENCIA_ALTA)
             return {"paso": paso}
 
         sesion.delete(intento)
@@ -169,7 +177,7 @@ def recibir_credencial_google(
         else:
             sesion.commit()
 
-    response.delete_cookie(key=COOKIE_INTENTO, path=RUTA_GOOGLE)
+    response.delete_cookie(key=COOKIE_INTENTO, path=ruta_cookie_intento(request))
     return {"paso": paso}
 
 
@@ -250,7 +258,7 @@ def completar_alta_google(
             raise HTTPException(500, "No se pudo completar el registro") from None
 
     response.headers["Cache-Control"] = "no-store"
-    response.delete_cookie(key=COOKIE_INTENTO, path=RUTA_GOOGLE)
+    response.delete_cookie(key=COOKIE_INTENTO, path=ruta_cookie_intento(request))
     return {"paso": "entrar"}
 
 @router.post("/vincular", dependencies=[Depends(exigir_csrf)])
@@ -371,7 +379,7 @@ def vincular_google(
             raise HTTPException(500, "No se pudo guardar la vinculación") from None
 
     response.headers["Cache-Control"] = "no-store"
-    response.delete_cookie(key=COOKIE_INTENTO, path=RUTA_GOOGLE)
+    response.delete_cookie(key=COOKIE_INTENTO, path=ruta_cookie_intento(request))
     return {"vinculado": True}
 
 
