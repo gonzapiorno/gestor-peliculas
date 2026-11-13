@@ -7,6 +7,7 @@ from app.api.routes.coleccion import router as coleccion_router
 from app.api.routes.usuarios import router as usuarios_router
 from app.api.routes.google import router as google_router
 from app.api.routes.feedback import router as feedback_router
+from app.api.routes.amistades import router as amistades_router
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.rate_limit import limiter
@@ -45,6 +46,7 @@ app.include_router(coleccion_router)
 app.include_router(usuarios_router)
 app.include_router(google_router)
 app.include_router(feedback_router)
+app.include_router(amistades_router)
 
 
 # Primera ruta de prueba

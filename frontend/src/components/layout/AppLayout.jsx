@@ -7,12 +7,11 @@ import Header from "./Header";
 import { isAuthRoute } from "../../utils/authFlow";
 import "./AppLayout.css";
 
-function NavigationLink({ to, icon, children, soon = false, active = false, mobile = false, end = false }) {
+function NavigationLink({ to, icon, children, active = false, mobile = false, end = false }) {
   return (
     <NavLink to={to} end={end} className={({ isActive }) => `${mobile ? "bottom-nav__link" : "sidebar__link"}${isActive || active ? " is-active" : ""}`}>
       <span className={mobile ? "bottom-nav__icon" : "sidebar__icon"}><Icon name={icon} size={21} /></span>
       <span>{children}</span>
-      {soon && <span className={mobile ? "bottom-nav__soon" : "sidebar__soon"}>{mobile ? "Pronto" : "Próximamente"}</span>}
     </NavLink>
   );
 }
@@ -58,7 +57,7 @@ export default function AppLayout({ children }) {
             <p className="sidebar__label">Cinemateca</p>
             <NavigationLink to="/" icon="compass" end active={enDetalleCatalogo}>Descubrir</NavigationLink>
             <NavigationLink to="/coleccion" icon="library">Mi colección</NavigationLink>
-            <NavigationLink to="/comunidad" icon="users" soon>Comunidad</NavigationLink>
+            <NavigationLink to="/comunidad" icon="users">Comunidad</NavigationLink>
           </div>
           <div className="sidebar__group">
             <p className="sidebar__label">Tu espacio</p>
@@ -81,7 +80,7 @@ export default function AppLayout({ children }) {
       <nav className="bottom-nav" ref={bottomNavRef} aria-label="Navegación principal móvil">
         <NavigationLink to="/" icon="compass" end mobile active={enDetalleCatalogo}>Descubrir</NavigationLink>
         <NavigationLink to="/coleccion" icon="library" mobile>Mi colección</NavigationLink>
-        <NavigationLink to="/comunidad" icon="users" mobile soon>Comunidad</NavigationLink>
+        <NavigationLink to="/comunidad" icon="users" mobile>Comunidad</NavigationLink>
         <NavigationLink to="/cuenta" icon="user" mobile active={enLogin || enRegistro}>Cuenta</NavigationLink>
       </nav>
 

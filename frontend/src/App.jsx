@@ -74,7 +74,7 @@ function AppContent() {
             <Route path="/recuperar-password" element={<RecoverPasswordPage />} />
             <Route path="/restablecer-password" element={<ResetPasswordPage />} />
             <Route path="/cuenta" element={<AccountPage />} />
-            <Route path="/comunidad" element={<CommunityPage />} />
+            <Route path="/comunidad" element={<RequireAuth><CommunityPage /></RequireAuth>} />
           </Routes>
         </div>
 

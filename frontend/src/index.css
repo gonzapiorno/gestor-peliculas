@@ -30,7 +30,7 @@
   --radius-pill: 999px;
 }
 * { box-sizing: border-box; }
-html { background: var(--color-bg); scroll-padding-block: 100px; }
+html { background: var(--color-bg); scroll-padding-block: 100px; scrollbar-gutter: stable; }
 body { margin: 0; min-width: 0; background: var(--color-bg); color: var(--color-text); }
 button, input, select, textarea { font: inherit; }
 button, a, input, select { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

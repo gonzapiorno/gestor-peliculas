@@ -2,7 +2,7 @@ import { useState } from "react";
 import { API_URL } from "../../services/apiClient";
 import Icon from "../ui/Icon";
 
-export default function ProfileAvatar({ user, className, iconSize = 24 }) {
+export default function ProfileAvatar({ user, className, iconSize = 24, photoPath = "/usuarios/me/foto" }) {
   const [fotoConError, setFotoConError] = useState(null);
   const nombre = user?.nombre_visible || user?.nombre_usuario || "";
   const iniciales = nombre
@@ -14,20 +14,21 @@ export default function ProfileAvatar({ user, className, iconSize = 24 }) {
     .toLocaleUpperCase("es-AR");
 
   const version = user?.foto_perfil_version;
+  const photoUrl = version ? `${API_URL}${photoPath}?v=${encodeURIComponent(version)}` : null;
   const icono = user?.avatar || "user";
   let contenido = user?.avatar || !iniciales
     ? <Icon name={icono} size={iconSize} />
     : iniciales;
 
-  if (version && version !== fotoConError) {
+  if (photoUrl && photoUrl !== fotoConError) {
     contenido = (
       <img
-        key={version}
+        key={photoUrl}
         className="profile-avatar__photo"
-        src={`${API_URL}/usuarios/me/foto?v=${encodeURIComponent(version)}`}
+        src={photoUrl}
         crossOrigin="use-credentials"
         alt=""
-        onError={() => setFotoConError(version)}
+        onError={() => setFotoConError(photoUrl)}
       />
     );
   }

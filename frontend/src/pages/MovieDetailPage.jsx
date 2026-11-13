@@ -124,7 +124,6 @@ function MovieDetailPage() {
           </div>
           <div className="movie-detail__poster-caption">
             <span>Película · TMDB</span>
-            {pelicula.duracion > 0 && <span>{pelicula.duracion} min</span>}
           </div>
         </aside>
 
@@ -134,6 +133,9 @@ function MovieDetailPage() {
 
           <div className="movie-detail__meta">
             <span className="movie-detail__year">{pelicula.anio || "Año no disponible"}</span>
+            {pelicula.duracion > 0 && (
+              <span className="movie-detail__duration"><Icon name="clock" size={16} />{pelicula.duracion} min</span>
+            )}
             {generos.length > 0 && <span className="movie-detail__meta-separator" aria-hidden="true">·</span>}
             <div className="movie-detail__genres">
               {generos.map((genero) => <span key={genero}>{genero}</span>)}

@@ -101,58 +101,60 @@ function SelectorDestacada({ actual, destacadas, onGuardar, onClose }) {
         />
       </label>
 
-      {errorCarga && (
-        <div className="inline-error" role="alert">
-          <span>{errorCarga}</span>
-          <button
-            className="button"
-            type="button"
-            disabled={guardando}
-            onClick={() => {
-              setErrorCarga("");
-              setIntento((valor) => valor + 1);
-            }}
-          >
-            Reintentar
-          </button>
-        </div>
-      )}
+      <div className="featured-picker__results">
+        {errorCarga && (
+          <div className="inline-error" role="alert">
+            <span>{errorCarga}</span>
+            <button
+              className="button"
+              type="button"
+              disabled={guardando}
+              onClick={() => {
+                setErrorCarga("");
+                setIntento((valor) => valor + 1);
+              }}
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
 
-      {!errorCarga && coleccion === null && <p role="status">Cargando colección…</p>}
-      {coleccion?.length === 0 && <p>Agregá películas a tu colección para destacarlas.</p>}
-      {coleccion?.length > 0 && resultados?.length === 0 && (
-        <p role="status">No encontramos películas con ese título.</p>
-      )}
+        {!errorCarga && coleccion === null && <p role="status">Cargando colección…</p>}
+        {coleccion?.length === 0 && <p>Agregá películas a tu colección para destacarlas.</p>}
+        {coleccion?.length > 0 && resultados?.length === 0 && (
+          <p role="status">No encontramos películas con ese título.</p>
+        )}
 
-      {resultados?.length > 0 && (
-        <ul className="featured-picker">
-          {resultados.map((pelicula) => {
-            const yaDestacada = idsDestacados.has(pelicula.id);
+        {resultados?.length > 0 && (
+          <ul className="featured-picker">
+            {resultados.map((pelicula) => {
+              const yaDestacada = idsDestacados.has(pelicula.id);
 
-            return (
-              <li key={pelicula.id}>
-                <button
-                  className="button featured-picker__option"
-                  type="button"
-                  disabled={guardando || yaDestacada}
-                  onClick={() => guardar(pelicula)}
-                >
-                  <span className="featured-picker__poster" aria-hidden="true">
-                    <Poster src={pelicula.poster} title={pelicula.titulo} sizes="40px" />
-                  </span>
-                  <span className="featured-picker__label">
-                    {pelicula.titulo}
-                    {pelicula.anio && <small>{pelicula.anio}</small>}
-                    {yaDestacada && (
-                      <small>{actual?.id === pelicula.id ? "Selección actual" : "Ya destacada"}</small>
-                    )}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              return (
+                <li key={pelicula.id}>
+                  <button
+                    className="button featured-picker__option"
+                    type="button"
+                    disabled={guardando || yaDestacada}
+                    onClick={() => guardar(pelicula)}
+                  >
+                    <span className="featured-picker__poster" aria-hidden="true">
+                      <Poster src={pelicula.poster} title={pelicula.titulo} sizes="40px" />
+                    </span>
+                    <span className="featured-picker__label">
+                      {pelicula.titulo}
+                      {pelicula.anio && <small>{pelicula.anio}</small>}
+                      {yaDestacada && (
+                        <small>{actual?.id === pelicula.id ? "Selección actual" : "Ya destacada"}</small>
+                      )}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       {errorGuardado && <p className="inline-error" role="alert">{errorGuardado}</p>}
       {guardando && <p role="status">Guardando cambio…</p>}

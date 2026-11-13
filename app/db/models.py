@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import String, Boolean, Numeric, DateTime, func, Integer, false, ForeignKey
-from sqlalchemy import CheckConstraint, LargeBinary, UniqueConstraint
+from sqlalchemy import CheckConstraint, LargeBinary, UniqueConstraint,Index
 from sqlalchemy.orm import Mapped, mapped_column
 from decimal import Decimal
 from app.db.session import Base
@@ -100,6 +100,42 @@ class Usuario(Base):
     server_default=func.now(),
     nullable=False
     )
+
+
+class SolicitudAmistad(Base):
+    __tablename__ = "solicitudes_amistad"
+
+    __table_args__ = (
+        CheckConstraint(
+            "remitente_id <> destinatario_id",
+            name="ck_solicitudes_amistad_usuarios_distintos",
+        ),
+        CheckConstraint(
+            "estado IN ('pendiente', 'aceptada', 'rechazada')",
+            name="ck_solicitudes_amistad_estado",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    remitente_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"), index=True
+    )
+    destinatario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"), index=True
+    )
+    estado: Mapped[str] = mapped_column(String(10), server_default="pendiente")
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    fecha_respuesta: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+Index(
+    "uq_solicitudes_amistad_pareja",
+    func.least(SolicitudAmistad.remitente_id, SolicitudAmistad.destinatario_id),
+    func.greatest(SolicitudAmistad.remitente_id, SolicitudAmistad.destinatario_id),
+    unique=True,
+)
 
 
 class IdentidadExterna(Base):

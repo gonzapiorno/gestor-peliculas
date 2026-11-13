@@ -57,6 +57,7 @@
   line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -84,13 +85,17 @@
   margin-top: 12px;
 }
 
-.featured-picker {
-  display: grid;
-  gap: 8px;
-  max-height: min(42vh, 360px);
+.featured-picker__results {
+  block-size: min(42dvh, 360px);
   margin-top: 14px;
   padding: 4px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.featured-picker {
+  display: grid;
+  gap: 8px;
 }
 
 .featured-picker__option {

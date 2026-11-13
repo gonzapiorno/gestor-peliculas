@@ -221,14 +221,11 @@ function PersonalMovieDetail({ id }) {
             </span>
 
             {detalle?.duracion > 0 && (
-              <>
-                <span className="movie-detail__meta-separator">·</span>
-                <span>{detalle.duracion} min</span>
-              </>
+              <span className="movie-detail__duration"><Icon name="clock" size={16} />{detalle.duracion} min</span>
             )}
 
             {generos.length > 0 && (
-              <span className="movie-detail__meta-separator">·</span>
+              <span className="movie-detail__meta-separator" aria-hidden="true">·</span>
             )}
 
             <div className="movie-detail__genres">
