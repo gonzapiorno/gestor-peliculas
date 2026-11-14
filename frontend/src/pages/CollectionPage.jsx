@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigationType } from "react-router-dom";
 
 import MovieGrid from "../components/movies/MovieGrid";
 import StatsCard from "../components/movies/StatsCard";
@@ -19,6 +19,9 @@ import {
 import "./CollectionPage.css";
 import { errorMessage } from "../utils/errorMessage";
 import { COLLECTION_CHANGED_EVENT } from "../utils/collectionEvents";
+import { useAuth } from "../auth/useAuth";
+import { isPlainLinkClick } from "../utils/catalogNavigation";
+import { collectionView, rememberCollectionView } from "../utils/collectionNavigation";
 
 const FILTERS = [
   { id: "todas", label: "Todas" },
@@ -55,16 +58,20 @@ function preferredView() {
 }
 
 function CollectionPage() {
+  const { key } = useLocation();
+  const navigationType = useNavigationType();
+  const { sessionKey } = useAuth();
+  const [previousView] = useState(() => navigationType === "POP" ? collectionView(key, sessionKey) : undefined);
   const [peliculas, setPeliculas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [errorCambio, setErrorCambio] = useState(null);
   const [actualizandoIds, setActualizandoIds] = useState(new Set());
-  const [busqueda, setBusqueda] = useState("");
-  const [filtro, setFiltro] = useState("todas");
-  const [filtroNota, setFiltroNota] = useState("todas");
-  const [orden, setOrden] = useState("recientes");
-  const [vista, setVista] = useState(preferredView);
+  const [busqueda, setBusqueda] = useState(previousView?.busqueda ?? "");
+  const [filtro, setFiltro] = useState(previousView?.filtro ?? "todas");
+  const [filtroNota, setFiltroNota] = useState(previousView?.filtroNota ?? "todas");
+  const [orden, setOrden] = useState(previousView?.orden ?? "recientes");
+  const [vista, setVista] = useState(() => previousView?.vista ?? preferredView());
   const [peliculaPuntuacion, setPeliculaPuntuacion] = useState(null);
   const [peliculaEliminar, setPeliculaEliminar] = useState(null);
   const [anuncio, setAnuncio] = useState("");
@@ -73,6 +80,28 @@ function CollectionPage() {
   const guardandoRef = useRef(new Set());
   const cargaRef = useRef(null);
   const filtrosNotaRef = useRef(null);
+  const pageRef = useRef(null);
+  const restoredRef = useRef(false);
+
+  function rememberView(event, movieId) {
+    if (!isPlainLinkClick(event)) return;
+    const movie = event.currentTarget.closest("[data-collection-movie]");
+    rememberCollectionView(key, {
+      sessionKey, busqueda, filtro, filtroNota, orden, vista, movieId,
+      top: window.scrollY,
+      offset: movie?.getBoundingClientRect().top,
+    });
+  }
+
+  useLayoutEffect(() => {
+    if (!previousView || restoredRef.current || cargando || error) return;
+    restoredRef.current = true;
+    const movie = pageRef.current?.querySelector(`[data-collection-movie="${previousView.movieId}"]`);
+    const top = movie && previousView.offset !== undefined
+      ? window.scrollY + movie.getBoundingClientRect().top - previousView.offset
+      : previousView.top;
+    window.scrollTo({ top, left: 0, behavior: "instant" });
+  }, [previousView, cargando, error]);
 
   function reintentarCarga() {
     setCargando(true);
@@ -189,7 +218,7 @@ function CollectionPage() {
   const dialogAbierto = Boolean(peliculaPuntuacion || peliculaEliminar);
 
   return (
-    <main className="collection-page page-container">
+    <main className="collection-page page-container" ref={pageRef}>
       <header className="page-heading collection-heading">
         <div>
           <p className="eyebrow">TU CINE, A TU MANERA</p>
@@ -304,6 +333,7 @@ function CollectionPage() {
 
           {cargando ? <MovieSkeleton count={4} /> : visibles.length > 0 ? (
             <MovieGrid
+              onOpenDetail={rememberView}
               peliculas={visibles}
               viewMode={vista}
               onCambiarEstado={(pelicula) => guardarCambio(pelicula, "estado", pelicula.estado === "vista" ? "pendiente" : "vista")}

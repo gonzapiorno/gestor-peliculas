@@ -81,9 +81,9 @@ export default function MovieSearch({ query, onQueryChange, results, status, err
   function select(movie) {
     close();
     const title = query.trim();
-    const fromResults = catalogQuery(location) === title;
-    if (fromResults) rememberResultPosition(location.key);
-    navigate(`/pelicula/${movie.id_tmdb}`, { state: { catalogSearch: { query: title, fromResults } } });
+    const fromDiscover = location.pathname === "/" && catalogQuery(location) === title;
+    if (fromDiscover) rememberResultPosition(location.key);
+    navigate(`/pelicula/${movie.id_tmdb}`, { state: { catalogSearch: { query: title, fromDiscover } } });
   }
 
   function viewAll() {

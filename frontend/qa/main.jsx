@@ -25,6 +25,19 @@ const detalles = {
   335984: { generos: ["Ciencia ficción", "Drama"], duracion: 164, sinopsis: "Un descubrimiento lleva a un investigador a seguir un rastro que podría cambiar su mundo. Sinopsis de prueba." },
 };
 
+const thrillers = [
+  { id_tmdb: 807, titulo: "Seven: Los siete pecados capitales", anio: "1995", puntuacion: 8.4, poster: poster("/6yoghtyTpznpBik8EngEmJskVUO.jpg") },
+  { id_tmdb: 11324, titulo: "La isla siniestra", anio: "2010", puntuacion: 8.2, poster: poster("/nrmXQ0zcZUL8jFLrakWc90IR8z9.jpg") },
+];
+for (const pelicula of thrillers) detalles[pelicula.id_tmdb] = { generos: ["Thriller", "Misterio"] };
+
+const categoriasCatalogo = {
+  populares: catalogo,
+  thriller: thrillers,
+  drama: catalogo.filter(({ id_tmdb }) => detalles[id_tmdb]?.generos.includes("Drama")),
+  romance: catalogo.filter(({ id_tmdb }) => detalles[id_tmdb]?.generos.includes("Romance")),
+};
+
 if (scenario === "edge") {
   catalogo.push({
     id_tmdb: 999001,
@@ -515,10 +528,26 @@ window.fetch = async function fetchSimulado(input, init) {
     return responder(resultadosBusqueda(consultaBusqueda));
   }
   if (request.method === "GET" && url.pathname === "/catalogo/populares") return responder(catalogo);
+  if (request.method === "GET" && url.pathname === "/catalogo/explorar") {
+    const categoria = url.searchParams.get("categoria") || "populares";
+    const pagina = Number(url.searchParams.get("pagina") || "1");
+    const decada = url.searchParams.has("decada") ? Number(url.searchParams.get("decada")) : null;
+    if (!Object.hasOwn(categoriasCatalogo, categoria) || !Number.isInteger(pagina) || pagina < 1 || pagina > 500) {
+      return error(422, "Categoría o página inválida");
+    }
+    const peliculas = decada === null ? categoriasCatalogo[categoria]
+      : categoriasCatalogo[categoria].filter(({ anio }) => Number(anio) >= decada && Number(anio) <= decada + 9);
+    const inicio = (pagina - 1) * 20;
+    return responder({
+      peliculas: peliculas.slice(inicio, inicio + 20),
+      siguiente_pagina: inicio + 20 < peliculas.length ? pagina + 1 : null,
+      ...(decada === null ? {} : { decada }),
+    });
+  }
   const detalle = /^\/catalogo\/peliculas\/(\d+)$/.exec(url.pathname);
   if (request.method === "GET" && detalle) {
     if (fallarMetadatos) return error(500, "Fallo simulado de metadatos TMDB; la colección personal sigue disponible");
-    const pelicula = catalogo.find((item) => item.id_tmdb === Number(detalle[1]));
+    const pelicula = [...catalogo, ...thrillers].find((item) => item.id_tmdb === Number(detalle[1]));
     return pelicula ? responder({ ...pelicula, ...detalles[pelicula.id_tmdb] }) : error(404, "Película no encontrada");
   }
   if (url.pathname === "/coleccion/" && request.method === "GET") {
@@ -526,7 +555,7 @@ window.fetch = async function fetchSimulado(input, init) {
   }
   if (url.pathname === "/coleccion/" && request.method === "POST") {
     if (!tieneUnicoCampo(body, "id_tmdb") || !Number.isInteger(body.id_tmdb) || body.id_tmdb <= 0) return error(422, "POST espera únicamente un id_tmdb entero positivo");
-    const pelicula = catalogo.find((item) => item.id_tmdb === body.id_tmdb);
+    const pelicula = [...catalogo, ...thrillers].find((item) => item.id_tmdb === body.id_tmdb);
     if (!pelicula) return error(404, "Película no encontrada en TMDB");
     if (duplicarProximoAgregado) {
       duplicarProximoAgregado = false;

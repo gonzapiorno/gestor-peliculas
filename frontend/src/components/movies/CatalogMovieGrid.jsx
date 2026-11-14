@@ -8,9 +8,18 @@ function CatalogMovieGrid({
   errores = new Map(),
   estadoColeccion = "loading",
   onAgregar,
+  gridRef,
+  carouselId,
+  onScroll,
 }) {
   return (
-    <div className="catalog-grid">
+    <div
+      className={carouselId ? "catalog-grid catalog-grid--carousel" : "catalog-grid"}
+      ref={gridRef}
+      onScroll={onScroll}
+      id={carouselId}
+      data-catalog-carousel={carouselId ? "" : undefined}
+    >
       {peliculas.map((pelicula) => {
         const id = Number(pelicula.id_tmdb);
         return (

@@ -10,6 +10,7 @@ function formatRating(value) {
 
 function MovieCard({
   pelicula,
+  detailLink,
   onCambiarEstado,
   onCambiarFavorita,
   onCambiarPuntuacion,
@@ -21,11 +22,12 @@ function MovieCard({
   const detalle = `/coleccion/${pelicula.id}`;
 
   return (
-    <article className="movie-card" aria-busy={actualizando}>
+    <article className="movie-card" data-collection-movie={pelicula.id} aria-busy={actualizando}>
       <div className="movie-card__poster">
         <Link
           className="movie-card__poster-link"
           to={detalle}
+          {...detailLink}
           aria-label={`Ver detalles de ${pelicula.titulo}`}
         >
           <Poster src={pelicula.poster} title={pelicula.titulo} loading="lazy" />
@@ -46,7 +48,7 @@ function MovieCard({
 
       <div className="movie-card__info">
         <h2 className="movie-card__title">
-          <Link to={detalle} title={pelicula.titulo}>{pelicula.titulo}</Link>
+          <Link to={detalle} {...detailLink} title={pelicula.titulo}>{pelicula.titulo}</Link>
         </h2>
 
         <div className="movie-card__meta">

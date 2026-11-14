@@ -20,20 +20,27 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import RecoverPasswordPage from "./pages/RecoverPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { isAuthRoute } from "./utils/authFlow";
-import { resultPosition } from "./utils/catalogNavigation";
+import { catalogCategory, catalogDecade, resultPosition } from "./utils/catalogNavigation";
+import { collectionView } from "./utils/collectionNavigation";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import RequireAuth from "./auth/RequireAuth";
 import AccountPage from "./pages/AccountPage";
 import CommunityPage from "./pages/CommunityPage";
 
-function RouteScroll() {
-  const { pathname, key } = useLocation();
+function RouteScroll({ sessionKey }) {
+  const location = useLocation();
+  const { pathname, key } = location;
   const navigationType = useNavigationType();
   const authRoute = isAuthRoute(pathname);
-  const returningToResults = pathname === "/" && navigationType === "POP" && resultPosition(key) !== undefined;
+  const category = catalogCategory(location);
+  const decade = category ? catalogDecade(location) : null;
+  const returningToList = navigationType === "POP" && (
+    (pathname === "/" && resultPosition(key) !== undefined)
+    || (pathname === "/coleccion" && collectionView(key, sessionKey) !== undefined)
+  );
   useLayoutEffect(() => { if (authRoute) window.scrollTo({ top: 0, left: 0, behavior: "instant" }); }, [pathname, authRoute]);
-  useEffect(() => { if (!authRoute && !returningToResults) window.scrollTo(0, 0); }, [pathname, authRoute, returningToResults]);
+  useEffect(() => { if (!authRoute && !returningToList) window.scrollTo(0, 0); }, [pathname, authRoute, category, decade, returningToList]);
   return null;
 }
 
@@ -43,7 +50,7 @@ function AppContent() {
   const contentKey = useMatch("/restablecer-password") ? "password-reset" : sessionKey;
   return (
     <>
-      <RouteScroll />
+      <RouteScroll sessionKey={sessionKey} />
       <AppLayout>
 
         {/* El contenido ocupa todo el espacio disponible */}

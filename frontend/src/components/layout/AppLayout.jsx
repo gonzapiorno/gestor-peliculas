@@ -20,6 +20,7 @@ export default function AppLayout({ children }) {
   const { user, sessionKey } = useAuth();
   const [sesionFeedback, setSesionFeedback] = useState(null);
   const layoutRef = useRef(null);
+  const headerRef = useRef(null);
   const bottomNavRef = useRef(null);
   const enDetalleCatalogo = Boolean(useMatch("/pelicula/:id"));
   const enLogin = Boolean(useMatch("/login"));
@@ -28,14 +29,17 @@ export default function AppLayout({ children }) {
 
   useEffect(() => {
     const navigation = bottomNavRef.current;
+    const header = headerRef.current;
     const layout = layoutRef.current;
-    if (!navigation || !layout) return;
+    if (!navigation || !header || !layout) return;
     function reserveNavigationSpace() {
       layout.style.setProperty("--bottom-nav-height", `${Math.ceil(navigation.getBoundingClientRect().height)}px`);
+      layout.style.setProperty("--header-height", `${Math.ceil(header.getBoundingClientRect().height)}px`);
     }
     reserveNavigationSpace();
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(reserveNavigationSpace) : null;
     observer?.observe(navigation);
+    observer?.observe(header);
     window.addEventListener("resize", reserveNavigationSpace);
     return () => {
       observer?.disconnect();
@@ -73,7 +77,7 @@ export default function AppLayout({ children }) {
       </aside>
 
       <div className="app-layout__main">
-        <Header />
+        <Header headerRef={headerRef} />
         <div className="app-layout__content">{children}</div>
       </div>
 

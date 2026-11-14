@@ -1,77 +1,115 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigationType, useSearchParams } from "react-router-dom";
+import { useLayoutEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 
 import CatalogMovieGrid from "../components/movies/CatalogMovieGrid";
 import CatalogAddDialog from "../components/movies/CatalogAddDialog";
+import CatalogCarousel from "../components/movies/CatalogCarousel";
+import CatalogDecadePicker from "../components/movies/CatalogDecadePicker";
+import MovieDetailBackLink from "../components/movies/MovieDetailBackLink";
 import Icon from "../components/ui/Icon";
 import PageState, { MovieSkeleton } from "../components/ui/PageState";
-import { obtenerPopulares } from "../services/catalogoApi";
 
 import "./DiscoverPage.css";
-import { errorMessage } from "../utils/errorMessage";
 import useMovieSearch from "../hooks/useMovieSearch";
 import useCatalogCollection from "../hooks/useCatalogCollection";
-import { resultPosition } from "../utils/catalogNavigation";
+import useCatalogPages from "../hooks/useCatalogPages";
+import { catalogCategories, catalogCategory, catalogCategoryUrl, catalogDecade, catalogQuery, resultPosition } from "../utils/catalogNavigation";
 
-function DiscoverPage() {
-  const [peliculas, setPeliculas] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-  const [reintentos, setReintentos] = useState(0);
-  const [searchParams] = useSearchParams();
-  const search = useMovieSearch(searchParams.get("buscar") || "");
+const opcionesCarrusel = { cantidadInicial: 14 };
+
+function DiscoverResults({ location }) {
+  const search = useMovieSearch(catalogQuery(location));
+  const buscando = search.eligible;
+  const categoria = buscando ? null : catalogCategory(location);
+  const decada = categoria ? catalogDecade(location) : null;
+  const enInicio = !buscando && !categoria;
+  const { key } = location;
+  const [columnas, setColumnas] = useState(0);
+  const catalogo = useCatalogPages(categoria, key, { columnas: columnas || 1, decada });
+  const populares = useCatalogPages(enInicio ? "populares" : null, key, opcionesCarrusel);
+  const thriller = useCatalogPages(enInicio ? "thriller" : null, key, opcionesCarrusel);
+  const drama = useCatalogPages(enInicio ? "drama" : null, key, opcionesCarrusel);
+  const romance = useCatalogPages(enInicio ? "romance" : null, key, opcionesCarrusel);
+  const secciones = [
+    { categoria: "populares", titulo: "Populares ahora", datos: populares },
+    { categoria: "thriller", titulo: "Thriller", datos: thriller },
+    { categoria: "drama", titulo: "Drama", datos: drama, requiereSoporte: true },
+    { categoria: "romance", titulo: "Romance", datos: romance, requiereSoporte: true },
+  ];
   const coleccion = useCatalogCollection();
   const [peliculaParaAgregar, setPeliculaParaAgregar] = useState(null);
-  const catalogRequestRef = useRef(null);
-  const { key } = useLocation();
+  const gridRef = useRef(null);
+  const navigate = useNavigate();
   const navigationType = useNavigationType();
   const restoredEntry = useRef(null);
 
+  const peliculasVisibles = buscando ? search.results : catalogo.peliculas;
+  const cargandoVista = buscando ? search.status === "loading" : catalogo.cargando;
+  const errorVista = buscando ? search.error : catalogo.error;
+  const cargaInicial = cargandoVista && peliculasVisibles.length === 0;
+  const errorInicial = errorVista && peliculasVisibles.length === 0;
+  const hayCuadricula = Boolean(categoria && peliculasVisibles.length > 0);
+  const listoParaVolver = enInicio
+    ? secciones.every(({ datos }) => !datos.cargando)
+    : !cargaInicial && !errorInicial && (!hayCuadricula || columnas > 0);
+
   useLayoutEffect(() => {
-    if (navigationType !== "POP" || search.status !== "success" || restoredEntry.current === key) return;
-    restoredEntry.current = key;
-    const top = resultPosition(key);
-    if (top !== undefined) window.scrollTo({ top, left: 0, behavior: "instant" });
-  }, [key, navigationType, search.status]);
-
-  useEffect(() => {
-    let cancelado = false;
-
-    async function cargarCatalogo() {
-      setCargando(true);
-      setError(null);
-
-      try {
-        if (catalogRequestRef.current?.intento !== reintentos) {
-          catalogRequestRef.current = { intento: reintentos, promesa: obtenerPopulares() };
-        }
-        const datos = await catalogRequestRef.current.promesa;
-        if (!cancelado) setPeliculas(datos);
-      } catch (error) {
-        if (!cancelado) setError(errorMessage(error));
-      } finally {
-        if (!cancelado) setCargando(false);
-      }
+    const grid = gridRef.current;
+    if (!grid) return;
+    function medirColumnas() {
+      const tracks = getComputedStyle(grid).gridTemplateColumns.split(" ");
+      setColumnas(tracks.length);
     }
+    medirColumnas();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(medirColumnas) : null;
+    observer?.observe(grid);
+    return () => observer?.disconnect();
+  }, [hayCuadricula]);
 
-    cargarCatalogo();
-    return () => { cancelado = true; };
-  }, [reintentos]);
+  useLayoutEffect(() => {
+    if (navigationType !== "POP" || !listoParaVolver || restoredEntry.current === key) return;
+    restoredEntry.current = key;
+    const posicion = resultPosition(key);
+    if (!posicion) return;
+    window.scrollTo({ top: posicion.top, left: 0, behavior: "instant" });
+    for (const [id, left] of posicion.carousels) {
+      document.getElementById(id)?.scrollTo({ left, behavior: "instant" });
+    }
+  }, [key, listoParaVolver, navigationType]);
 
-  const buscando = search.eligible;
-  const cargandoVista = buscando ? search.status === "loading" : cargando;
-  const errorVista = buscando ? search.error : error;
-  const peliculasVisibles = buscando ? search.results : peliculas;
+  const tarjetas = {
+    guardadas: coleccion.guardadas,
+    guardandoIds: coleccion.guardandoIds,
+    errores: coleccion.errores,
+    estadoColeccion: coleccion.estadoColeccion,
+    onAgregar: (pelicula) => {
+      if (coleccion.puedeAgregar(pelicula)) setPeliculaParaAgregar(pelicula);
+    },
+  };
+  const titulo = buscando ? "Resultados de búsqueda" : catalogCategories[categoria] ?? "Descubrir";
+  const descripcion = buscando ? `Películas para «${search.query.trim()}».`
+    : categoria === "thriller" ? "Explorá películas de suspenso." : categoria === "populares" ? "Lo que se está viendo en TMDB." : null;
+  const tituloSeccion = buscando ? "Películas encontradas" : categoria === "populares" ? "Populares ahora" : `Películas de ${titulo}`;
+
+  function cambiarDecada(decade) {
+    navigate(catalogCategoryUrl(categoria, decade), {
+      replace: true,
+      state: location.state,
+    });
+  }
 
   return (
-    <main className="discover-page page-container">
+    <main className={`discover-page page-container${enInicio ? " discover-page--inicio" : ""}`}>
+      {categoria && (
+        <MovieDetailBackLink to="/" historyBack={location.state?.desdeDescubrir === true}>
+          Volver a descubrir
+        </MovieDetailBackLink>
+      )}
       <header className="discover-page__header page-heading">
         <div>
-          <p className="eyebrow">TU PRÓXIMA HISTORIA</p>
-          <h1 className="page-title">{buscando ? "Resultados de búsqueda" : "Descubrir"}</h1>
-          <p className="page-description">
-            {buscando ? `Películas para «${search.query.trim()}».` : "Encontrá algo que te den ganas de ver."}
-          </p>
+          {!enInicio && <p className="eyebrow">TU PRÓXIMA HISTORIA</p>}
+          <h1 className="page-title">{titulo}</h1>
+          {descripcion && <p className="page-description">{descripcion}</p>}
         </div>
         {buscando && <Link className="button" to="/">Ver populares</Link>}
       </header>
@@ -85,19 +123,23 @@ function DiscoverPage() {
         </div>
       )}
 
-      <section className="discover-page__catalog" aria-labelledby="radar-heading" aria-busy={cargandoVista}>
+      {enInicio ? secciones
+        .filter(({ requiereSoporte, datos }) => !requiereSoporte || datos.errorStatus !== 422)
+        .map(({ categoria, titulo, datos }) => (
+          <CatalogCarousel key={categoria} categoria={categoria} titulo={titulo} catalogo={datos} tarjetas={tarjetas} entry={key} />
+        )) : <section className="discover-page__catalog" aria-labelledby="radar-heading" aria-busy={cargandoVista}>
         <div className="discover-page__section-heading">
-          <div><h2 id="radar-heading">{buscando ? "Películas encontradas" : "Populares ahora"}</h2>
-            {!buscando && <p>Lo que se está viendo en TMDB.</p>}
-          </div>
-          <span role="status">{buscando ? cargandoVista ? "Buscando…" : errorVista ? "Búsqueda no disponible" : `${peliculasVisibles.length} ${peliculasVisibles.length === 1 ? "resultado" : "resultados"}` : <><Icon name="film" size={15} /> Catálogo TMDB</>}</span>
+          <h2 id="radar-heading">{tituloSeccion}</h2>
+          {categoria ? (
+            <CatalogDecadePicker value={decada} onChange={cambiarDecada} />
+          ) : <span role="status">{cargandoVista ? "Buscando…" : errorVista ? "Búsqueda no disponible" : `${peliculasVisibles.length} ${peliculasVisibles.length === 1 ? "resultado" : "resultados"}`}</span>}
         </div>
 
-        {cargandoVista ? (
+        {cargaInicial ? (
           <MovieSkeleton count={6} />
-        ) : errorVista ? (
-          <PageState kind="error" title={buscando ? "No pudimos completar la búsqueda" : "El catálogo no pudo llegar a la pantalla"} description={errorVista}>
-            <button className="button" type="button" onClick={() => buscando ? search.retry() : setReintentos((valor) => valor + 1)}>
+        ) : errorInicial ? (
+          <PageState kind="error" title={buscando ? "No pudimos completar la búsqueda" : "El catálogo no pudo llegar a la pantalla"} description={errorInicial}>
+            <button className="button" type="button" onClick={buscando ? search.retry : catalogo.cargarMas}>
               <Icon name="refresh" size={17} />Volver a intentar
             </button>
           </PageState>
@@ -106,17 +148,22 @@ function DiscoverPage() {
             <Link className="button" to="/">Ver populares</Link>
           </PageState>
         ) : peliculasVisibles.length === 0 ? (
-          <PageState title="Todavía no hay películas para mostrar" description="Vuelve a consultar el catálogo en un momento.">
-            <button className="button" type="button" onClick={() => setReintentos((valor) => valor + 1)}>
-              <Icon name="refresh" size={17} />Actualizar catálogo
-            </button>
-          </PageState>
+          <PageState title={decada ? "No encontramos películas de esta década" : "Todavía no hay películas para mostrar"} />
         ) : (
-          <CatalogMovieGrid peliculas={peliculasVisibles} guardadas={coleccion.guardadas} guardandoIds={coleccion.guardandoIds} errores={coleccion.errores} estadoColeccion={coleccion.estadoColeccion} onAgregar={(pelicula) => {
-            if (coleccion.puedeAgregar(pelicula)) setPeliculaParaAgregar(pelicula);
-          }} />
+          <CatalogMovieGrid {...tarjetas} peliculas={peliculasVisibles} gridRef={categoria ? gridRef : undefined} />
         )}
-      </section>
+
+        {!buscando && catalogo.hayMas && !cargaInicial && !errorInicial && (
+          <div className="discover-page__more">
+            {catalogo.error && <p className="discover-page__more-error" role="alert">No pudimos cargar más películas. {catalogo.error}.</p>}
+            <button className="button button--primary" type="button" aria-disabled={catalogo.cargando} onClick={catalogo.cargarMas}>
+              <Icon name={catalogo.error ? "refresh" : "chevron-down"} size={17} />
+              {catalogo.cargando ? "Cargando películas…" : catalogo.error ? "Reintentar" : "Cargar más"}
+            </button>
+            <p className="visually-hidden" role="status">{peliculasVisibles.length} películas visibles</p>
+          </div>
+        )}
+      </section>}
 
       <aside className="discover-page__collection-cta">
         <Icon name="library" size={24} />
@@ -133,4 +180,7 @@ function DiscoverPage() {
   );
 }
 
-export default DiscoverPage;
+export default function DiscoverPage() {
+  const location = useLocation();
+  return <DiscoverResults key={location.key} location={location} />;
+}

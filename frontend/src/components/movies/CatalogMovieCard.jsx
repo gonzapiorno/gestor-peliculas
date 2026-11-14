@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { catalogQuery, isPlainLinkClick, rememberResultPosition } from "../../utils/catalogNavigation";
+import { catalogCategory, catalogDecade, catalogQuery, isPlainLinkClick, rememberResultPosition } from "../../utils/catalogNavigation";
 import Icon from "../ui/Icon";
 import Poster from "../ui/Poster";
 import "./CatalogMovieCard.css";
@@ -17,10 +17,13 @@ function CatalogMovieCard({
   const errorId = useId();
   const location = useLocation();
   const query = catalogQuery(location);
-  const searchState = query.length >= 2 ? { catalogSearch: { query, fromResults: true } } : undefined;
+  const fromDiscover = location.pathname === "/";
+  const searchState = fromDiscover
+    ? { catalogSearch: { query, fromDiscover, category: catalogCategory(location), decade: catalogDecade(location) } }
+    : undefined;
 
   function rememberPosition(event) {
-    if (searchState && isPlainLinkClick(event)) rememberResultPosition(location.key);
+    if (fromDiscover && isPlainLinkClick(event)) rememberResultPosition(location.key);
   }
   const puntuacion = Number.isFinite(pelicula.puntuacion)
     ? pelicula.puntuacion.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })

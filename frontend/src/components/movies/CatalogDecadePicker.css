@@ -1,0 +1,69 @@
+.button.decade-picker__trigger {
+  gap: 9px;
+  padding-inline: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+}
+.decade-picker__trigger > svg:first-child { color: var(--color-accent); }
+.decade-picker__trigger > svg:last-child { color: var(--color-text-secondary); }
+.button.decade-picker__trigger.is-filtered {
+  border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  color: var(--color-accent);
+}
+.button.decade-picker__trigger.is-filtered:hover {
+  background: color-mix(in srgb, var(--color-accent) 20%, var(--color-surface));
+}
+.dialog.decade-picker__panel {
+  position: fixed;
+  inset: var(--decade-panel-top) max(12px, var(--decade-panel-right)) var(--decade-panel-bottom) auto;
+  width: min(368px, calc(100% - 24px));
+  max-height: var(--decade-panel-space);
+  margin: 0;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 37%);
+}
+.decade-picker__panel::backdrop { background: rgb(5 8 5 / 25%); backdrop-filter: none; }
+.decade-picker__panel .dialog__body { padding: 20px; }
+.decade-picker__panel .dialog__title { margin: 2px 36px 16px 0; font-size: 1.2rem; font-weight: 650; }
+.decade-picker__panel .dialog__close { top: 12px; right: 12px; }
+.decade-picker__options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.decade-picker__option {
+  min-height: 44px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: .86rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 140ms, border-color 140ms;
+}
+.decade-picker__option--all { grid-column: span 3; text-align: start; padding-inline: 12px; }
+.decade-picker__option:hover { background: var(--color-surface-hover); }
+.decade-picker__option[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+.decade-picker__option:focus-visible { outline-offset: 2px; }
+
+@media (max-width: 650px) {
+  .dialog.decade-picker__panel {
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+    border-radius: 20px 20px 0 0;
+  }
+  .decade-picker__panel::backdrop { background: rgb(5 8 5 / 64%); }
+  .decade-picker__panel .dialog__body {
+    padding: 22px max(16px, env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .decade-picker__option { transition: none; }
+}

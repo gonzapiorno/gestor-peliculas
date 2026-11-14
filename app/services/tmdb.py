@@ -8,6 +8,8 @@ load_dotenv()
 
 TMDB_TOKEN = os.getenv("TMDB_TOKEN")
 TMDB_URL = "https://api.themoviedb.org/3"
+TMDB_MAX_PAGINA = 500
+GENEROS_EXPLORAR = {"thriller": 53, "drama": 18, "romance": 10749}
 
 
 # Headers utilizados para autenticarnos contra TMDB.
@@ -47,52 +49,53 @@ async def obtener_mapa_generos(client):
     return _generos_cache
 
 
-async def obtener_populares():
+async def obtener_pagina_catalogo(categoria: str, pagina: int, decada: int | None = None):
+    params = {"language": "es-AR", "page": pagina}
+    ruta = "/movie/popular"
+    if categoria != "populares" or decada is not None:
+        ruta = "/discover/movie"
+        params.update({
+            "sort_by": "popularity.desc" if categoria == "populares" else "vote_count.desc",
+            "include_adult": "false",
+        })
+    if categoria in GENEROS_EXPLORAR:
+        params["with_genres"] = GENEROS_EXPLORAR[categoria]
+    if decada is not None:
+        params["primary_release_date.gte"] = f"{decada}-01-01"
+        params["primary_release_date.lte"] = f"{decada + 9}-12-31"
+    else:
+        params["region"] = "AR"
 
     async with httpx.AsyncClient(timeout=10.0) as client:
-
         respuesta = await client.get(
-            f"{TMDB_URL}/movie/popular",
+            f"{TMDB_URL}{ruta}",
             headers=HEADERS,
-            params={
-                "language": "es-AR",
-                "region": "AR",
-                "page": 1
-            }
+            params=params,
         )
-
         respuesta.raise_for_status()
-
         datos = respuesta.json()
 
-        peliculas = []
+    peliculas = []
+    for pelicula in datos["results"]:
+        poster_path = pelicula.get("poster_path")
+        peliculas.append({
+            "id_tmdb": pelicula["id"],
+            "titulo": pelicula["title"],
+            "anio": pelicula["release_date"][:4] if pelicula.get("release_date") else None,
+            "puntuacion": round(pelicula.get("vote_average", 0), 1),
+            "poster": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None,
+        })
 
-        # Transformamos la respuesta de TMDB
-        # al formato que necesita nuestro frontend.
-        for pelicula in datos["results"]:
+    ultima_pagina = min(datos["total_pages"], TMDB_MAX_PAGINA)
+    return {
+        "peliculas": peliculas,
+        "siguiente_pagina": pagina + 1 if pagina < ultima_pagina else None,
+    }
 
-            poster_path = pelicula.get("poster_path")
 
-            peliculas.append({
-                "id_tmdb": pelicula["id"],
-                "titulo": pelicula["title"],
-                "anio": (
-                    pelicula["release_date"][:4]
-                    if pelicula.get("release_date")
-                    else None
-                ),
-                "puntuacion": round(
-                    pelicula.get("vote_average", 0),
-                    1
-                ),
-                "poster": (
-                    f"https://image.tmdb.org/t/p/w500{poster_path}"
-                    if poster_path
-                    else None
-                )
-            })
-
-        return peliculas
+async def obtener_populares():
+    pagina = await obtener_pagina_catalogo("populares", 1)
+    return pagina["peliculas"]
 
 
 async def obtener_detalle_pelicula(id_tmdb):

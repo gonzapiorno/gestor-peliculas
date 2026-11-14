@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import CatalogAddDialog from "../components/movies/CatalogAddDialog";
+import MovieDetailBackLink from "../components/movies/MovieDetailBackLink";
 import Icon from "../components/ui/Icon";
 import PageState from "../components/ui/PageState";
 import Poster from "../components/ui/Poster";
@@ -11,7 +12,7 @@ import useCatalogCollection from "../hooks/useCatalogCollection";
 import "./MovieDetailPage.css";
 import { errorMessage } from "../utils/errorMessage";
 import { useAuth } from "../auth/useAuth";
-import { catalogResultsUrl, isPlainLinkClick } from "../utils/catalogNavigation";
+import { catalogCategories, catalogCategoryUrl, catalogResultsUrl } from "../utils/catalogNavigation";
 
 function formatearNota(nota) {
   return nota.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -19,7 +20,6 @@ function formatearNota(nota) {
 
 function MovieDetailPage() {
   const { status, user } = useAuth();
-  const navigate = useNavigate();
   const { state, pathname, search } = useLocation();
   const pendingVerification = status === "authenticated" && user?.email_verificado !== true;
   const { id } = useParams();
@@ -59,17 +59,13 @@ function MovieDetailPage() {
   }, [id, reintentos]);
 
   const resultadosUrl = catalogResultsUrl(state?.catalogSearch?.query);
-  function volverAlCatalogo(event) {
-    if (resultadosUrl && state.catalogSearch.fromResults === true && isPlainLinkClick(event)) {
-      event.preventDefault();
-      navigate(-1);
-    }
-  }
-
+  const categoria = state?.catalogSearch?.category;
+  const nombreCategoria = Object.hasOwn(catalogCategories, categoria) ? catalogCategories[categoria] : null;
+  const destino = resultadosUrl || (nombreCategoria ? catalogCategoryUrl(categoria, state.catalogSearch.decade) : "/");
   const volver = (
-    <Link className="movie-detail__back" to={resultadosUrl || "/"} onClick={volverAlCatalogo}>
-      <Icon name="arrow-left" size={16} />{resultadosUrl ? "Volver a resultados" : "Volver a descubrir"}
-    </Link>
+    <MovieDetailBackLink to={destino} historyBack={state?.catalogSearch?.fromDiscover === true}>
+      {resultadosUrl ? "Volver a resultados" : nombreCategoria ? `Volver a ${nombreCategoria}` : "Volver a descubrir"}
+    </MovieDetailBackLink>
   );
 
   if (cargando) {
@@ -113,9 +109,7 @@ function MovieDetailPage() {
 
   return (
     <main className="movie-detail page-container">
-      <nav className="movie-detail__breadcrumb" aria-label="Ruta de navegación">
-        {volver}<span aria-hidden="true">/</span><span aria-current="page">{pelicula.titulo}</span>
-      </nav>
+      {volver}
 
       <div className="movie-detail__layout">
         <aside className="movie-detail__poster-column" aria-label="Póster e información técnica">

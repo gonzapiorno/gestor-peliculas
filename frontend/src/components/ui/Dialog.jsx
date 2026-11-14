@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import Icon from "./Icon";
 import "./Dialog.css";
-export default function Dialog({ title, description, children, onClose, busy = false, className = "" }) {
+export default function Dialog({ title, description, children, onClose, busy = false, className = "", style }) {
   const ref = useRef(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -38,7 +38,7 @@ export default function Dialog({ title, description, children, onClose, busy = f
     }
   }
   return (
-    <dialog ref={ref} className={`dialog ${className}`} aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} aria-busy={busy} onKeyDown={handleKeyDown} onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} onClick={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
+    <dialog ref={ref} className={`dialog ${className}`} style={style} aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} aria-busy={busy} onKeyDown={handleKeyDown} onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} onClick={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
       <div className="dialog__body">
         <button className="icon-button dialog__close" type="button" onClick={onClose} disabled={busy} aria-label="Cerrar ventana"><Icon name="close"/></button>
         <h2 id={titleId} className="dialog__title">{title}</h2>

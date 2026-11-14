@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
+import MovieDetailBackLink from "../components/movies/MovieDetailBackLink";
 import RatingDialog from "../components/movies/RatingDialog";
 import Dialog from "../components/ui/Dialog";
 import Icon from "../components/ui/Icon";
@@ -16,6 +17,8 @@ import {
 } from "../services/coleccionApi";
 import { errorMessage } from "../utils/errorMessage";
 import { notificarCambioColeccion } from "../utils/collectionEvents";
+import { useAuth } from "../auth/useAuth";
+import { collectionView } from "../utils/collectionNavigation";
 
 import "./MovieDetailPage.css";
 import "./CollectionMovieDetailPage.css";
@@ -26,6 +29,9 @@ function formatearNota(nota) {
 
 function PersonalMovieDetail({ id }) {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const { sessionKey } = useAuth();
+  const openedFromCollection = Boolean(collectionView(state?.collectionEntry, sessionKey));
   const idValido = /^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number(id) > 0;
   const cicloRef = useRef(null);
   const guardandoRef = useRef(null);
@@ -156,9 +162,9 @@ function PersonalMovieDetail({ id }) {
   }
 
   const volver = (
-    <Link className="movie-detail__back" to="/coleccion">
-      <Icon name="arrow-left" size={16} />Volver a mi colección
-    </Link>
+    <MovieDetailBackLink to="/coleccion" historyBack={openedFromCollection}>
+      Volver a mi colección
+    </MovieDetailBackLink>
   );
 
   if (cargando) {
@@ -177,13 +183,12 @@ function PersonalMovieDetail({ id }) {
     const noEncontrada = error?.status === 404;
     return (
       <main className="movie-detail collection-movie-detail page-container">
-        <div className="collection-movie-detail__back-row">{volver}</div>
+        {volver}
         <PageState
           kind="error"
           title={noEncontrada ? "404 · Esta película no está en tu colección" : "No pudimos abrir tu película"}
           description={noEncontrada ? "Puede que se haya eliminado o que el enlace ya no esté disponible." : error?.mensaje || "No pudimos recuperar la película guardada."}
         >
-          <Link className="button" to="/coleccion"><Icon name="library" size={17} />Ir a mi colección</Link>
           {!noEncontrada && (
             <button className="button" type="button" onClick={reintentarCarga}>
               <Icon name="refresh" size={17} />Volver a intentar
@@ -203,9 +208,7 @@ function PersonalMovieDetail({ id }) {
 
   return (
     <main className="movie-detail collection-movie-detail page-container">
-      <nav className="movie-detail__breadcrumb" aria-label="Ruta de navegación">
-        {volver}<span aria-hidden="true">/</span><span aria-current="page">{titulo}</span>
-      </nav>
+      {volver}
 
       <div className="movie-detail__layout">
         <aside className="movie-detail__poster-column" aria-label="Póster e información técnica">

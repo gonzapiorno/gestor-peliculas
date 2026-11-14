@@ -4,9 +4,28 @@
 .discover-page__header .page-description { overflow-wrap: anywhere; }
 .discover-page__header > .button { flex-shrink: 0; }
 .discover-page__catalog { min-width: 0; }
+.discover-page__carousel { min-width: 0; }
+.discover-page__carousel + .discover-page__carousel { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+.discover-page__carousel .discover-page__section-heading { flex-wrap: nowrap; gap: 8px; margin-bottom: 9px; }
+.discover-page__carousel-track { position: relative; }
+.icon-button.discover-page__carousel-arrow {
+  position: absolute;
+  z-index: 3;
+  top: 42%;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: rgb(16 18 16 / 88%);
+  color: var(--color-text);
+}
+.discover-page__carousel-arrow[data-direction="previous"] { left: 5px; }
+.discover-page__carousel-arrow[data-direction="next"] { right: 5px; }
+.icon-button.discover-page__carousel-arrow:hover { background: var(--color-surface-hover); }
+.discover-page__carousel-arrow[aria-disabled="true"]:not(:focus-visible) { visibility: hidden; }
+.discover-page__more { display: grid; justify-items: center; gap: 10px; margin-top: 24px; }
+.discover-page__more-error { margin: 0; color: var(--color-danger); text-align: center; }
+.discover-page__more > button[aria-disabled="true"] { cursor: wait; opacity: .7; }
 .discover-page__section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 22px; }
 .discover-page__section-heading h2 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.035em; }
-.discover-page__section-heading p { margin: 7px 0 0; font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
 .discover-page__section-heading > span { display: inline-flex; align-items: center; gap: 7px; color: var(--color-text-secondary); font-size: 12px; }
 .discover-page__section-heading > span svg { color: var(--color-accent); }
 .discover-page__collection-error { font-size: 14px; }
@@ -23,6 +42,9 @@
   .discover-page__section-heading { margin-bottom: 18px; }
   .discover-page__section-heading h2 { font-size: 20px; }
   .discover-page__section-heading > span { font-size: 12px; }
+  .discover-page--inicio { padding-top: 14px; }
+  .discover-page--inicio .discover-page__header { margin-bottom: 12px; }
+  .discover-page__carousel + .discover-page__carousel { margin-top: 14px; padding-top: 12px; }
   .discover-page__collection-cta { flex-wrap: wrap; gap: 14px; padding: 22px; margin-top: 30px; }
   .discover-page__collection-cta > div { flex-basis: calc(100% - 44px); }
   .discover-page__collection-cta .button { width: 100%; }

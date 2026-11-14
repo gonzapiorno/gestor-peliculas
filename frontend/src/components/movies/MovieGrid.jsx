@@ -1,9 +1,11 @@
+import { useLocation } from "react-router-dom";
 import MovieCard from "./MovieCard";
 import MovieListItem from "./MovieListItem";
 import "./MovieGrid.css";
 
 
-function MovieGrid({ peliculas, viewMode = "grid", onCambiarEstado, onCambiarFavorita, onCambiarPuntuacion, onEliminar, actualizandoIds = new Set() }) {
+function MovieGrid({ peliculas, viewMode = "grid", onOpenDetail, onCambiarEstado, onCambiarFavorita, onCambiarPuntuacion, onEliminar, actualizandoIds = new Set() }) {
+  const { key } = useLocation();
   const Card = viewMode === "list" ? MovieListItem : MovieCard;
   return (
     <section className={viewMode === "list" ? "movie-list" : "movie-grid"} aria-label="Películas de mi colección">
@@ -11,6 +13,10 @@ function MovieGrid({ peliculas, viewMode = "grid", onCambiarEstado, onCambiarFav
         <Card
           key={pelicula.id}
           pelicula={pelicula}
+          detailLink={{
+            state: { collectionEntry: key },
+            onClick: (event) => onOpenDetail(event, pelicula.id),
+          }}
           onCambiarEstado={onCambiarEstado}
           onCambiarFavorita={onCambiarFavorita}
           onCambiarPuntuacion={onCambiarPuntuacion}

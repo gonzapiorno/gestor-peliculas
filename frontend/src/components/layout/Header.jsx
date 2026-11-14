@@ -87,10 +87,10 @@ export function AccountSession({ variant = "header", compact = false }) {
   return <SessionActions key={String(auth.user?.id ?? "anonymous") + variant} auth={auth} variant={variant} compact={compact} />;
 }
 
-export default function Header() {
+export default function Header({ headerRef }) {
   const { user } = useAuth();
   return (
-    <header className="header">
+    <header className="header" ref={headerRef}>
       <div className="header__inner">
         <NavLink to="/" className="header__mobile-brand" aria-label="Muvis Beta · Ir a descubrir">
           <img src="/logos/muvis-logo.svg" alt="Muvis" width="112" height="33" /><span className="beta-badge">BETA</span>

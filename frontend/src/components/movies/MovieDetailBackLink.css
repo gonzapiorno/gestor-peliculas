@@ -1,0 +1,9 @@
+.movie-detail-back {
+  position: sticky;
+  top: var(--header-height, 88px);
+  z-index: 30;
+  margin-bottom: 20px;
+  padding-block: 6px;
+  background: var(--color-bg);
+}
+.button.movie-detail-back__link { min-height: 44px; padding-inline: 13px; }
