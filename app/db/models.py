@@ -68,6 +68,11 @@ class Usuario(Base):
 
     nombre_visible: Mapped[str | None] = mapped_column(String(50), nullable=True)
     bio: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    coleccion_visible_amigos: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=false(),
+    )
     avatar: Mapped[str | None] = mapped_column(String(16), nullable=True)
     foto_perfil: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
     foto_perfil_version: Mapped[str | None] = mapped_column(String(32), nullable=True)

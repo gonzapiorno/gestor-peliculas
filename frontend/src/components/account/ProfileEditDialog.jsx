@@ -20,6 +20,7 @@ export default function ProfileEditDialog({ user, onSave, onClose }) {
     avatar: user.avatar ?? "",
   }));
   const [campos, setCampos] = useState(inicial);
+  const [compartir, setCompartir] = useState(user.coleccion_visible_amigos);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const { guardarFotoPerfil } = useAuth();
@@ -43,6 +44,9 @@ export default function ProfileEditDialog({ user, onSave, onClose }) {
     for (const campo of Object.keys(inicial)) {
       const valor = campos[campo].trim();
       if (valor !== inicial[campo]) cambios[campo] = valor || null;
+    }
+    if (typeof compartir === "boolean" && compartir !== user.coleccion_visible_amigos) {
+      cambios.coleccion_visible_amigos = compartir;
     }
 
     if (Object.keys(cambios).length === 0) {
@@ -138,6 +142,26 @@ export default function ProfileEditDialog({ user, onSave, onClose }) {
             </label>
           ))}
         </fieldset>
+
+        {typeof compartir === "boolean" && (
+          <label className="profile-form__visibility">
+            <span>
+              <strong>Compartir mis películas vistas con amigos</strong>
+              <small id={`${id}-visibilidad`}>Tus amigos también podrán ver las notas que les pusiste.</small>
+            </span>
+            <input
+              className="visually-hidden"
+              type="checkbox"
+              role="switch"
+              aria-label="Compartir mis películas vistas con amigos"
+              aria-describedby={`${id}-visibilidad`}
+              checked={compartir}
+              disabled={guardando}
+              onChange={(event) => setCompartir(event.target.checked)}
+            />
+            <span className="profile-form__switch" aria-hidden="true" />
+          </label>
+        )}
 
         {error && <p className="inline-error" role="alert">{error}</p>}
 

@@ -41,3 +41,28 @@ class BandejaAmistades(BaseModel):
     recibidas: list[SolicitudAmistadPendiente]
     enviadas: list[SolicitudAmistadPendiente]
     amigos: list[UsuarioEncontrado]
+
+
+class PeliculaDestacadaAmigo(BaseModel):
+    id_tmdb: int
+    titulo: str
+    anio: int | None
+    poster: str | None
+    posicion_destacada: int
+
+
+class PerfilAmigo(UsuarioEncontrado):
+    bio: str | None
+    destacadas: list[PeliculaDestacadaAmigo]
+
+class PeliculaVistaAmigo(BaseModel):
+    id_tmdb: int
+    titulo: str
+    anio: int | None
+    poster: str | None
+    puntuacion_personal: float | None
+
+
+class ColeccionAmigo(BaseModel):
+    visible: bool
+    peliculas: list[PeliculaVistaAmigo]

@@ -107,6 +107,22 @@
 }
 
 .community-row--result { margin-top: 12px; }
+.community-row--friend { padding: 0; }
+
+.community-profile-link {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: inherit;
+  color: var(--color-text);
+  text-decoration: none;
+}
+.community-row--friend .community-profile-link { padding: 12px; }
+.community-row--friend .community-profile-link:hover { background: var(--color-surface-raised); }
+.community-profile-link > svg,
+.community-profile-link:hover strong { color: var(--color-accent); }
 
 .community-person {
   display: flex;

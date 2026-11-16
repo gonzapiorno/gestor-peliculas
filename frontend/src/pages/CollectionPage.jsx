@@ -20,8 +20,7 @@ import "./CollectionPage.css";
 import { errorMessage } from "../utils/errorMessage";
 import { COLLECTION_CHANGED_EVENT } from "../utils/collectionEvents";
 import { useAuth } from "../auth/useAuth";
-import { isPlainLinkClick } from "../utils/catalogNavigation";
-import { collectionView, rememberCollectionView } from "../utils/collectionNavigation";
+import { collectionView, rememberCollectionView, restoreCollectionPosition } from "../utils/collectionNavigation";
 
 const FILTERS = [
   { id: "todas", label: "Todas" },
@@ -84,23 +83,15 @@ function CollectionPage() {
   const restoredRef = useRef(false);
 
   function rememberView(event, movieId) {
-    if (!isPlainLinkClick(event)) return;
-    const movie = event.currentTarget.closest("[data-collection-movie]");
-    rememberCollectionView(key, {
+    rememberCollectionView(event, key, {
       sessionKey, busqueda, filtro, filtroNota, orden, vista, movieId,
-      top: window.scrollY,
-      offset: movie?.getBoundingClientRect().top,
     });
   }
 
   useLayoutEffect(() => {
     if (!previousView || restoredRef.current || cargando || error) return;
     restoredRef.current = true;
-    const movie = pageRef.current?.querySelector(`[data-collection-movie="${previousView.movieId}"]`);
-    const top = movie && previousView.offset !== undefined
-      ? window.scrollY + movie.getBoundingClientRect().top - previousView.offset
-      : previousView.top;
-    window.scrollTo({ top, left: 0, behavior: "instant" });
+    restoreCollectionPosition(previousView, pageRef.current);
   }, [previousView, cargando, error]);
 
   function reintentarCarga() {

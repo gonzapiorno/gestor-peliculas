@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import ProfileAvatar from "../components/account/ProfileAvatar";
 import Icon from "../components/ui/Icon";
 import {
@@ -24,6 +25,15 @@ function Persona({ usuario }) {
         <span>@{usuario.nombre_usuario}</span>
       </div>
     </div>
+  );
+}
+
+function EnlacePerfil({ usuario }) {
+  return (
+    <Link className="community-profile-link" to={`/comunidad/amigos/${usuario.id}`} state={{ desdeComunidad: true }}>
+      <Persona usuario={usuario} />
+      <Icon name="arrow-right" size={18} />
+    </Link>
   );
 }
 
@@ -61,6 +71,7 @@ function AccionesSolicitud({ solicitud, ocupada, onResponder }) {
 }
 
 export default function CommunityPage() {
+  const { state } = useLocation();
   const [bandeja, setBandeja] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [intento, setIntento] = useState(0);
@@ -69,7 +80,7 @@ export default function CommunityPage() {
   const [busqueda, setBusqueda] = useState(null);
   const [buscando, setBuscando] = useState(false);
   const [ocupada, setOcupada] = useState(false);
-  const [aviso, setAviso] = useState(null);
+  const [aviso, setAviso] = useState(() => state?.amistadQuitada ? { mensaje: "Amistad eliminada." } : null);
   const operacion = useRef(false);
 
   useEffect(() => {
@@ -192,7 +203,7 @@ export default function CommunityPage() {
           {resultado && resultado.error === "" && <p className="community-message" role="status">No encontramos ese usuario.</p>}
           {usuarioEncontrado && (
             <div className="community-row community-row--result">
-              <Persona usuario={perfilEncontrado} />
+              {amigo ? <EnlacePerfil usuario={amigo} /> : <Persona usuario={perfilEncontrado} />}
               {amigo ? <span className="community-badge"><Icon name="check" size={15} />Amigos</span>
                 : enviada ? <span className="community-badge"><Icon name="clock" size={15} />Solicitud enviada</span>
                   : recibida ? <a className="community-link" href="#community-recibidas">Ver solicitud recibida</a>
@@ -210,7 +221,9 @@ export default function CommunityPage() {
           {cargando && <p className="community-message" role="status">{bandeja ? "Actualizando amistades…" : "Cargando amistades…"}</p>}
           {bandeja?.amigos.length > 0 ? (
             <ul className="community-list">
-              {bandeja.amigos.map((usuario) => <li className="community-row" key={usuario.id}><Persona usuario={usuario} /></li>)}
+              {bandeja.amigos.map((usuario) => (
+                <li className="community-row community-row--friend" key={usuario.id}><EnlacePerfil usuario={usuario} /></li>
+              ))}
             </ul>
           ) : bandeja && !cargando && <p className="community-message">Todavía no tenés amigos en Muvis.</p>}
         </Panel>

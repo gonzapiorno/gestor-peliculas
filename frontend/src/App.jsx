@@ -27,17 +27,19 @@ import { useAuth } from "./auth/useAuth";
 import RequireAuth from "./auth/RequireAuth";
 import AccountPage from "./pages/AccountPage";
 import CommunityPage from "./pages/CommunityPage";
+import FriendProfilePage from "./pages/FriendProfilePage";
 
 function RouteScroll({ sessionKey }) {
   const location = useLocation();
   const { pathname, key } = location;
   const navigationType = useNavigationType();
+  const friendProfile = useMatch("/comunidad/amigos/:id");
   const authRoute = isAuthRoute(pathname);
   const category = catalogCategory(location);
   const decade = category ? catalogDecade(location) : null;
   const returningToList = navigationType === "POP" && (
     (pathname === "/" && resultPosition(key) !== undefined)
-    || (pathname === "/coleccion" && collectionView(key, sessionKey) !== undefined)
+    || ((pathname === "/coleccion" || friendProfile) && collectionView(key, sessionKey) !== undefined)
   );
   useLayoutEffect(() => { if (authRoute) window.scrollTo({ top: 0, left: 0, behavior: "instant" }); }, [pathname, authRoute]);
   useEffect(() => { if (!authRoute && !returningToList) window.scrollTo(0, 0); }, [pathname, authRoute, category, decade, returningToList]);
@@ -82,6 +84,7 @@ function AppContent() {
             <Route path="/restablecer-password" element={<ResetPasswordPage />} />
             <Route path="/cuenta" element={<AccountPage />} />
             <Route path="/comunidad" element={<RequireAuth><CommunityPage /></RequireAuth>} />
+            <Route path="/comunidad/amigos/:id" element={<RequireAuth><FriendProfilePage /></RequireAuth>} />
           </Routes>
         </div>
 

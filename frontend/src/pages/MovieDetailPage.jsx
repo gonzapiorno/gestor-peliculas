@@ -61,10 +61,14 @@ function MovieDetailPage() {
   const resultadosUrl = catalogResultsUrl(state?.catalogSearch?.query);
   const categoria = state?.catalogSearch?.category;
   const nombreCategoria = Object.hasOwn(catalogCategories, categoria) ? catalogCategories[categoria] : null;
-  const destino = resultadosUrl || (nombreCategoria ? catalogCategoryUrl(categoria, state.catalogSearch.decade) : "/");
+  const amigo = Number.isInteger(state?.friendProfileId) && state.friendProfileId > 0 ? state.friendProfileId : null;
+  const destino = amigo ? `/comunidad/amigos/${amigo}${state.friendProfileCollection === true ? "?vista=coleccion" : ""}`
+    : resultadosUrl || (nombreCategoria ? catalogCategoryUrl(categoria, state.catalogSearch.decade) : "/");
+  const textoVolver = amigo ? "Volver al perfil"
+    : resultadosUrl ? "Volver a resultados" : nombreCategoria ? `Volver a ${nombreCategoria}` : "Volver a descubrir";
   const volver = (
-    <MovieDetailBackLink to={destino} historyBack={state?.catalogSearch?.fromDiscover === true}>
-      {resultadosUrl ? "Volver a resultados" : nombreCategoria ? `Volver a ${nombreCategoria}` : "Volver a descubrir"}
+    <MovieDetailBackLink to={destino} historyBack={Boolean(amigo) || state?.catalogSearch?.fromDiscover === true}>
+      {textoVolver}
     </MovieDetailBackLink>
   );
 
