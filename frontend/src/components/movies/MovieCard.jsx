@@ -47,9 +47,14 @@ function MovieCard({
       </div>
 
       <div className="movie-card__info">
-        <h2 className="movie-card__title">
-          <Link to={detalle} {...detailLink} title={pelicula.titulo}>{pelicula.titulo}</Link>
-        </h2>
+        <div className="movie-card__heading">
+          <h2 className="movie-card__title">
+            <Link to={detalle} {...detailLink} title={pelicula.titulo}>{pelicula.titulo}</Link>
+          </h2>
+          <button className="movie-card__remove" type="button" disabled={actualizando}
+            onClick={() => onEliminar(pelicula)} aria-label={`Eliminar ${pelicula.titulo} de mi colección`}
+            title="Quitar de mi colección"><Icon name="trash" size={13} /></button>
+        </div>
 
         <div className="movie-card__meta">
           <span>{pelicula.anio || "Año no disponible"}</span>
@@ -58,10 +63,9 @@ function MovieCard({
               <Icon name="refresh" size={11} /> Guardando…
             </span>
           )}
-          <button className="movie-card__remove" type="button" disabled={actualizando} onClick={() => onEliminar(pelicula)} aria-label={`Eliminar ${pelicula.titulo} de mi colección`} title="Quitar de mi colección"><Icon name="trash" size={15} /></button>
         </div>
 
-        <div className="movie-card__personal">
+        <footer className="movie-card__personal">
           <button
             className={`movie-card__status${vista ? " is-watched" : ""}`}
             type="button"
@@ -82,10 +86,10 @@ function MovieCard({
             aria-label={`Editar puntuación de ${pelicula.titulo}: ${tienePuntuacion ? `${formatRating(pelicula.puntuacion_personal)} sobre 10` : "sin puntuar"}`}
           >
             {tienePuntuacion
-              ? <><Icon name="star" size={13} /><span>Tu nota <strong>{formatRating(pelicula.puntuacion_personal)}</strong></span></>
+              ? <><Icon name="star" size={13} /><strong>{formatRating(pelicula.puntuacion_personal)} / 10</strong></>
               : <><Icon name="star" size={13} />Sin puntuar</>}
           </button>
-        </div>
+        </footer>
 
       </div>
     </article>

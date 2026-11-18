@@ -25,7 +25,7 @@ async def listar_populares():
 
 @router.get("/explorar")
 async def explorar_catalogo(
-    categoria: Literal["populares", "thriller", "drama", "romance"] = "populares",
+    categoria: Literal["populares", "thriller", "drama", "romance", "anime"] = "populares",
     pagina: int = Query(default=1, ge=1, le=TMDB_MAX_PAGINA),
     decada: int | None = Query(default=None, ge=1900, le=2020, multiple_of=10),
 ):

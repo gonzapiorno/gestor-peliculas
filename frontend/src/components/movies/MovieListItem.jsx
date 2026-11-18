@@ -15,11 +15,11 @@ export default function MovieListItem({ pelicula, detailLink, onCambiarEstado, o
   const generos = metadata.data?.generos.slice(0, 3).join(" · ");
 
   return (
-    <article className="movie-list-item" ref={targetRef} data-collection-movie={pelicula.id}>
+    <article className="movie-list-item" ref={targetRef} data-collection-movie={pelicula.id} aria-busy={actualizando}>
       <Link to={detalle} {...detailLink} className="movie-list-item__poster" aria-label={`Ver detalles de ${pelicula.titulo}`}><Poster src={pelicula.poster} title={pelicula.titulo} loading="lazy" /></Link>
       <div className="movie-list-item__content">
         <div className="movie-list-item__heading">
-          <h2><Link to={detalle} {...detailLink}>{pelicula.titulo}</Link></h2>
+          <h2><Link to={detalle} {...detailLink} title={pelicula.titulo}>{pelicula.titulo}</Link></h2>
           <button className={`movie-list-item__favorite${pelicula.favorita ? " is-favorite" : ""}`} type="button" disabled={actualizando} aria-pressed={pelicula.favorita} aria-label={`${pelicula.favorita ? "Quitar" : "Agregar"} ${pelicula.titulo} ${pelicula.favorita ? "de" : "a"} favoritas`} title={pelicula.favorita ? "Quitar de favoritas" : "Agregar a favoritas"} onClick={() => onCambiarFavorita(pelicula)}><Icon name="heart" size={19} /></button>
         </div>
         <div className="movie-list-item__metadata">
@@ -35,9 +35,9 @@ export default function MovieListItem({ pelicula, detailLink, onCambiarEstado, o
       </div>
         <div className="movie-list-item__actions">
           <button className={`movie-list-item__status${vista ? " is-watched" : ""}`} type="button" disabled={actualizando} aria-label={`Marcar ${pelicula.titulo} como ${vista ? "pendiente" : "vista"}`} onClick={() => onCambiarEstado(pelicula)}><Icon name={vista ? "check" : "clock"} size={15} />{vista ? "Vista" : "Pendiente"}</button>
-          <button className={`movie-list-item__rating${tieneNota ? " has-rating" : ""}`} type="button" disabled={actualizando} aria-label={`Editar puntuación de ${pelicula.titulo}: ${tieneNota ? `${nota} sobre 10` : "sin puntuar"}`} onClick={() => onCambiarPuntuacion(pelicula)}><Icon name="star" size={15} />{tieneNota ? <>Tu nota <strong>{nota} / 10</strong></> : "Sin puntuar"}</button>
+          <button className={`movie-list-item__rating${tieneNota ? " has-rating" : ""}`} type="button" disabled={actualizando} aria-label={`Editar puntuación de ${pelicula.titulo}: ${tieneNota ? `${nota} sobre 10` : "sin puntuar"}`} onClick={() => onCambiarPuntuacion(pelicula)}><Icon name="star" size={15} />{tieneNota ? <strong>{nota}<span className="movie-list-item__rating-scale"> / 10</span></strong> : <><span className="movie-list-item__unrated-label">Sin puntuar</span><span className="movie-list-item__unrated-short" aria-hidden="true">—</span></>}</button>
           <button className="movie-list-item__remove" type="button" disabled={actualizando} aria-label={`Eliminar ${pelicula.titulo} de mi colección`} title="Quitar de mi colección" onClick={() => onEliminar(pelicula)}><Icon name="trash" size={16} /><span>Quitar</span></button>
-          {actualizando ? <span className="movie-list-item__saving" role="status">Guardando…</span> : <Link className="movie-list-item__detail" to={detalle} {...detailLink}>Ver detalle <Icon name="arrow-right" size={15} /></Link>}
+          {actualizando ? <span className="movie-list-item__saving" role="status"><Icon name="refresh" size={15} /><span className="visually-hidden">Guardando…</span></span> : <Link className="movie-list-item__detail" to={detalle} {...detailLink} aria-label={`Ver detalle de ${pelicula.titulo}`} title="Ver detalle"><span>Ver detalle</span><Icon name="arrow-right" size={15} /></Link>}
         </div>
     </article>
   );

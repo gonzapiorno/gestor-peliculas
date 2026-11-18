@@ -43,3 +43,18 @@
   .account-session__actions { align-items: flex-start; }
 }
 @media (max-width: 360px) { .header__inner { width: calc(100% - 32px); } }
+
+.session-logout-dialog { max-inline-size: 420px; }
+.session-logout-dialog .dialog__body { padding: 24px; }
+.session-logout-dialog .dialog__title {
+  margin-block: 4px 10px;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+.session-logout-dialog .dialog__description { margin-block-end: 18px; font-size: .88rem; }
+.session-logout-dialog .dialog__actions { margin-block-start: 18px; }
+.session-logout-dialog .dialog__actions .button {
+  min-block-size: 38px;
+  padding: 8px 12px;
+  font-size: .8rem;
+}

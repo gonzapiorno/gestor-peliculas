@@ -6,6 +6,7 @@ import GlobalSearch from "../movies/GlobalSearch";
 import Icon from "../ui/Icon";
 import { errorMessage } from "../../utils/errorMessage";
 import ProfileAvatar from "../account/ProfileAvatar";
+import Dialog from "../ui/Dialog";
 import "./Header.css";
 
 function SessionActions({ auth, variant, compact }) {
@@ -13,6 +14,7 @@ function SessionActions({ auth, variant, compact }) {
   const operacionRef = useRef(null);
   const [pendiente, setPendiente] = useState(null);
   const [error, setError] = useState("");
+  const [confirmarSalida, setConfirmarSalida] = useState(false);
   const { user, status } = auth;
   const location = useLocation();
   const esPagina = variant === "page";
@@ -30,7 +32,10 @@ function SessionActions({ auth, variant, compact }) {
     setPendiente(tipo);
     setError("");
     try {
-      if (tipo === "logout") await auth.logout();
+      if (tipo === "logout") {
+        await auth.logout();
+        if (activoRef.current) setConfirmarSalida(false);
+      }
       else await auth.retrySession();
     } catch (cause) {
       if (activoRef.current) setError(errorMessage(cause));
@@ -43,6 +48,18 @@ function SessionActions({ auth, variant, compact }) {
   }
 
   const ocupado = pendiente !== null || status === "loading";
+  function pedirConfirmacion() {
+    if (ocupado) return;
+    setError("");
+    setConfirmarSalida(true);
+  }
+
+  function cancelarSalida() {
+    if (ocupado) return;
+    setConfirmarSalida(false);
+    setError("");
+  }
+
   return (
     <div className={esPagina ? "account-session" : "header__account"} aria-busy={pendiente !== null}>
       {user ? (
@@ -58,7 +75,7 @@ function SessionActions({ auth, variant, compact }) {
               </span>
             </Link>
           )}
-          <button className={`button button--logout${esPagina ? "" : " header__logout"}`} type="button" disabled={ocupado} onClick={() => ejecutar("logout")}>{pendiente === "logout" ? "Cerrando sesión…" : "Cerrar sesión"}</button>
+          <button className={`button button--logout${esPagina ? "" : " header__logout"}`} type="button" disabled={ocupado} onClick={pedirConfirmacion}>Cerrar sesión</button>
         </div>
       ) : status === "loading" ? (
         <span className="header__session-status" role="status">Comprobando sesión…</span>
@@ -72,11 +89,26 @@ function SessionActions({ auth, variant, compact }) {
         </>
       )}
 
-      {(error || status === "error") && (
+      {!confirmarSalida && (error || status === "error") && (
         <div className={esPagina ? "inline-error account-session__error" : "header__session-error"} role="alert">
           <p>{error || "No pudimos comprobar tu sesión."}</p>
-          <button type="button" disabled={ocupado} onClick={() => ejecutar(error && user ? "logout" : "session")}><Icon name="refresh" size={14} />{error && user ? "Reintentar cierre" : "Reintentar sesión"}</button>
+          <button type="button" disabled={ocupado} onClick={() => error && user ? pedirConfirmacion() : ejecutar("session")}><Icon name="refresh" size={14} />{error && user ? "Reintentar cierre" : "Reintentar sesión"}</button>
         </div>
+      )}
+      {user && confirmarSalida && (
+        <Dialog className="dialog--enter session-logout-dialog" title="¿Querés cerrar sesión?"
+          description="Podés volver a entrar cuando quieras."
+          onClose={cancelarSalida} busy={ocupado}>
+          {error && <p className="inline-error" role="alert">{error}</p>}
+          <div className="dialog__actions">
+            <button className="button" type="button" data-autofocus disabled={ocupado} onClick={cancelarSalida}>
+              Seguir en Muvis
+            </button>
+            <button className="button button--danger" type="button" disabled={ocupado} onClick={() => ejecutar("logout")}>
+              {pendiente === "logout" ? "Cerrando sesión…" : error ? "Reintentar cierre" : "Cerrar sesión"}
+            </button>
+          </div>
+        </Dialog>
       )}
     </div>
   );

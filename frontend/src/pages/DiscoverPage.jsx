@@ -30,11 +30,13 @@ function DiscoverResults({ location }) {
   const thriller = useCatalogPages(enInicio ? "thriller" : null, key, opcionesCarrusel);
   const drama = useCatalogPages(enInicio ? "drama" : null, key, opcionesCarrusel);
   const romance = useCatalogPages(enInicio ? "romance" : null, key, opcionesCarrusel);
+  const anime = useCatalogPages(enInicio ? "anime" : null, key, opcionesCarrusel);
   const secciones = [
     { categoria: "populares", titulo: "Populares ahora", datos: populares },
     { categoria: "thriller", titulo: "Thriller", datos: thriller },
     { categoria: "drama", titulo: "Drama", datos: drama, requiereSoporte: true },
     { categoria: "romance", titulo: "Romance", datos: romance, requiereSoporte: true },
+    { categoria: "anime", titulo: "Películas de anime", datos: anime, requiereSoporte: true },
   ];
   const coleccion = useCatalogCollection();
   const [peliculaParaAgregar, setPeliculaParaAgregar] = useState(null);
@@ -89,7 +91,9 @@ function DiscoverResults({ location }) {
   const titulo = buscando ? "Resultados de búsqueda" : catalogCategories[categoria] ?? "Descubrir";
   const descripcion = buscando ? `Películas para «${search.query.trim()}».`
     : categoria === "thriller" ? "Explorá películas de suspenso." : categoria === "populares" ? "Lo que se está viendo en TMDB." : null;
-  const tituloSeccion = buscando ? "Películas encontradas" : categoria === "populares" ? "Populares ahora" : `Películas de ${titulo}`;
+  const tituloSeccion = buscando ? "Películas encontradas"
+    : categoria === "populares" ? "Populares ahora"
+      : categoria === "anime" ? "Películas de anime" : `Películas de ${titulo}`;
 
   function cambiarDecada(decade) {
     navigate(catalogCategoryUrl(categoria, decade), {
@@ -107,7 +111,6 @@ function DiscoverResults({ location }) {
       )}
       <header className="discover-page__header page-heading">
         <div>
-          {!enInicio && <p className="eyebrow">TU PRÓXIMA HISTORIA</p>}
           <h1 className="page-title">{titulo}</h1>
           {descripcion && <p className="page-description">{descripcion}</p>}
         </div>

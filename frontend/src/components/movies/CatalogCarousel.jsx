@@ -44,7 +44,7 @@ export default function CatalogCarousel({ categoria, titulo, catalogo, tarjetas,
         <h2 id={`${carouselId}-heading`}>{titulo}</h2>
         <Link className="button button--primary" to={catalogCategoryUrl(categoria)} state={{ desdeDescubrir: true }} aria-label={`Ver todo: ${titulo}`} onClick={(event) => {
           if (isPlainLinkClick(event)) rememberResultPosition(entry);
-        }}>Ver todo<Icon name="arrow-right" size={16} /></Link>
+        }}>Ver todo<Icon name="arrow-right" size={13} /></Link>
       </div>
       {catalogo.cargando ? <p role="status">Cargando películas…</p>
         : catalogo.error ? (

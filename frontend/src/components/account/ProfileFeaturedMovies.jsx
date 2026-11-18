@@ -11,6 +11,7 @@ import Poster from "../ui/Poster";
 import "./ProfileFeaturedMovies.css";
 
 const POSICIONES = [1, 2, 3, 4];
+const formatoNota = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
 
 function normalizar(texto) {
   return texto.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("es");
@@ -174,7 +175,7 @@ function SelectorDestacada({ actual, destacadas, onGuardar, onClose }) {
   );
 }
 
-export default function ProfileFeaturedMovies() {
+export default function ProfileFeaturedMovies({ coleccion }) {
   const [destacadas, setDestacadas] = useState(null);
   const [posicion, setPosicion] = useState(null);
   const [intento, setIntento] = useState(0);
@@ -199,6 +200,7 @@ export default function ProfileFeaturedMovies() {
   const porPosicion = new Map(
     (destacadas ?? []).map((pelicula) => [pelicula.posicion_destacada, pelicula])
   );
+  const notas = new Map((coleccion ?? []).map((pelicula) => [pelicula.id, pelicula.puntuacion_personal]));
 
   async function guardar(pelicula) {
     await guardarPeliculaDestacada(posicion, pelicula?.id ?? null);
@@ -215,7 +217,14 @@ export default function ProfileFeaturedMovies() {
 
   return (
     <section className="profile-featured" aria-labelledby="profile-featured-heading">
-      <h2 id="profile-featured-heading">Películas destacadas</h2>
+      <div className="profile-featured__heading">
+        <h2 id="profile-featured-heading"><Icon name="star" size={17} />Películas destacadas</h2>
+        {destacadas !== null && (
+          <span className="profile-featured__count" aria-label={`${destacadas.length} de 4 películas destacadas`}>
+            {destacadas.length} / 4
+          </span>
+        )}
+      </div>
 
       {error && (
         <div className="inline-error" role="alert">
@@ -239,6 +248,7 @@ export default function ProfileFeaturedMovies() {
         <ul className="profile-featured__grid">
           {POSICIONES.map((lugar) => {
             const pelicula = porPosicion.get(lugar);
+            const nota = notas.get(pelicula?.id) ?? pelicula?.puntuacion_personal;
 
             return (
               <li key={lugar}>
@@ -256,11 +266,15 @@ export default function ProfileFeaturedMovies() {
                   <span className="profile-featured__poster" aria-hidden="true">
                     {pelicula
                       ? <PosterDestacado key={pelicula.id} pelicula={pelicula} animar={lugar === posicionAnimada} />
-                      : <Icon name="plus" size={26} />}
+                      : <span className="profile-featured__add"><Icon name="plus" size={21} /></span>}
+                    {nota != null && (
+                      <span className="profile-featured__rating"><Icon name="star" size={12} />{formatoNota.format(nota)}</span>
+                    )}
                   </span>
                   <span className="profile-featured__title" title={pelicula?.titulo}>
-                    {pelicula?.titulo || "Agregar película"}
+                    {pelicula?.titulo || "Elegir película"}
                   </span>
+                  {pelicula?.anio && <span className="profile-featured__year">{pelicula.anio}</span>}
                 </button>
               </li>
             );

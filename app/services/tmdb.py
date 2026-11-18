@@ -9,7 +9,7 @@ load_dotenv()
 TMDB_TOKEN = os.getenv("TMDB_TOKEN")
 TMDB_URL = "https://api.themoviedb.org/3"
 TMDB_MAX_PAGINA = 500
-GENEROS_EXPLORAR = {"thriller": 53, "drama": 18, "romance": 10749}
+GENEROS_EXPLORAR = {"thriller": 53, "drama": 18, "romance": 10749, "anime": 16}
 
 
 # Headers utilizados para autenticarnos contra TMDB.
@@ -60,6 +60,8 @@ async def obtener_pagina_catalogo(categoria: str, pagina: int, decada: int | Non
         })
     if categoria in GENEROS_EXPLORAR:
         params["with_genres"] = GENEROS_EXPLORAR[categoria]
+    if categoria == "anime":
+        params["with_original_language"] = "ja"
     if decada is not None:
         params["primary_release_date.gte"] = f"{decada}-01-01"
         params["primary_release_date.lte"] = f"{decada + 9}-12-31"

@@ -5,6 +5,7 @@ export const catalogCategories = {
   thriller: "Thriller",
   drama: "Drama",
   romance: "Romance",
+  anime: "Anime",
 };
 
 export const catalogDecades = Array.from({ length: 13 }, (_, index) => 2020 - index * 10);

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigationType } from "react-router-dom";
 import MovieGrid from "../components/movies/MovieGrid";
 import StatsCard from "../components/movies/StatsCard";
 import ViewModeToggle from "../components/movies/ViewModeToggle";
+import CollectionSortPicker from "../components/movies/CollectionSortPicker";
 import { collectionStatistics } from "../components/movies/collectionStatistics";
 import RatingDialog from "../components/movies/RatingDialog";
 import Dialog from "../components/ui/Dialog";
@@ -51,6 +52,7 @@ function matchesRating(movie, filter) {
 }
 
 const VIEW_KEY = "muvis.collection.view";
+const PAGE_SIZE = 24;
 function preferredView() {
   try { return window.localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid"; }
   catch { return "grid"; }
@@ -70,6 +72,7 @@ function CollectionPage() {
   const [filtro, setFiltro] = useState(previousView?.filtro ?? "todas");
   const [filtroNota, setFiltroNota] = useState(previousView?.filtroNota ?? "todas");
   const [orden, setOrden] = useState(previousView?.orden ?? "recientes");
+  const [cantidadVisible, setCantidadVisible] = useState(previousView?.cantidadVisible ?? PAGE_SIZE);
   const [vista, setVista] = useState(() => previousView?.vista ?? preferredView());
   const [peliculaPuntuacion, setPeliculaPuntuacion] = useState(null);
   const [peliculaEliminar, setPeliculaEliminar] = useState(null);
@@ -84,7 +87,7 @@ function CollectionPage() {
 
   function rememberView(event, movieId) {
     rememberCollectionView(event, key, {
-      sessionKey, busqueda, filtro, filtroNota, orden, vista, movieId,
+      sessionKey, busqueda, filtro, filtroNota, orden, vista, movieId, cantidadVisible,
     });
   }
 
@@ -203,6 +206,7 @@ function CollectionPage() {
     setBusqueda("");
     setFiltro("todas");
     setFiltroNota("todas");
+    setCantidadVisible(PAGE_SIZE);
   }
 
   const hayFiltros = busqueda.trim() || filtro !== "todas" || filtroNota !== "todas";
@@ -212,21 +216,20 @@ function CollectionPage() {
     <main className="collection-page page-container" ref={pageRef}>
       <header className="page-heading collection-heading">
         <div>
-          <p className="eyebrow">TU CINE, A TU MANERA</p>
           <h1 className="page-title">Mi colección</h1>
           <p className="page-description">Las películas que viste y las que querés ver.</p>
         </div>
-        <Link to="/" className="button button--primary"><Icon name="plus" size={18} /> Agregar películas</Link>
+        <Link to="/" className="button button--primary"><Icon name="plus" size={15} /> Agregar películas</Link>
       </header>
 
       <p className="visually-hidden" role="status" aria-live="polite">{anuncio}</p>
 
       {!error && (
         <section className="collection-stats" aria-label="Estadísticas de tu colección">
-          <StatsCard label="Películas guardadas" value={cantidades.todas} icon="library" detail="En tu colección" loading={cargando} />
-          <StatsCard label="Películas vistas" value={cantidades.vistas} icon="check" detail="Marcadas como vistas" tone="secondary" loading={cargando} />
-          <StatsCard label="Tu nota promedio" value={cantidades.promedio == null ? "—" : cantidades.promedio.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} icon="star" detail={cantidades.puntuadas ? `Sobre ${cantidades.puntuadas} ${cantidades.puntuadas === 1 ? "película puntuada" : "películas puntuadas"}` : "Aún sin puntuaciones"} tone="rating" loading={cargando} />
-          <StatsCard label="Películas favoritas" value={cantidades.favoritas} icon="heart" detail="Marcadas por vos" loading={cargando} />
+          <StatsCard label="Películas guardadas" value={cantidades.todas} icon="library" loading={cargando} />
+          <StatsCard label="Películas vistas" value={cantidades.vistas} icon="check" tone="secondary" loading={cargando} />
+          <StatsCard label="Tu nota promedio" value={cantidades.promedio == null ? "—" : cantidades.promedio.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} icon="star" detail={cantidades.puntuadas ? `${cantidades.puntuadas} ${cantidades.puntuadas === 1 ? "puntuada" : "puntuadas"}` : "Sin notas"} tone="rating" loading={cargando} />
+          <StatsCard label="Películas favoritas" value={cantidades.favoritas} icon="heart" loading={cargando} />
         </section>
       )}
 
@@ -248,10 +251,10 @@ function CollectionPage() {
                   type="button"
                   key={item.id}
                   aria-pressed={filtro === item.id}
-                  onClick={() => setFiltro(item.id)}
+                  onClick={() => { setFiltro(item.id); setCantidadVisible(PAGE_SIZE); }}
                   disabled={cargando}
                 >
-                  {item.icon && <Icon name={item.icon} size={16} />}
+                  <Icon name={item.icon || "grid"} size={14} />
                   <span>{item.label}</span>
                   <span className="collection-tab__count">{cantidades[item.id]}</span>
                 </button>
@@ -262,8 +265,8 @@ function CollectionPage() {
               <div className="search-field collection-search">
                 <Icon name="search" size={18} />
                 <label htmlFor="collection-search" className="visually-hidden">Buscar en mi colección</label>
-                <input className="field-input" id="collection-search" type="search" placeholder="Filtrar en mi colección…" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} disabled={cargando} />
-                {busqueda && <button className="icon-button" type="button" onClick={() => setBusqueda("")} aria-label="Limpiar búsqueda"><Icon name="close" size={16} /></button>}
+                <input className="field-input" id="collection-search" type="search" placeholder="Filtrar en mi colección…" value={busqueda} onChange={(event) => { setBusqueda(event.target.value); setCantidadVisible(PAGE_SIZE); }} disabled={cargando} />
+                {busqueda && <button className="icon-button" type="button" onClick={() => { setBusqueda(""); setCantidadVisible(PAGE_SIZE); }} aria-label="Limpiar búsqueda"><Icon name="close" size={16} /></button>}
               </div>
 
               <details ref={filtrosNotaRef} className="collection-ratings" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false; }} onKeyDown={(event) => { if (event.key === "Escape") { event.currentTarget.open = false; event.currentTarget.querySelector("summary").focus(); } }}>
@@ -277,6 +280,7 @@ function CollectionPage() {
                     aria-pressed={filtroNota === item.id}
                     onClick={() => {
                       setFiltroNota(item.id);
+                      setCantidadVisible(PAGE_SIZE);
                       if (filtrosNotaRef.current) {
                         filtrosNotaRef.current.open = false;
                         filtrosNotaRef.current.querySelector("summary").focus();
@@ -288,18 +292,9 @@ function CollectionPage() {
                 </div>
               </details>
 
-              <div className="collection-sort">
-                <label className="visually-hidden" htmlFor="collection-sort">Ordenar por</label>
-                <div className="collection-sort__select">
-                  <select id="collection-sort" value={orden} onChange={(event) => setOrden(event.target.value)} disabled={cargando}>
-                    <option value="recientes">Últimas añadidas</option>
-                    <option value="titulo">Título: A–Z</option>
-                    <option value="anio">Año: más recientes</option>
-                    <option value="puntuacion">Tu puntuación: mayor</option>
-                  </select>
-                  <Icon name="chevron-down" size={14} />
-                </div>
-              </div>
+              <CollectionSortPicker value={orden} onChange={(value) => { setOrden(value); setCantidadVisible(PAGE_SIZE); }} disabled={cargando}
+                onOpen={() => { if (filtrosNotaRef.current) filtrosNotaRef.current.open = false; }} />
+              <ViewModeToggle value={vista} onChange={cambiarVista} />
             </div>
           </div>
 
@@ -310,7 +305,6 @@ function CollectionPage() {
                   ? `${visibles.length} de ${peliculas.length} películas`
                   : `${peliculas.length} ${peliculas.length === 1 ? "película" : "películas"} en tu colección`}
               </p>
-              <ViewModeToggle value={vista} onChange={cambiarVista} />
             </div>
           )}
 
@@ -325,7 +319,7 @@ function CollectionPage() {
           {cargando ? <MovieSkeleton count={4} /> : visibles.length > 0 ? (
             <MovieGrid
               onOpenDetail={rememberView}
-              peliculas={visibles}
+              peliculas={visibles.slice(0, cantidadVisible)}
               viewMode={vista}
               onCambiarEstado={(pelicula) => guardarCambio(pelicula, "estado", pelicula.estado === "vista" ? "pendiente" : "vista")}
               onCambiarFavorita={(pelicula) => guardarCambio(pelicula, "favorita", !pelicula.favorita)}
@@ -339,8 +333,19 @@ function CollectionPage() {
             </PageState>
           )}
 
+          {!cargando && visibles.length > PAGE_SIZE && (
+            <div className="collection-more">
+              {cantidadVisible < visibles.length && (
+                <button className="button button--primary" type="button" onClick={() => setCantidadVisible((cantidad) => cantidad + PAGE_SIZE)}>
+                  Cargar más<Icon name="chevron-down" size={15} />
+                </button>
+              )}
+              <p role="status">Mostrando {Math.min(cantidadVisible, visibles.length)} de {visibles.length} películas</p>
+            </div>
+          )}
+
           {!cargando && visibles.length > 0 && (
-            <p className="collection-note"><Icon name="star" size={13} /> Tu puntuación es personal, sobre 10. Podés editarla pulsando la nota.</p>
+            <p className="collection-note"><Icon name="star" size={13} /> Tus puntuaciones son personales, sobre 10.</p>
           )}
         </>
       )}

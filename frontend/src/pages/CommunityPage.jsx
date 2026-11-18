@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import ProfileAvatar from "../components/account/ProfileAvatar";
+import Dialog from "../components/ui/Dialog";
 import Icon from "../components/ui/Icon";
 import {
   buscarUsuario,
@@ -17,7 +18,7 @@ function Persona({ usuario }) {
       <ProfileAvatar
         user={usuario}
         className="community-person__avatar"
-        iconSize={19}
+        iconSize={18}
         photoPath={`/amistades/usuarios/${usuario.id}/foto`}
       />
       <div className="community-person__identity">
@@ -30,9 +31,9 @@ function Persona({ usuario }) {
 
 function EnlacePerfil({ usuario }) {
   return (
-    <Link className="community-profile-link" to={`/comunidad/amigos/${usuario.id}`} state={{ desdeComunidad: true }}>
+    <Link className="community-profile-link" to={`/comunidad/amigos/${usuario.id}`} state={{ desdeComunidad: true }} aria-label={`Ver perfil de @${usuario.nombre_usuario}`}>
       <Persona usuario={usuario} />
-      <Icon name="arrow-right" size={18} />
+      <Icon name="chevron-right" size={16} />
     </Link>
   );
 }
@@ -42,9 +43,9 @@ function Panel({ id, titulo, cantidad, icono, acciones, children }) {
     <section className={`community-panel community-panel--${id}`} aria-labelledby={`community-${id}`}>
       <header className="community-panel__header">
         <h2 id={`community-${id}`}>
-          <Icon name={icono} size={17} />
+          <Icon name={icono} size={16} />
           {titulo}
-          {cantidad > 0 && <span className="community-panel__count">{cantidad}</span>}
+          {cantidad != null && <span className="community-panel__count">{cantidad}</span>}
         </h2>
         {acciones}
       </header>
@@ -80,6 +81,7 @@ export default function CommunityPage() {
   const [busqueda, setBusqueda] = useState(null);
   const [buscando, setBuscando] = useState(false);
   const [ocupada, setOcupada] = useState(false);
+  const [mostrarAdelanto, setMostrarAdelanto] = useState(false);
   const [aviso, setAviso] = useState(() => state?.amistadQuitada ? { mensaje: "Amistad eliminada." } : null);
   const operacion = useRef(false);
 
@@ -172,10 +174,14 @@ export default function CommunityPage() {
 
   return (
     <main className="community-page page-container">
-      <header className="page-heading">
-        <p className="eyebrow">Cine en comunidad</p>
-        <h1 className="page-title">Comunidad</h1>
-        <p className="page-description">Encontrá a tus amigos en Muvis y enviá solicitudes de amistad.</p>
+      <header className="community-heading page-heading">
+        <div>
+          <h1 className="page-title">Comunidad</h1>
+          <p className="page-description">El cine se disfruta más juntos.</p>
+        </div>
+        <button className="button community-upcoming-trigger" type="button" onClick={() => setMostrarAdelanto(true)} aria-haspopup="dialog">
+          <Icon name="message" size={16} />Mensajes<span>Próximamente</span>
+        </button>
       </header>
 
       {aviso && <p className={aviso.error ? "inline-error" : "community-notice"} role={aviso.error ? "alert" : "status"}>{aviso.mensaje}</p>}
@@ -189,7 +195,7 @@ export default function CommunityPage() {
       )}
 
       <div className="community-grid">
-        <Panel id="buscar" titulo="Buscador de cinéfilos" icono="search">
+        <Panel id="buscar" titulo="Buscá a tus amigos" icono="search">
           <form className="community-search" onSubmit={buscar} role="search" aria-label="Buscar cinéfilos">
             <label className="visually-hidden" htmlFor="community-username">Buscar por @usuario</label>
             <input id="community-username" className="field-input" type="search"
@@ -225,7 +231,13 @@ export default function CommunityPage() {
                 <li className="community-row community-row--friend" key={usuario.id}><EnlacePerfil usuario={usuario} /></li>
               ))}
             </ul>
-          ) : bandeja && !cargando && <p className="community-message">Todavía no tenés amigos en Muvis.</p>}
+          ) : bandeja && !cargando && (
+            <div className="community-empty">
+              <span className="community-empty__icon"><Icon name="users" size={24} /></span>
+              <p>Todavía no tenés amigos en Muvis.</p>
+              <span>Buscalos por su @usuario para empezar a compartir cine.</span>
+            </div>
+          )}
         </Panel>
 
         <Panel id="recibidas" titulo="Solicitudes recibidas" icono="message" cantidad={bandeja?.recibidas.length}>
@@ -254,6 +266,23 @@ export default function CommunityPage() {
           ) : bandeja && <p className="community-message">No tenés solicitudes enviadas pendientes.</p>}
         </Panel>
       </div>
+      {mostrarAdelanto && (
+        <Dialog className="community-upcoming dialog--enter" title="Lo próximo en Comunidad" description="Un adelanto de las funciones que queremos sumar a Muvis." onClose={() => setMostrarAdelanto(false)}>
+          <span className="community-upcoming__label">Próximamente</span>
+          <ul className="community-upcoming__features">
+            <li>
+              <span><Icon name="message" size={20} /></span>
+              <div><h3>Mensajes entre amigos</h3><p>Conversaciones privadas para charlar de cine y compartir películas y publicaciones.</p></div>
+            </li>
+            <li>
+              <span><Icon name="film" size={20} /></span>
+              <div><h3>Lo que estás viendo</h3><p>Publicaciones sobre la película que estás viendo o que ya viste, con likes y comentarios de tus amigos.</p></div>
+            </li>
+          </ul>
+          <p className="community-upcoming__note">Estas funciones todavía no están disponibles.</p>
+          <div className="dialog__actions"><button className="button button--primary" type="button" data-autofocus="" onClick={() => setMostrarAdelanto(false)}>Volver a Comunidad</button></div>
+        </Dialog>
+      )}
     </main>
   );
 }

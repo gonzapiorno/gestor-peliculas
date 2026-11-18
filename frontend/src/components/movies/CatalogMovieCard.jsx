@@ -67,14 +67,14 @@ function CatalogMovieCard({
           aria-describedby={errorAccion ? errorId : undefined}
           onClick={() => onAgregar?.(pelicula)}
         >
-          <Icon name={icono} size={18} />
+          <Icon name={icono} size={15} />
         </button>
       </div>
       <div className="catalog-card__info">
         <h3><Link className="catalog-card__title-link" to={detalle} state={searchState} onClick={rememberPosition}>{pelicula.titulo}</Link></h3>
         <div className="catalog-card__meta">
           <span>{pelicula.anio || "Sin año"}</span>
-          <span className="catalog-card__rating">{puntuacion ? "TMDB / 10" : "Sin valoración"}</span>
+          <span className="catalog-card__rating">{puntuacion ? "TMDB" : "Sin valoración"}</span>
         </div>
         {errorAccion && (
           <p className="catalog-card__error" id={errorId} role="alert">
