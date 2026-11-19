@@ -21,6 +21,7 @@ from app.schemas.amistades import (
     PerfilAmigo,
     ColeccionAmigo,
     PeliculaVistaAmigo,
+    PeliculaPendienteAmigo,
 )
 
 
@@ -363,13 +364,24 @@ def obtener_coleccion_amigo(
     usuario_id: int = Path(gt=0, le=2_147_483_647),
     usuario_actual: Usuario = Depends(obtener_usuario_actual),
 ):
+    vistas_compartidas = and_(
+        PeliculaColeccion.estado == "vista",
+        Usuario.coleccion_visible_amigos.is_(True),
+    )
+    pendientes_compartidas = and_(
+        PeliculaColeccion.estado == "pendiente",
+        Usuario.pendientes_visibles_amigos.is_(True),
+    )
+
     consulta = (
         select(
             Usuario.coleccion_visible_amigos,
+            Usuario.pendientes_visibles_amigos,
             PeliculaColeccion.id_tmdb,
             PeliculaColeccion.titulo,
             PeliculaColeccion.anio,
             PeliculaColeccion.poster,
+            PeliculaColeccion.estado,
             PeliculaColeccion.puntuacion_personal,
         )
         .select_from(Usuario)
@@ -377,8 +389,7 @@ def obtener_coleccion_amigo(
             PeliculaColeccion,
             and_(
                 PeliculaColeccion.usuario_id == Usuario.id,
-                PeliculaColeccion.estado == "vista",
-                Usuario.coleccion_visible_amigos.is_(True),
+                or_(vistas_compartidas, pendientes_compartidas),
             ),
         )
         .where(
@@ -395,12 +406,22 @@ def obtener_coleccion_amigo(
     if not filas:
         raise HTTPException(404, "Perfil no disponible.")
 
+    vistas = [
+        PeliculaVistaAmigo.model_validate(fila)
+        for fila in filas
+        if fila["estado"] == "vista"
+    ]
+    pendientes = [
+        PeliculaPendienteAmigo.model_validate(fila)
+        for fila in filas
+        if fila["estado"] == "pendiente"
+    ]
+
     response.headers["Cache-Control"] = "private, no-store"
+
     return ColeccionAmigo(
         visible=filas[0]["coleccion_visible_amigos"],
-        peliculas=[
-            PeliculaVistaAmigo.model_validate(fila)
-            for fila in filas
-            if fila["id_tmdb"] is not None
-        ],
+        peliculas=vistas,
+        pendientes_visibles=filas[0]["pendientes_visibles_amigos"],
+        pendientes=pendientes,
     )

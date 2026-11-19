@@ -73,6 +73,11 @@ class Usuario(Base):
         nullable=False,
         server_default=false(),
     )
+    pendientes_visibles_amigos: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=false(),
+    )
     avatar: Mapped[str | None] = mapped_column(String(16), nullable=True)
     foto_perfil: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
     foto_perfil_version: Mapped[str | None] = mapped_column(String(32), nullable=True)

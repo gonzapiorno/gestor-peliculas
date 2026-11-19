@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/useAuth";
 import GlobalSearch from "../movies/GlobalSearch";
@@ -17,6 +17,7 @@ function SessionActions({ auth, variant, compact }) {
   const [confirmarSalida, setConfirmarSalida] = useState(false);
   const { user, status } = auth;
   const location = useLocation();
+  const navigate = useNavigate();
   const esPagina = variant === "page";
   const retorno = { from: { pathname: location.pathname, search: location.search, hash: location.hash } };
 
@@ -34,7 +35,7 @@ function SessionActions({ auth, variant, compact }) {
     try {
       if (tipo === "logout") {
         await auth.logout();
-        if (activoRef.current) setConfirmarSalida(false);
+        navigate("/login", { replace: true });
       }
       else await auth.retrySession();
     } catch (cause) {

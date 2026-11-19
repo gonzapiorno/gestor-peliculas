@@ -4,6 +4,7 @@ import { AccountSession } from "../components/layout/Header";
 import GoogleVinculacion from "../components/auth/GoogleVinculacion";
 import FeedbackPanel from "../components/ui/FeedbackPanel";
 import Icon from "../components/ui/Icon";
+import CollectionPrivacySettings from "../components/account/CollectionPrivacySettings";
 import ProfileEditDialog from "../components/account/ProfileEditDialog";
 import ProfileAvatar from "../components/account/ProfileAvatar";
 import ProfileFeaturedMovies from "../components/account/ProfileFeaturedMovies";
@@ -51,7 +52,7 @@ function CuentaAutenticada({ user }) {
   const [perfilAbierto, setPerfilAbierto] = useState(false);
   const [resumen, setResumen] = useState(null);
   const [intento, setIntento] = useState(0);
-  const [guardandoVisibilidad, setGuardandoVisibilidad] = useState(false);
+  const [guardandoVisibilidad, setGuardandoVisibilidad] = useState(null);
   const [errorVisibilidad, setErrorVisibilidad] = useState("");
   const [mensajeVisibilidad, setMensajeVisibilidad] = useState("");
   const consulta = useRef(null);
@@ -81,22 +82,23 @@ function CuentaAutenticada({ user }) {
     return () => window.removeEventListener(COLLECTION_CHANGED_EVENT, actualizarResumen);
   }, []);
 
-  async function cambiarVisibilidad(compartir) {
+  async function cambiarVisibilidad(campo, compartir) {
     if (cambioVisibilidad.current) return;
     cambioVisibilidad.current = true;
-    setGuardandoVisibilidad(true);
+    setGuardandoVisibilidad(campo);
     setErrorVisibilidad("");
     setMensajeVisibilidad("");
     try {
-      await guardarPerfil({ coleccion_visible_amigos: compartir });
+      await guardarPerfil({ [campo]: compartir });
+      const lista = campo === "coleccion_visible_amigos" ? "Tus películas vistas y sus notas" : "Tus películas pendientes";
       setMensajeVisibilidad(compartir
-        ? "Tus amigos ya pueden ver tus películas vistas y sus notas."
-        : "Tu colección ahora es privada.");
+        ? `${lista} ahora son visibles para tus amigos.`
+        : `${lista} ahora son privadas.`);
     } catch (error) {
       setErrorVisibilidad(errorMessage(error));
     } finally {
       cambioVisibilidad.current = false;
-      setGuardandoVisibilidad(false);
+      setGuardandoVisibilidad(null);
     }
   }
 
@@ -149,23 +151,8 @@ function CuentaAutenticada({ user }) {
               {verificado && import.meta.env.VITE_GOOGLE_CLIENT_ID && <GoogleVinculacion key={user.id} />}
             </div>
           </div>
-          {typeof user.coleccion_visible_amigos === "boolean" && (
-            <label className="account-page__setting account-page__visibility" aria-busy={guardandoVisibilidad}>
-              <span className="account-page__setting-icon"><Icon name="users" size={18} /></span>
-              <span className="account-page__setting-content">
-                <span className="account-page__setting-title">Visibilidad de la colección</span>
-                <span className="account-page__setting-description" id="account-visibility-description">
-                  {guardandoVisibilidad ? "Guardando…"
-                    : user.coleccion_visible_amigos ? "Películas vistas y notas para amigos" : "Películas vistas y notas solo para vos"}
-                </span>
-              </span>
-              <input className="visually-hidden" type="checkbox" role="switch"
-                aria-label="Compartir mis películas vistas con amigos" aria-describedby="account-visibility-description"
-                checked={user.coleccion_visible_amigos} disabled={guardandoVisibilidad || perfilAbierto}
-                onChange={(event) => cambiarVisibilidad(event.target.checked)} />
-              <span className="profile-form__switch" aria-hidden="true" />
-            </label>
-          )}
+          <CollectionPrivacySettings valores={user} onChange={cambiarVisibilidad}
+            disabled={Boolean(guardandoVisibilidad) || perfilAbierto} guardando={guardandoVisibilidad} />
           <button className="account-page__setting account-page__feedback" type="button"
             onClick={() => setFeedbackAbierto(true)}>
             <span className="account-page__setting-icon"><Icon name="message" size={18} /></span>

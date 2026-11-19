@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useNavigationType, useParams } from "re
 import { useAuth } from "../auth/useAuth";
 import ProfileAvatar from "../components/account/ProfileAvatar";
 import MovieDetailBackLink from "../components/movies/MovieDetailBackLink";
+import CollectionSortPicker from "../components/movies/CollectionSortPicker";
 import { collectionStatistics } from "../components/movies/collectionStatistics";
 import Dialog from "../components/ui/Dialog";
 import Icon from "../components/ui/Icon";
@@ -18,16 +19,18 @@ import "./FriendProfilePage.css";
 const formatoNota = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
 const formatoCantidad = new Intl.NumberFormat("es-AR");
 const LIMITE_INICIAL = 12;
+const FILTROS_INICIALES = { busqueda: "", orden: "recientes", todas: false };
 
 function normalizarTitulo(titulo) {
   return titulo.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("es");
 }
 
-function PeliculasDelAmigo({ peliculas, perfilId, enColeccion = false, recordarVista, notas }) {
+function PeliculasDelAmigo({ peliculas, perfilId, enColeccion = false, recordarVista, notas, pendientesPropias }) {
   return (
     <ul className={`profile-featured__grid${enColeccion ? " friend-profile__watched-grid" : ""}`}>
       {peliculas.map((pelicula) => {
         const nota = enColeccion ? pelicula.puntuacion_personal : notas?.get(pelicula.id_tmdb);
+        const pendienteEnComun = pendientesPropias?.has(pelicula.id_tmdb);
         return (
           <li key={pelicula.id_tmdb} data-collection-movie={pelicula.id_tmdb}>
             <Link className="profile-featured__slot" to={`/pelicula/${pelicula.id_tmdb}`}
@@ -36,8 +39,10 @@ function PeliculasDelAmigo({ peliculas, perfilId, enColeccion = false, recordarV
               <span className="profile-featured__poster" aria-hidden="true">
                 <Poster src={pelicula.poster} title={pelicula.titulo}
                   sizes={enColeccion ? "(max-width: 600px) 30vw, 160px" : "(max-width: 600px) 45vw, 200px"} />
+                {pendienteEnComun && <span className="friend-profile__shared-pending">También la querés ver</span>}
               </span>
               <span className="profile-featured__title">{pelicula.titulo}</span>
+              {pendienteEnComun && <span className="visually-hidden">También la querés ver</span>}
               {pelicula.anio && <span className="friend-profile__movie-year">{pelicula.anio}</span>}
               {nota != null && (
                 <span className="friend-profile__rating">
@@ -55,21 +60,10 @@ function PeliculasDelAmigo({ peliculas, perfilId, enColeccion = false, recordarV
   );
 }
 
-function EstadisticasAmigo({ peliculas }) {
-  const [enComun, setEnComun] = useState(null);
-  useEffect(() => {
-    if (!peliculas.length) return;
-    let vigente = true;
-    obtenerColeccion().then((propias) => {
-      if (!vigente) return;
-      const vistasPropias = new Set(propias.filter(({ estado }) => estado === "vista").map(({ id_tmdb }) => id_tmdb));
-      setEnComun(peliculas.filter(({ id_tmdb }) => vistasPropias.has(id_tmdb)).length);
-    }).catch(() => { if (vigente) setEnComun(null); });
-    return () => { vigente = false; };
-  }, [peliculas]);
-
+function EstadisticasAmigo({ peliculas, vistasPropias }) {
   const { promedio } = collectionStatistics(peliculas);
-  const coincidencias = peliculas.length ? enComun : 0;
+  const coincidencias = vistasPropias || !peliculas.length
+    ? peliculas.filter(({ id_tmdb }) => vistasPropias?.has(id_tmdb)).length : null;
   return (
     <dl className="friend-profile__stats">
       <div>
@@ -94,22 +88,24 @@ function EstadisticasAmigo({ peliculas }) {
   );
 }
 
-function ColeccionCompartida({ peliculas, perfilId, vista, setVista, recordarVista }) {
+function ColeccionCompartida({ peliculas, perfilId, lista, vista, setVista, recordarVista, pendientesPropias }) {
   const buscador = useRef(null);
   const consulta = normalizarTitulo(vista.busqueda.trim());
   const filtradas = peliculas.filter(({ titulo }) => normalizarTitulo(titulo).includes(consulta));
-  if (vista.orden === "nota") {
-    filtradas.sort((a, b) => (b.puntuacion_personal ?? 0) - (a.puntuacion_personal ?? 0));
-  }
+  if (vista.orden === "puntuacion") filtradas.sort((a, b) => (b.puntuacion_personal ?? -1) - (a.puntuacion_personal ?? -1));
+  if (vista.orden === "titulo") filtradas.sort((a, b) => a.titulo.localeCompare(b.titulo, "es", { sensitivity: "base" }));
+  if (vista.orden === "anio") filtradas.sort((a, b) => (b.anio ?? 0) - (a.anio ?? 0));
   const mostradas = vista.todas ? filtradas : filtradas.slice(0, LIMITE_INICIAL);
 
-  if (!peliculas.length) return <p className="friend-profile__message">Todavía no marcó películas como vistas.</p>;
+  if (!peliculas.length) return <p className="friend-profile__message">
+    {lista === "vistas" ? "Todavía no marcó películas como vistas." : "Todavía no tiene películas pendientes."}
+  </p>;
   return (
     <>
       <div className="friend-profile__filters">
         <div className="search-field friend-profile__search">
           <Icon name="search" size={17} />
-          <input ref={buscador} className="field-input" type="search" aria-label="Buscar en las películas vistas"
+          <input ref={buscador} className="field-input" type="search" aria-label={`Buscar en las películas ${lista}`}
             placeholder="Buscar por título…" value={vista.busqueda}
             onChange={(event) => setVista({ ...vista, busqueda: event.target.value })} />
           {vista.busqueda && (
@@ -119,15 +115,12 @@ function ColeccionCompartida({ peliculas, perfilId, vista, setVista, recordarVis
             }}><Icon name="close" size={18} /></button>
           )}
         </div>
-        <div className="friend-profile__sort" role="group" aria-label="Orden de películas vistas">
-          <button type="button" aria-pressed={vista.orden === "recientes"}
-            onClick={() => setVista({ ...vista, orden: "recientes" })}>Recientes</button>
-          <button type="button" aria-pressed={vista.orden === "nota"}
-            onClick={() => setVista({ ...vista, orden: "nota" })}>Mejores notas</button>
-        </div>
+        <CollectionSortPicker value={vista.orden} conNotas={lista === "vistas"}
+          onChange={(orden) => setVista({ ...vista, orden })} />
       </div>
       {mostradas.length
-        ? <PeliculasDelAmigo peliculas={mostradas} perfilId={perfilId} recordarVista={recordarVista} enColeccion />
+        ? <PeliculasDelAmigo peliculas={mostradas} perfilId={perfilId} recordarVista={recordarVista}
+            pendientesPropias={lista === "pendientes" ? pendientesPropias : null} enColeccion />
         : <p className="friend-profile__message" role="status">No encontramos películas con ese título.</p>}
       {mostradas.length < filtradas.length && (
         <button className="button friend-profile__show-all" type="button"
@@ -216,7 +209,8 @@ function PerfilAmigo({ id }) {
     const guardada = collectionView(key, sessionKey);
     return tipoNavegacion === "POP" && guardada?.perfilId === Number(id) ? guardada : null;
   });
-  const [vista, setVista] = useState(() => anterior?.vista ?? { busqueda: "", orden: "recientes", todas: false });
+  const [vista, setVista] = useState(() => anterior?.vista ?? { lista: "vistas" });
+  const [propias, setPropias] = useState(null);
   const [confirmarBaja, setConfirmarBaja] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [intento, setIntento] = useState(0);
@@ -245,6 +239,23 @@ function PerfilAmigo({ id }) {
       .catch((error) => { if (vigente) setResultado({ error }); });
     return () => { vigente = false; };
   }, [id, idValido, intento]);
+
+  useEffect(() => {
+    const compartida = resultado?.coleccion;
+    if (!compartida?.peliculas?.length && !compartida?.pendientes?.length) return;
+    let vigente = true;
+    obtenerColeccion().then((peliculas) => {
+      if (!vigente) return;
+      const vistas = new Set();
+      const pendientes = new Set();
+      for (const { estado, id_tmdb } of peliculas) {
+        if (estado === "vista") vistas.add(id_tmdb);
+        if (estado === "pendiente") pendientes.add(id_tmdb);
+      }
+      setPropias({ vistas, pendientes });
+    }).catch(() => { if (vigente) setPropias(null); });
+    return () => { vigente = false; };
+  }, [resultado]);
 
   useLayoutEffect(() => {
     if (!resultado?.perfil) return;
@@ -293,6 +304,10 @@ function PerfilAmigo({ id }) {
   const perfil = resultado?.perfil;
   const coleccion = resultado?.coleccion;
   const vistas = coleccion?.visible ? coleccion.peliculas : null;
+  const pendientes = coleccion?.pendientes_visibles ? coleccion.pendientes : null;
+  const ambas = Boolean(vistas && pendientes);
+  const lista = pendientes && (!vistas || vista.lista === "pendientes") ? "pendientes" : "vistas";
+  const peliculas = lista === "vistas" ? vistas : pendientes;
   const notas = vistas ? new Map(vistas.map(({ id_tmdb, puntuacion_personal }) => [id_tmdb, puntuacion_personal])) : null;
   if (anterior && !perfil) {
     return (
@@ -321,7 +336,7 @@ function PerfilAmigo({ id }) {
               </div>
             </div>
             {perfil.bio && <p className="friend-profile__bio">{perfil.bio}</p>}
-            {vistas && <EstadisticasAmigo peliculas={vistas} />}
+            {vistas && <EstadisticasAmigo peliculas={vistas} vistasPropias={propias?.vistas} />}
           </header>
           <section ref={seccionDestacadas} className="friend-profile__section" aria-labelledby="friend-featured-heading">
             <div className="friend-profile__section-heading">
@@ -334,17 +349,31 @@ function PerfilAmigo({ id }) {
           </section>
           <section ref={seccionColeccion} className="friend-profile__section" aria-labelledby="friend-collection-heading">
             <div className="friend-profile__section-heading">
-              <h2 id="friend-collection-heading"><Icon name="library" size={16} />Películas vistas</h2>
-              {vistas && <span className="friend-profile__count">{formatoCantidad.format(vistas.length)}</span>}
+              <h2 id="friend-collection-heading"><Icon name="library" size={16} />
+                {ambas || !peliculas ? "Colección" : `Películas ${lista}`}
+              </h2>
+              {peliculas && !ambas && <span className="friend-profile__count">{formatoCantidad.format(peliculas.length)}</span>}
             </div>
+            {ambas && (
+              <div className="friend-profile__lists" role="group" aria-label="Elegir lista de películas">
+                {[["vistas", "Vistas", vistas.length], ["pendientes", "Pendientes", pendientes.length]].map(([tipo, titulo, cantidad]) => (
+                  <button key={tipo} type="button" aria-pressed={lista === tipo}
+                    onClick={() => setVista((actual) => ({ ...actual, lista: tipo }))}>
+                    {titulo} <span>{formatoCantidad.format(cantidad)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {coleccion.error ? (
               <div className="inline-error" role="alert">
                 <span>{errorMessage(coleccion.error)}</span>
                 <button className="button" type="button" onClick={reintentar}>Reintentar</button>
               </div>
-            ) : vistas ? (
-              <ColeccionCompartida perfilId={perfil.id} peliculas={vistas}
-                vista={vista} setVista={setVista} recordarVista={recordarVista} />
+            ) : peliculas ? (
+              <ColeccionCompartida key={lista} perfilId={perfil.id} peliculas={peliculas} lista={lista}
+                vista={vista[lista] ?? FILTROS_INICIALES} pendientesPropias={propias?.pendientes}
+                setVista={(filtros) => setVista((actual) => ({ ...actual, lista, [lista]: filtros }))}
+                recordarVista={recordarVista} />
             ) : <p className="friend-profile__message friend-profile__message--private"><Icon name="library" size={18} />Esta persona prefiere mantener su colección privada.</p>}
           </section>
           {confirmarBaja && (
@@ -359,5 +388,6 @@ function PerfilAmigo({ id }) {
 
 export default function FriendProfilePage() {
   const { id } = useParams();
-  return <PerfilAmigo key={id} id={id} />;
+  const { sessionKey } = useAuth();
+  return <PerfilAmigo key={`${sessionKey}-${id}`} id={id} />;
 }

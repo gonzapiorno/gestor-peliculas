@@ -8,9 +8,12 @@ const OPTIONS = [
   { value: "puntuacion", label: "Mejor nota", icon: "star" },
 ];
 
-export default function CollectionSortPicker({ value, onChange, disabled, onOpen }) {
+const SIN_NOTAS = OPTIONS.filter(({ value }) => value !== "puntuacion");
+
+export default function CollectionSortPicker({ value, onChange, disabled, onOpen, conNotas = true }) {
   const ref = useRef(null);
-  const selected = OPTIONS.find((option) => option.value === value) ?? OPTIONS[0];
+  const options = conNotas ? OPTIONS : SIN_NOTAS;
+  const selected = options.find((option) => option.value === value) ?? options[0];
 
   useEffect(() => {
     function closeOutside(event) {
@@ -41,7 +44,7 @@ export default function CollectionSortPicker({ value, onChange, disabled, onOpen
     const current = buttons.indexOf(document.activeElement);
     panel.open = true;
     const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
-      : current === -1 ? OPTIONS.indexOf(selected)
+      : current === -1 ? options.indexOf(selected)
         : (current + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length;
     buttons[next].focus({ preventScroll: true });
   }
@@ -55,9 +58,9 @@ export default function CollectionSortPicker({ value, onChange, disabled, onOpen
         onClick={(event) => { if (disabled) event.preventDefault(); }}>
         <Icon name={selected.icon} size={13} /><span>{selected.label}</span><Icon name="chevron-down" size={12} />
       </summary>
-      <div className="collection-sort__panel" role="group" aria-label="Ordenar mi colección">
+      <div className="collection-sort__panel" role="group" aria-label="Ordenar películas">
         <p>Ordenar películas</p>
-        {OPTIONS.map((option) => (
+        {options.map((option) => (
           <button key={option.value} type="button" disabled={disabled} aria-pressed={value === option.value}
             onClick={() => { onChange(option.value); close(); }}>
             <Icon name={option.icon} size={16} /><span>{option.label}</span>

@@ -39,6 +39,7 @@ class PerfilRespuesta(UsuarioRespuesta):
     avatar: AvatarPerfil | None = None
     foto_perfil_version: str | None = None
     coleccion_visible_amigos: bool
+    pendientes_visibles_amigos: bool
 
 
 class EditarPerfilSolicitud(BaseModel):
@@ -48,6 +49,7 @@ class EditarPerfilSolicitud(BaseModel):
     bio: str | None = Field(default=None, max_length=200)
     avatar: AvatarPerfil | None = None
     coleccion_visible_amigos: bool = Field(default=False, strict=True)
+    pendientes_visibles_amigos: bool = Field(default=False, strict=True)
 
     @field_validator("nombre_visible", "bio", mode="before")
     @classmethod

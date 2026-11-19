@@ -55,14 +55,19 @@ class PerfilAmigo(UsuarioEncontrado):
     bio: str | None
     destacadas: list[PeliculaDestacadaAmigo]
 
-class PeliculaVistaAmigo(BaseModel):
+class PeliculaPendienteAmigo(BaseModel):
     id_tmdb: int
     titulo: str
     anio: int | None
     poster: str | None
+
+
+class PeliculaVistaAmigo(PeliculaPendienteAmigo):
     puntuacion_personal: float | None
 
 
 class ColeccionAmigo(BaseModel):
     visible: bool
     peliculas: list[PeliculaVistaAmigo]
+    pendientes_visibles: bool
+    pendientes: list[PeliculaPendienteAmigo]

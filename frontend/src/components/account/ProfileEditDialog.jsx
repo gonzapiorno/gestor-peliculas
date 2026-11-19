@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import Dialog from "../ui/Dialog";
 import Icon from "../ui/Icon";
 import { useAuth } from "../../auth/useAuth";
+import CollectionPrivacySettings from "./CollectionPrivacySettings";
 import ProfilePhotoDialog from "./ProfilePhotoDialog";
 
 const avatares = [
@@ -20,7 +21,7 @@ export default function ProfileEditDialog({ user, onSave, onClose }) {
     avatar: user.avatar ?? "",
   }));
   const [campos, setCampos] = useState(inicial);
-  const [compartir, setCompartir] = useState(user.coleccion_visible_amigos);
+  const [privacidad, setPrivacidad] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const { guardarFotoPerfil } = useAuth();
@@ -45,8 +46,8 @@ export default function ProfileEditDialog({ user, onSave, onClose }) {
       const valor = campos[campo].trim();
       if (valor !== inicial[campo]) cambios[campo] = valor || null;
     }
-    if (typeof compartir === "boolean" && compartir !== user.coleccion_visible_amigos) {
-      cambios.coleccion_visible_amigos = compartir;
+    for (const [campo, valor] of Object.entries(privacidad)) {
+      if (valor !== user[campo]) cambios[campo] = valor;
     }
 
     if (Object.keys(cambios).length === 0) {
@@ -143,25 +144,10 @@ export default function ProfileEditDialog({ user, onSave, onClose }) {
           ))}
         </fieldset>
 
-        {typeof compartir === "boolean" && (
-          <label className="profile-form__visibility">
-            <span>
-              <strong>Compartir mis películas vistas con amigos</strong>
-              <small id={`${id}-visibilidad`}>Tus amigos también podrán ver las notas que les pusiste.</small>
-            </span>
-            <input
-              className="visually-hidden"
-              type="checkbox"
-              role="switch"
-              aria-label="Compartir mis películas vistas con amigos"
-              aria-describedby={`${id}-visibilidad`}
-              checked={compartir}
-              disabled={guardando}
-              onChange={(event) => setCompartir(event.target.checked)}
-            />
-            <span className="profile-form__switch" aria-hidden="true" />
-          </label>
-        )}
+        <div className="account-page__settings-list">
+          <CollectionPrivacySettings valores={{ ...user, ...privacidad }} disabled={guardando}
+            onChange={(campo, valor) => setPrivacidad((prev) => ({ ...prev, [campo]: valor }))} />
+        </div>
 
         {error && <p className="inline-error" role="alert">{error}</p>}
 

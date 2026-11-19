@@ -98,10 +98,69 @@
 .friend-profile__search .icon-button { inline-size: 28px; block-size: 28px; }
 .friend-profile__search input::-webkit-search-cancel-button { appearance: none; }
 .friend-profile__search > svg { inline-size: 15px; block-size: 15px; color: var(--color-accent); }
-.friend-profile__sort { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 4px; border: 1px solid #293027; border-radius: var(--radius-pill); background: var(--color-surface-soft); }
-.friend-profile__sort button { position: relative; min-block-size: 30px; padding: 5px 10px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-secondary); font-size: .75rem; font-weight: 600; line-height: 1.4; }
-.friend-profile__sort button:hover { background: var(--color-surface-raised); color: var(--color-text); }
-.friend-profile__sort button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-bg); }
+.friend-profile__lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  inline-size: min(100%, 17rem);
+  margin: 0 auto 12px;
+  padding: 2px;
+  border: 1px solid #30372e;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+}
+.friend-profile__lists::before {
+  content: "";
+  grid-area: 1 / 1;
+  border-radius: inherit;
+  background: var(--color-accent);
+  pointer-events: none;
+}
+.friend-profile__lists:has(button:last-child[aria-pressed="true"])::before {
+  transform: translateX(100%);
+}
+.friend-profile__lists button {
+  position: relative;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-block-size: 26px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: .8rem;
+  font-weight: 650;
+}
+.friend-profile__lists button:first-of-type { grid-column: 1; }
+.friend-profile__lists button:last-of-type { grid-column: 2; }
+.friend-profile__lists button[aria-pressed="true"] { color: var(--color-bg); }
+.friend-profile__lists button span { font-size: .72rem; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) {
+  .friend-profile__lists::before { transition: transform 240ms cubic-bezier(.25,.8,.25,1); }
+  .friend-profile__lists button { transition: color 0s 65ms; }
+}
+@media (forced-colors: active) {
+  .friend-profile__lists button[aria-pressed="true"] { outline: 1px solid Highlight; outline-offset: -2px; }
+}
+.friend-profile__filters { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.friend-profile__filters .collection-sort__trigger { min-block-size: 40px; }
+.friend-profile .profile-featured__poster { position: relative; }
+.friend-profile__shared-pending {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 4px 5px;
+  background: #172015f5;
+  color: var(--color-accent);
+  font-size: .69rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
+}
 .friend-profile .friend-profile__watched-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 10px; }
 .friend-profile__watched-grid .profile-featured__title { font-size: .78rem; }
 .friend-profile__watched-grid .friend-profile__movie-year { font-size: .7rem; }
@@ -126,8 +185,6 @@
 @container friend (min-width: 540px) {
   .friend-profile .profile-featured__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 14px; }
   .friend-profile .friend-profile__watched-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .friend-profile__filters { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-  .friend-profile__sort { min-inline-size: 220px; }
 }
 @container friend (min-width: 760px) {
   .friend-profile .friend-profile__watched-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
@@ -143,8 +200,8 @@
   .friend-profile__toolbar .movie-detail-back__link { min-block-size: 44px; }
   .friend-profile__options > summary::after { position: absolute; inset: -6px; content: ""; }
   .friend-profile__remove { min-block-size: 44px; }
-  .friend-profile__sort { gap: 10px; }
-  .friend-profile__sort button::after { position: absolute; inset: -7px 0; content: ""; }
+  .friend-profile__lists button::after { content: ""; position: absolute; inset: -9px 0; }
+  .friend-profile__filters .collection-sort__trigger { min-block-size: 44px; }
   .friend-profile__confirmation .dialog__actions .button,
   .button.friend-profile__show-all,
   .friend-profile__section .inline-error .button { min-block-size: 44px; }
