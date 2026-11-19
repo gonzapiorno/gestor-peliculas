@@ -1,9 +1,9 @@
 .catalog-add-dialog .dialog__description { color: var(--color-accent); }
-.catalog-add { display: grid; gap: 17px; }
+.catalog-add { display: grid; gap: 14px; }
 .catalog-add__choices { min-width: 0; margin: 0; padding: 0; border: 0; }
 .catalog-add__choices legend { margin-bottom: 8px; font-size: .9rem; font-weight: 600; }
 .catalog-add__choices > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.catalog-add__choice { display: flex; min-height: 46px; align-items: center; justify-content: center; gap: 7px; padding: 8px; border: 1px solid transparent; border-radius: var(--radius-control); background: var(--color-surface-raised); color: var(--color-text-secondary); cursor: pointer; font-size: .82rem; }
+.catalog-add__choice { display: flex; min-height: 38px; align-items: center; justify-content: center; gap: 6px; padding: 7px; border: 1px solid transparent; border-radius: 8px; background: var(--color-surface-raised); color: var(--color-text-secondary); cursor: pointer; font-size: .8rem; }
 .catalog-add__choice svg { flex: none; }
 .catalog-add__choice input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .catalog-add__choice:has(:checked) { border-color: #627a52; background: #283223; color: var(--color-accent); }
@@ -14,12 +14,17 @@
 .catalog-add__rating .rating-dialog__clear { margin-top: 6px; }
 .catalog-add__footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
 .catalog-add__favorite svg { color: var(--color-accent); }
+.catalog-add__favorite { position: relative; width: 34px; height: 34px; border-radius: 9px; }
 .catalog-add__favorite[aria-pressed="true"] svg { fill: currentColor; }
 .catalog-add .dialog__actions { margin-top: 0; }
 .catalog-add .inline-error { margin: 0; font-size: .875rem; }
 @media (max-width: 480px) {
   .catalog-add__footer .dialog__actions { gap: 8px; }
   .catalog-add__footer .dialog__actions .button { padding-inline: 12px; }
+}
+@media (pointer: coarse) {
+  .catalog-add__choice { min-height: 44px; }
+  .catalog-add__favorite::after { position: absolute; inset: -5px; content: ""; }
 }
 @media (max-width: 359px) {
   .catalog-add__footer { flex-wrap: wrap; }

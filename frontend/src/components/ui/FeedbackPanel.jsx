@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { enviarFeedback } from "../../services/feedbackApi";
 import Dialog from "./Dialog";
+import Icon from "./Icon";
 import "./FeedbackPanel.css";
 
 export default function FeedbackPanel({ onClose }) {
@@ -52,17 +53,18 @@ export default function FeedbackPanel({ onClose }) {
       busy={enviando}
     >
       <form className="feedback-panel" onSubmit={enviar}>
-        <label htmlFor={`${id}-type`}>Tipo de feedback</label>
-        <select
-          id={`${id}-type`}
-          value={tipo}
-          onChange={(event) => setTipo(event.target.value)}
-          disabled={enviando}
-          data-autofocus
-        >
-          <option value="error">Encontré un error</option>
-          <option value="sugerencia">Tengo una sugerencia</option>
-        </select>
+        <fieldset className="feedback-panel__types" disabled={enviando}>
+          <legend>Tipo de feedback</legend>
+          <div>
+            {[{ value: "error", label: "Error", icon: "alert" }, { value: "sugerencia", label: "Sugerencia", icon: "message" }].map((option) => (
+              <label key={option.value}>
+                <input type="radio" name={`${id}-type`} value={option.value} checked={tipo === option.value}
+                  data-autofocus={option.value === "error" ? "" : undefined} onChange={() => setTipo(option.value)} />
+                <Icon name={option.icon} size={15} />{option.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <label htmlFor={`${id}-description`}>Descripción</label>
         <textarea

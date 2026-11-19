@@ -1,5 +1,5 @@
 .rating-dialog {
-  padding-top: 15px;
+  padding-top: 6px;
 }
 
 .rating-dialog__preview {
@@ -45,7 +45,7 @@
 }
 
 .rating-dialog__hint {
-  margin: 18px 0 25px;
+  margin: 14px 0 18px;
   color: var(--color-text-secondary);
   font-size: 12px;
   line-height: 1.7;
@@ -55,6 +55,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 9px;
+  flex-wrap: wrap;
 }
 
 .rating-dialog__clear {

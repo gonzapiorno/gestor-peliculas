@@ -5,7 +5,7 @@ import CatalogAddDialog from "../components/movies/CatalogAddDialog";
 import MovieDetailBackLink from "../components/movies/MovieDetailBackLink";
 import Icon from "../components/ui/Icon";
 import PageState from "../components/ui/PageState";
-import Poster from "../components/ui/Poster";
+import MovieDetailLayout from "../components/movies/MovieDetailLayout";
 import { obtenerDetallePelicula } from "../services/catalogoApi";
 import useCatalogCollection from "../hooks/useCatalogCollection";
 
@@ -108,47 +108,14 @@ function MovieDetailPage() {
   const coleccionComprobada = coleccion.estadoColeccion === "ready";
   const errorColeccion = coleccion.errorColeccion;
   const from = `${pathname}${search}`;
-  const tieneNotaCatalogo = Number.isFinite(pelicula.puntuacion);
   const tieneNotaPersonal = Number.isFinite(peliculaGuardada?.puntuacion_personal);
 
   return (
     <main className="movie-detail page-container">
       {volver}
 
-      <div className="movie-detail__layout">
-        <aside className="movie-detail__poster-column" aria-label="Póster e información técnica">
-          <div className="movie-detail__poster">
-            <Poster src={pelicula.poster} title={pelicula.titulo} />
-          </div>
-          <div className="movie-detail__poster-caption">
-            <span>Película · TMDB</span>
-          </div>
-        </aside>
-
-        <section className="movie-detail__content" aria-labelledby="movie-title">
-          <p className="eyebrow">Una historia por descubrir</p>
-          <h1 id="movie-title">{pelicula.titulo}</h1>
-
-          <div className="movie-detail__meta">
-            <span className="movie-detail__year">{pelicula.anio || "Año no disponible"}</span>
-            {pelicula.duracion > 0 && (
-              <span className="movie-detail__duration"><Icon name="clock" size={16} />{pelicula.duracion} min</span>
-            )}
-            {generos.length > 0 && <span className="movie-detail__meta-separator" aria-hidden="true">·</span>}
-            <div className="movie-detail__genres">
-              {generos.map((genero) => <span key={genero}>{genero}</span>)}
-            </div>
-          </div>
-
-          <div className="movie-detail__rating">
-            <Icon name="star" size={23} />
-            <span className="movie-detail__score">{tieneNotaCatalogo ? formatearNota(pelicula.puntuacion) : "—"}</span>
-            <div>
-              <p>Puntuación del catálogo</p>
-              <span>{tieneNotaCatalogo ? "TMDB · Sobre 10" : "TMDB · Sin valoración disponible"}</span>
-            </div>
-          </div>
-
+      <MovieDetailLayout titleId="movie-title" titulo={pelicula.titulo} poster={pelicula.poster}
+        anio={pelicula.anio} duracion={pelicula.duracion} generos={generos} puntuacion={pelicula.puntuacion}>
           <section className="movie-detail__synopsis" aria-labelledby="synopsis-heading">
             <h2 id="synopsis-heading">La historia</h2>
             <p>{pelicula.sinopsis || "Todavía no hay una sinopsis disponible para esta película."}</p>
@@ -156,10 +123,10 @@ function MovieDetailPage() {
 
           <div className="movie-detail__collection-panel" aria-busy={agregando}>
             <div className="movie-detail__collection-copy">
-              <h2>{enColeccion ? "Ya es parte de tu historia." : "Hazla parte de tu historia."}</h2>
+              <h2>{enColeccion ? "En tu colección" : "Guardá esta película"}</h2>
               <p>{enColeccion
-                ? "Encuéntrala en tu colección para cambiar su estado, marcarla como favorita y guardar tu puntuación."
-                : "Guárdala en tu colección para marcarla como vista, elegir tus favoritas y dejar tu puntuación personal."}
+                ? "Administrá su estado, tu puntuación y tus favoritas."
+                : "Elegí si ya la viste, poné tu nota y marcala como favorita."}
               </p>
             </div>
             {pendingVerification ? <Link className="button button--primary" to="/verificar-email" state={{ email: user.email, from }}>Verificar correo para guardar</Link> : status === "anonymous" || status === "error" ? (
@@ -196,8 +163,7 @@ function MovieDetailPage() {
               <Link to="/coleccion">Ir a mi colección<Icon name="arrow-right" size={16} /></Link>
             </div>
           )}
-        </section>
-      </div>
+      </MovieDetailLayout>
 
       <p className="movie-detail__note">Los datos y la puntuación del catálogo provienen de TMDB. Tu puntuación personal cuenta tu propia experiencia.</p>
       {idParaAgregar === id && (

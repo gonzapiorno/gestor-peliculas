@@ -1,11 +1,17 @@
 .dialog { width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 40px); padding: 0; overflow: auto; border: 0; border-radius: var(--radius-panel); background: var(--color-surface); color: var(--color-text); }
 .dialog::backdrop { background: rgb(5 8 5 / 78%); backdrop-filter: blur(4px); }
-.dialog__body { position: relative; padding: 32px; }
-.dialog__close { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; background: transparent; border: 0; }
-.dialog__title { margin: 8px 24px 10px 0; font-size: 1.6rem; font-weight: 400; letter-spacing: -.025em; }
-.dialog__description { margin: 0 0 25px; color: var(--color-text-secondary); line-height: 1.7; overflow-wrap: anywhere; }
-.dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 24px; }
-@media (max-width: 480px) { .dialog__body { padding: 26px 22px; } }
+.dialog__body { position: relative; padding: 24px; }
+.dialog__close { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--color-surface-raised); }
+.dialog__close svg { width: 15px; height: 15px; }
+.dialog__title { margin: 2px 32px 9px 0; font-size: 1.25rem; font-weight: 650; letter-spacing: -.025em; line-height: 1.35; overflow-wrap: anywhere; }
+.dialog__description { margin: 0 0 18px; color: var(--color-text-secondary); font-size: .84rem; line-height: 1.7; overflow-wrap: anywhere; }
+.dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+.dialog .button { min-height: 36px; gap: 6px; padding: 7px 12px; font-size: .8rem; }
+@media (max-width: 480px) { .dialog__body { padding: 22px; } }
+@media (pointer: coarse) {
+  .dialog .button { min-height: 44px; }
+  .dialog__close::after { position: absolute; inset: -8px; content: ""; }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .dialog--enter[open] {

@@ -58,3 +58,6 @@
   padding: 8px 12px;
   font-size: .8rem;
 }
+@media (pointer: coarse) {
+  .session-logout-dialog .dialog__actions .button { min-block-size: 44px; }
+}

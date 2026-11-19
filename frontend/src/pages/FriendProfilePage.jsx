@@ -13,7 +13,6 @@ import { obtenerColeccion } from "../services/coleccionApi";
 import { collectionView, rememberCollectionView, restoreCollectionPosition } from "../utils/collectionNavigation";
 import { errorMessage } from "../utils/errorMessage";
 import "../components/account/ProfileFeaturedMovies.css";
-import "./CommunityPage.css";
 import "./FriendProfilePage.css";
 
 const formatoNota = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
@@ -104,7 +103,7 @@ function ColeccionCompartida({ peliculas, perfilId, vista, setVista, recordarVis
   }
   const mostradas = vista.todas ? filtradas : filtradas.slice(0, LIMITE_INICIAL);
 
-  if (!peliculas.length) return <p className="community-message">Todavía no marcó películas como vistas.</p>;
+  if (!peliculas.length) return <p className="friend-profile__message">Todavía no marcó películas como vistas.</p>;
   return (
     <>
       <div className="friend-profile__filters">
@@ -122,14 +121,14 @@ function ColeccionCompartida({ peliculas, perfilId, vista, setVista, recordarVis
         </div>
         <div className="friend-profile__sort" role="group" aria-label="Orden de películas vistas">
           <button type="button" aria-pressed={vista.orden === "recientes"}
-            onClick={() => setVista({ ...vista, orden: "recientes" })}>Últimas agregadas</button>
+            onClick={() => setVista({ ...vista, orden: "recientes" })}>Recientes</button>
           <button type="button" aria-pressed={vista.orden === "nota"}
             onClick={() => setVista({ ...vista, orden: "nota" })}>Mejores notas</button>
         </div>
       </div>
       {mostradas.length
         ? <PeliculasDelAmigo peliculas={mostradas} perfilId={perfilId} recordarVista={recordarVista} enColeccion />
-        : <p className="community-message" role="status">No encontramos películas con ese título.</p>}
+        : <p className="friend-profile__message" role="status">No encontramos películas con ese título.</p>}
       {mostradas.length < filtradas.length && (
         <button className="button friend-profile__show-all" type="button"
           onClick={() => setVista({ ...vista, todas: true })}>
@@ -137,6 +136,36 @@ function ColeccionCompartida({ peliculas, perfilId, vista, setVista, recordarVis
         </button>
       )}
     </>
+  );
+}
+
+function OpcionesAmistad({ onRemove }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    function cerrarFuera(event) {
+      const menu = ref.current;
+      if (menu && !menu.contains(event.target)) menu.open = false;
+    }
+    document.addEventListener("pointerdown", cerrarFuera);
+    return () => document.removeEventListener("pointerdown", cerrarFuera);
+  }, []);
+
+  function cerrar() {
+    ref.current.open = false;
+    ref.current.querySelector("summary").focus({ preventScroll: true });
+  }
+
+  return (
+    <details className="friend-profile__options" ref={ref}
+      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false; }}
+      onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); cerrar(); } }}>
+      <summary aria-label="Opciones de amistad" title="Opciones de amistad"><Icon name="dots" size={18} /></summary>
+      <div className="friend-profile__options-panel">
+        <button className="friend-profile__remove" type="button" onClick={() => { cerrar(); onRemove(); }}>
+          <Icon name="users" size={15} />Quitar de amigos
+        </button>
+      </div>
+    </details>
   );
 }
 
@@ -164,7 +193,7 @@ function ConfirmarBaja({ perfil, onClose, onComplete }) {
   }
 
   return (
-    <Dialog className="dialog--enter" title={`¿Quitar a @${perfil.nombre_usuario} de tus amigos?`}
+    <Dialog className="friend-profile__confirmation dialog--enter" title={`¿Quitar a @${perfil.nombre_usuario} de tus amigos?`}
       description="Se cerrará el acceso mutuo a sus perfiles y colecciones compartidas."
       busy={ocupado} onClose={onClose}>
       {error && <p className="inline-error" role="alert">{error}</p>}
@@ -195,6 +224,10 @@ function PerfilAmigo({ id }) {
   const seccionColeccion = useRef(null);
   const solicitud = useRef(null);
   const idValido = /^\d+$/.test(id) && Number(id) > 0 && Number(id) <= 2_147_483_647;
+
+  useEffect(() => {
+    if (resultado?.perfil) document.title = `${resultado.perfil.nombre_visible || resultado.perfil.nombre_usuario} · Muvis`;
+  }, [resultado]);
 
   useEffect(() => {
     if (!idValido) return;
@@ -273,30 +306,37 @@ function PerfilAmigo({ id }) {
     <main className={`friend-profile page-container${anterior ? " friend-profile--restored" : ""}`}>
       <div className="friend-profile__toolbar">
         {volver}
-        {perfil && (
-          <button type="button" className="button friend-profile__remove" onClick={() => setConfirmarBaja(true)}>
-            Quitar de amigos
-          </button>
-        )}
+        {perfil && <OpcionesAmistad onRemove={() => setConfirmarBaja(true)} />}
       </div>
       {!perfil ? <PageState title="Cargando perfil…" /> : (
         <>
           <header className="friend-profile__identity">
-            <ProfileAvatar user={perfil} className="community-person__avatar friend-profile__avatar" iconSize={34}
-              photoPath={`/amistades/usuarios/${perfil.id}/foto`} />
-            <h1>{perfil.nombre_visible || perfil.nombre_usuario}</h1>
-            <p className="friend-profile__handle">@{perfil.nombre_usuario}</p>
+            <div className="friend-profile__person">
+              <ProfileAvatar user={perfil} className="friend-profile__avatar" iconSize={30}
+                photoPath={`/amistades/usuarios/${perfil.id}/foto`} />
+              <div className="friend-profile__name">
+                <h1>{perfil.nombre_visible || perfil.nombre_usuario}</h1>
+                <p className="friend-profile__handle">@{perfil.nombre_usuario}</p>
+                <span className="friend-profile__friend-badge"><Icon name="check" size={12} />Amigos</span>
+              </div>
+            </div>
             {perfil.bio && <p className="friend-profile__bio">{perfil.bio}</p>}
             {vistas && <EstadisticasAmigo peliculas={vistas} />}
           </header>
           <section ref={seccionDestacadas} className="friend-profile__section" aria-labelledby="friend-featured-heading">
-            <h2 id="friend-featured-heading">Películas destacadas</h2>
+            <div className="friend-profile__section-heading">
+              <h2 id="friend-featured-heading"><Icon name="star" size={16} />Películas destacadas</h2>
+              <span className="friend-profile__count" aria-label={`${perfil.destacadas.length} películas destacadas de un máximo de 4`}>{perfil.destacadas.length} / 4</span>
+            </div>
             {perfil.destacadas.length ? (
               <PeliculasDelAmigo peliculas={perfil.destacadas} perfilId={perfil.id} notas={notas} recordarVista={recordarVista} />
-            ) : <p className="community-message">Todavía no eligió películas destacadas.</p>}
+            ) : <p className="friend-profile__message">Todavía no eligió películas destacadas.</p>}
           </section>
           <section ref={seccionColeccion} className="friend-profile__section" aria-labelledby="friend-collection-heading">
-            <h2 id="friend-collection-heading">Películas vistas</h2>
+            <div className="friend-profile__section-heading">
+              <h2 id="friend-collection-heading"><Icon name="library" size={16} />Películas vistas</h2>
+              {vistas && <span className="friend-profile__count">{formatoCantidad.format(vistas.length)}</span>}
+            </div>
             {coleccion.error ? (
               <div className="inline-error" role="alert">
                 <span>{errorMessage(coleccion.error)}</span>
@@ -305,7 +345,7 @@ function PerfilAmigo({ id }) {
             ) : vistas ? (
               <ColeccionCompartida perfilId={perfil.id} peliculas={vistas}
                 vista={vista} setVista={setVista} recordarVista={recordarVista} />
-            ) : <p className="community-message">Esta persona prefiere mantener su colección privada.</p>}
+            ) : <p className="friend-profile__message friend-profile__message--private"><Icon name="library" size={18} />Esta persona prefiere mantener su colección privada.</p>}
           </section>
           {confirmarBaja && (
             <ConfirmarBaja perfil={perfil} onClose={() => setConfirmarBaja(false)}

@@ -6,7 +6,7 @@ import RatingDialog from "../components/movies/RatingDialog";
 import Dialog from "../components/ui/Dialog";
 import Icon from "../components/ui/Icon";
 import PageState from "../components/ui/PageState";
-import Poster from "../components/ui/Poster";
+import MovieDetailLayout from "../components/movies/MovieDetailLayout";
 import { obtenerDetallePelicula } from "../services/catalogoApi";
 import {
   obtenerPeliculaColeccion,
@@ -201,7 +201,6 @@ function PersonalMovieDetail({ id }) {
 
   const titulo = detalle?.titulo || pelicula.titulo;
   const generos = Array.isArray(detalle?.generos) ? detalle.generos : [];
-  const tieneNotaCatalogo = Number.isFinite(detalle?.puntuacion);
   const tieneNotaPersonal = Number.isFinite(pelicula.puntuacion_personal);
   const vista = pelicula.estado === "vista";
   const ocupado = guardando !== null;
@@ -210,43 +209,9 @@ function PersonalMovieDetail({ id }) {
     <main className="movie-detail collection-movie-detail page-container">
       {volver}
 
-      <div className="movie-detail__layout">
-        <aside className="movie-detail__poster-column" aria-label="Póster e información técnica">
-          <div className="movie-detail__poster"><Poster src={detalle?.poster || pelicula.poster} title={titulo} /></div>
-        </aside>
-
-        <section className="movie-detail__content" aria-labelledby="collection-movie-title">
-          <p className="eyebrow">Una historia que se queda contigo</p>
-          <h1 id="collection-movie-title">{titulo}</h1>
-          <div className="movie-detail__meta">
-            <span className="movie-detail__year">
-              {detalle?.anio || pelicula.anio || "Año no disponible"}
-            </span>
-
-            {detalle?.duracion > 0 && (
-              <span className="movie-detail__duration"><Icon name="clock" size={16} />{detalle.duracion} min</span>
-            )}
-
-            {generos.length > 0 && (
-              <span className="movie-detail__meta-separator" aria-hidden="true">·</span>
-            )}
-
-            <div className="movie-detail__genres">
-              {generos.map((genero) => (
-                <span key={genero}>{genero}</span>
-              ))}
-            </div>
-          </div>
-
-          <div className="movie-detail__rating" aria-busy={Boolean(idTmdb) && cargandoDetalle}>
-            <Icon name="star" size={23} />
-            <span className="movie-detail__score">{tieneNotaCatalogo ? formatearNota(detalle.puntuacion) : "—"}</span>
-            <div>
-              <p>Puntuación del catálogo</p>
-              <span>{idTmdb && cargandoDetalle ? "Consultando TMDB…" : tieneNotaCatalogo ? "TMDB · Sobre 10" : "TMDB · Sin valoración disponible"}</span>
-            </div>
-          </div>
-
+      <MovieDetailLayout titleId="collection-movie-title" titulo={titulo} poster={detalle?.poster || pelicula.poster}
+        anio={detalle?.anio || pelicula.anio} duracion={detalle?.duracion} generos={generos}
+        puntuacion={detalle?.puntuacion} cargandoNota={Boolean(idTmdb) && cargandoDetalle}>
           <section className="movie-detail__synopsis" aria-labelledby="collection-synopsis-heading">
             <h2 id="collection-synopsis-heading">La historia</h2>
             <p>{idTmdb && cargandoDetalle && !detalle ? "Cargando la sinopsis…" : detalle?.sinopsis || "La sinopsis no está disponible por el momento."}</p>
@@ -260,12 +225,11 @@ function PersonalMovieDetail({ id }) {
               </button>
             </div>
           )}
-        </section>
-      </div>
+      </MovieDetailLayout>
 
       <section className="collection-movie-detail__personal" aria-labelledby="personal-movie-heading" aria-busy={ocupado}>
         <header className="collection-movie-detail__personal-heading">
-          <div><h2 id="personal-movie-heading">Tu colección</h2><p>El lugar de esta película en tu historia de cine.</p></div>
+          <div><h2 id="personal-movie-heading">Tu colección</h2><p>Tu estado, tu nota y tus favoritas.</p></div>
           <span className="collection-movie-detail__saved"><Icon name={ocupado ? "refresh" : "bookmark"} size={16} />{ocupado ? guardando === "eliminar" ? "Eliminando…" : "Guardando…" : "En tu colección"}</span>
         </header>
 

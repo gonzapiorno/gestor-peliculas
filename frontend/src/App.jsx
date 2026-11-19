@@ -1,5 +1,6 @@
 import {
   BrowserRouter,
+  Link,
   Route,
   Routes,
   useLocation,
@@ -46,6 +47,30 @@ function RouteScroll({ sessionKey }) {
   return null;
 }
 
+function RouteTitle() {
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    const titles = {
+      "/": "Descubrir", "/coleccion": "Mi colección", "/cuenta": "Mi cuenta",
+      "/comunidad": "Comunidad", "/login": "Iniciar sesión", "/registro": "Crear cuenta",
+      "/verificar-email": "Verificar correo", "/recuperar-password": "Recuperar contraseña",
+      "/restablecer-password": "Restablecer contraseña",
+    };
+    const title = titles[pathname] || (/^\/comunidad\/amigos\//.test(pathname) ? "Perfil de amigo"
+      : /^\/(pelicula|coleccion)\//.test(pathname) ? "Detalle de película" : "Página no encontrada");
+    document.title = `${title} · Muvis`;
+  }, [pathname]);
+  return null;
+}
+
+function NotFoundPage() {
+  return <main className="page-container">
+    <h1 className="page-title">Página no encontrada</h1>
+    <p className="page-description">Esta dirección no está disponible. Podés seguir explorando películas en Descubrir.</p>
+    <Link className="button button--primary" to="/">Volver a descubrir</Link>
+  </main>;
+}
+
 function AppContent() {
   const { sessionKey } = useAuth();
   // El formulario del enlace conserva su token en memoria al actualizar la sesión.
@@ -53,6 +78,7 @@ function AppContent() {
   return (
     <>
       <RouteScroll sessionKey={sessionKey} />
+      <RouteTitle />
       <AppLayout>
 
         {/* El contenido ocupa todo el espacio disponible */}
@@ -85,6 +111,7 @@ function AppContent() {
             <Route path="/cuenta" element={<AccountPage />} />
             <Route path="/comunidad" element={<RequireAuth><CommunityPage /></RequireAuth>} />
             <Route path="/comunidad/amigos/:id" element={<RequireAuth><FriendProfilePage /></RequireAuth>} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
 

@@ -22,10 +22,12 @@ export default function AppLayout({ children }) {
   const layoutRef = useRef(null);
   const headerRef = useRef(null);
   const bottomNavRef = useRef(null);
+  const location = useLocation();
   const enDetalleCatalogo = Boolean(useMatch("/pelicula/:id"));
+  const desdeAmigo = enDetalleCatalogo && Boolean(location.state?.friendProfileId);
   const enLogin = Boolean(useMatch("/login"));
   const enRegistro = Boolean(useMatch("/registro"));
-  const authRoute = isAuthRoute(useLocation().pathname);
+  const authRoute = isAuthRoute(location.pathname);
 
   useEffect(() => {
     const navigation = bottomNavRef.current;
@@ -59,9 +61,9 @@ export default function AppLayout({ children }) {
         <nav className="sidebar__navigation" aria-label="Navegación principal">
           <div className="sidebar__group">
             <p className="sidebar__label">Cinemateca</p>
-            <NavigationLink to="/" icon="compass" end active={enDetalleCatalogo}>Descubrir</NavigationLink>
+            <NavigationLink to="/" icon="compass" end active={enDetalleCatalogo && !desdeAmigo}>Descubrir</NavigationLink>
             <NavigationLink to="/coleccion" icon="library">Mi colección</NavigationLink>
-            <NavigationLink to="/comunidad" icon="users">Comunidad</NavigationLink>
+            <NavigationLink to="/comunidad" icon="users" active={desdeAmigo}>Comunidad</NavigationLink>
           </div>
           <div className="sidebar__group">
             <p className="sidebar__label">Tu espacio</p>
@@ -82,9 +84,9 @@ export default function AppLayout({ children }) {
       </div>
 
       <nav className="bottom-nav" ref={bottomNavRef} aria-label="Navegación principal móvil">
-        <NavigationLink to="/" icon="compass" end mobile active={enDetalleCatalogo}>Descubrir</NavigationLink>
+        <NavigationLink to="/" icon="compass" end mobile active={enDetalleCatalogo && !desdeAmigo}>Descubrir</NavigationLink>
         <NavigationLink to="/coleccion" icon="library" mobile>Mi colección</NavigationLink>
-        <NavigationLink to="/comunidad" icon="users" mobile>Comunidad</NavigationLink>
+        <NavigationLink to="/comunidad" icon="users" mobile active={desdeAmigo}>Comunidad</NavigationLink>
         <NavigationLink to="/cuenta" icon="user" mobile active={enLogin || enRegistro}>Cuenta</NavigationLink>
       </nav>
 
