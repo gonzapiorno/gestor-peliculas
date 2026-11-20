@@ -5,6 +5,7 @@ import FeedbackPanel from "../ui/FeedbackPanel";
 import Icon from "../ui/Icon";
 import Header from "./Header";
 import { isAuthRoute } from "../../utils/authFlow";
+import { attachMobileNavigation } from "../../utils/mobileNavigation";
 import "./AppLayout.css";
 
 function NavigationLink({ to, icon, children, active = false, mobile = false, end = false }) {
@@ -28,6 +29,10 @@ export default function AppLayout({ children }) {
   const enLogin = Boolean(useMatch("/login"));
   const enRegistro = Boolean(useMatch("/registro"));
   const authRoute = isAuthRoute(location.pathname);
+
+  useEffect(() => {
+    if (bottomNavRef.current) return attachMobileNavigation(bottomNavRef.current);
+  }, [authRoute]);
 
   useEffect(() => {
     const navigation = bottomNavRef.current;

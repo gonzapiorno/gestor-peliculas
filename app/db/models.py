@@ -314,3 +314,91 @@ class Feedback(Base):
     )
 
 
+class Publicacion(Base):
+    __tablename__ = "publicaciones"
+
+    __table_args__ = (
+        CheckConstraint(
+            "estado IN ('viendo', 'vista')",
+            name="ck_publicaciones_estado",
+        ),
+        CheckConstraint(
+            "puntuacion_personal BETWEEN 1 AND 10 "
+            "AND puntuacion_personal * 2 = trunc(puntuacion_personal * 2)",
+            name="ck_publicaciones_puntuacion",
+        ),
+        CheckConstraint(
+            "estado = 'vista' OR puntuacion_personal IS NULL",
+            name="ck_publicaciones_nota_solo_vista",
+        ),
+        Index("ix_publicaciones_usuario_id_id", "usuario_id", "id"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    id_tmdb: Mapped[int] = mapped_column(nullable=False)
+    titulo: Mapped[str] = mapped_column(String(255), nullable=False)
+    anio: Mapped[int | None] = mapped_column(nullable=True)
+    poster: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    duracion: Mapped[int | None] = mapped_column(nullable=True)
+
+    estado: Mapped[str] = mapped_column(String(10), nullable=False)
+    contenido: Mapped[str] = mapped_column(
+        String(280),
+        nullable=False,
+        server_default="",
+    )
+    puntuacion_personal: Mapped[Decimal | None] = mapped_column(
+        Numeric(3, 1),
+        nullable=True,
+    )
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
+class MeGustaPublicacion(Base):
+    __tablename__ = "me_gusta_publicaciones"
+
+    publicacion_id: Mapped[int] = mapped_column(
+        ForeignKey("publicaciones.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+
+class ComentarioPublicacion(Base):
+    __tablename__ = "comentarios_publicaciones"
+
+    __table_args__ = (
+        CheckConstraint(
+            "char_length(trim(contenido)) BETWEEN 1 AND 280",
+            name="ck_comentarios_publicaciones_contenido",
+        ),
+        Index("ix_comentarios_publicacion_id_id", "publicacion_id", "id"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    publicacion_id: Mapped[int] = mapped_column(
+        ForeignKey("publicaciones.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    contenido: Mapped[str] = mapped_column(String(280), nullable=False)
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
