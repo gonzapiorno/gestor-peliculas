@@ -88,7 +88,7 @@ function EstadisticasAmigo({ peliculas, vistasPropias }) {
   );
 }
 
-function ColeccionCompartida({ peliculas, perfilId, lista, vista, setVista, recordarVista, pendientesPropias }) {
+function ColeccionCompartida({ peliculas, perfilId, lista, vista, setVista, recordarVista, pendientesPropias, children }) {
   const buscador = useRef(null);
   const consulta = normalizarTitulo(vista.busqueda.trim());
   const filtradas = peliculas.filter(({ titulo }) => normalizarTitulo(titulo).includes(consulta));
@@ -97,9 +97,6 @@ function ColeccionCompartida({ peliculas, perfilId, lista, vista, setVista, reco
   if (vista.orden === "anio") filtradas.sort((a, b) => (b.anio ?? 0) - (a.anio ?? 0));
   const mostradas = vista.todas ? filtradas : filtradas.slice(0, LIMITE_INICIAL);
 
-  if (!peliculas.length) return <p className="friend-profile__message">
-    {lista === "vistas" ? "Todavía no marcó películas como vistas." : "Todavía no tiene películas pendientes."}
-  </p>;
   return (
     <>
       <div className="friend-profile__filters">
@@ -118,7 +115,10 @@ function ColeccionCompartida({ peliculas, perfilId, lista, vista, setVista, reco
         <CollectionSortPicker value={vista.orden} conNotas={lista === "vistas"}
           onChange={(orden) => setVista({ ...vista, orden })} />
       </div>
-      {mostradas.length
+      {children}
+      {!peliculas.length ? <p className="friend-profile__message">
+        {lista === "vistas" ? "Todavía no marcó películas como vistas." : "Todavía no tiene películas pendientes."}
+      </p> : mostradas.length
         ? <PeliculasDelAmigo peliculas={mostradas} perfilId={perfilId} recordarVista={recordarVista}
             pendientesPropias={lista === "pendientes" ? pendientesPropias : null} enColeccion />
         : <p className="friend-profile__message" role="status">No encontramos películas con ese título.</p>}
@@ -354,26 +354,27 @@ function PerfilAmigo({ id }) {
               </h2>
               {peliculas && !ambas && <span className="friend-profile__count">{formatoCantidad.format(peliculas.length)}</span>}
             </div>
-            {ambas && (
-              <div className="friend-profile__lists" role="group" aria-label="Elegir lista de películas">
-                {[["vistas", "Vistas", vistas.length], ["pendientes", "Pendientes", pendientes.length]].map(([tipo, titulo, cantidad]) => (
-                  <button key={tipo} type="button" aria-pressed={lista === tipo}
-                    onClick={() => setVista((actual) => ({ ...actual, lista: tipo }))}>
-                    {titulo} <span>{formatoCantidad.format(cantidad)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
             {coleccion.error ? (
               <div className="inline-error" role="alert">
                 <span>{errorMessage(coleccion.error)}</span>
                 <button className="button" type="button" onClick={reintentar}>Reintentar</button>
               </div>
             ) : peliculas ? (
-              <ColeccionCompartida key={lista} perfilId={perfil.id} peliculas={peliculas} lista={lista}
+              <ColeccionCompartida perfilId={perfil.id} peliculas={peliculas} lista={lista}
                 vista={vista[lista] ?? FILTROS_INICIALES} pendientesPropias={propias?.pendientes}
                 setVista={(filtros) => setVista((actual) => ({ ...actual, lista, [lista]: filtros }))}
-                recordarVista={recordarVista} />
+                recordarVista={recordarVista}>
+                {ambas && (
+                  <div className="friend-profile__lists" role="group" aria-label="Elegir lista de películas">
+                    {[["vistas", "Vistas", vistas.length], ["pendientes", "Pendientes", pendientes.length]].map(([tipo, titulo, cantidad]) => (
+                      <button key={tipo} type="button" aria-pressed={lista === tipo}
+                        onClick={() => setVista((actual) => ({ ...actual, lista: tipo }))}>
+                        {titulo} <span>{formatoCantidad.format(cantidad)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </ColeccionCompartida>
             ) : <p className="friend-profile__message friend-profile__message--private"><Icon name="library" size={18} />Esta persona prefiere mantener su colección privada.</p>}
           </section>
           {confirmarBaja && (
