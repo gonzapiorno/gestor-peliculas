@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useStartupReady from "../../hooks/useStartupReady";
 import {
   guardarPeliculaDestacada,
   obtenerPeliculasDestacadas,
@@ -175,13 +176,14 @@ function SelectorDestacada({ actual, destacadas, onGuardar, onClose }) {
   );
 }
 
-export default function ProfileFeaturedMovies({ coleccion }) {
+export default function ProfileFeaturedMovies({ coleccion, resumenListo }) {
   const [destacadas, setDestacadas] = useState(null);
   const [posicion, setPosicion] = useState(null);
   const [intento, setIntento] = useState(0);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [posicionAnimada, setPosicionAnimada] = useState(null);
+  useStartupReady(resumenListo && (destacadas !== null || Boolean(error)));
 
   useEffect(() => {
     let vigente = true;

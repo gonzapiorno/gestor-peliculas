@@ -402,3 +402,33 @@ class ComentarioPublicacion(Base):
         nullable=False,
     )
 
+class PreferenciasNotificaciones(Base):
+    __tablename__ = "preferencias_notificaciones"
+
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    solicitudes_amistad: Mapped[bool] = mapped_column(
+        nullable=False,
+        server_default="true",
+    )
+    actividad_amigos: Mapped[bool] = mapped_column(
+        nullable=False,
+        server_default=false(),
+    )
+
+
+class DispositivoNotificaciones(Base):
+    __tablename__ = "dispositivos_notificaciones"
+
+    endpoint_sha256: Mapped[str] = mapped_column(String(64), primary_key=True)
+    sesion_id: Mapped[int] = mapped_column(
+        ForeignKey("sesiones.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    endpoint: Mapped[str] = mapped_column(String(2048), nullable=False)
+    p256dh: Mapped[str] = mapped_column(String(128), nullable=False)
+    auth: Mapped[str] = mapped_column(String(64), nullable=False)
+

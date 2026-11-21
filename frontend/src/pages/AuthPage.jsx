@@ -1,3 +1,4 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
@@ -25,6 +26,7 @@ function AuthForm({ mode }) {
   const [busy, setBusy] = useState(false);
   const destination = safeAuthDestination(location.state?.from);
   const disabled = busy || auth.status === "loading";
+  useStartupReady(auth.status !== "loading" && auth.status !== "authenticated");
   const navigationState = { from: destination, email: fields.email.trim() };
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 

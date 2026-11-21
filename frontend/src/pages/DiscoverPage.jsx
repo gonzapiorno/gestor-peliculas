@@ -1,3 +1,4 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 
@@ -54,6 +55,11 @@ function DiscoverResults({ location }) {
   const listoParaVolver = enInicio
     ? secciones.every(({ datos }) => !datos.cargando)
     : !cargaInicial && !errorInicial && (!hayCuadricula || columnas > 0);
+
+  const contenidoListo = enInicio
+    ? secciones.every(({ datos }) => !datos.cargando)
+    : !cargaInicial;
+  useStartupReady(contenidoListo && coleccion.estadoColeccion !== "loading");
 
   useLayoutEffect(() => {
     const grid = gridRef.current;

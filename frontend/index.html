@@ -10,9 +10,54 @@
     <link rel="preload" href="/fonts/PlusJakartaSans-Variable.ttf" as="font" type="font/ttf" crossorigin />
     <meta name="description" content="Descubrí tu próxima película y construí tu colección personal de cine con Muvis." />
     <title>Muvis · Tu colección de cine</title>
+    <style>
+      #muvis-startup {
+        position: fixed;
+        z-index: 1000;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #17291f;
+        color: #f2f3eb;
+        font: 1rem system-ui, sans-serif;
+      }
+      #muvis-startup img { display: block; width: min(62vw, 330px); height: auto; }
+      #muvis-startup .startup-status {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+      #muvis-startup .startup-retry {
+        position: absolute;
+        inset-block-end: calc(2rem + env(safe-area-inset-bottom, 0px));
+        min-height: 44px;
+        padding: 0.65rem 1rem;
+        border: 1px solid #d8e8a4;
+        border-radius: 0.75rem;
+        background: transparent;
+        color: #d8e8a4;
+        font: inherit;
+        visibility: hidden;
+        animation: startup-retry 0s 8s forwards;
+      }
+      @keyframes startup-retry { to { visibility: visible; } }
+      #muvis-startup[data-ready] { opacity: 0; visibility: hidden; pointer-events: none; }
+      #muvis-startup[data-ready] .startup-retry { visibility: hidden; animation: none; }
+      @media (prefers-reduced-motion: no-preference) {
+        #muvis-startup { transition: opacity 180ms ease-out, visibility 0s linear 180ms; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="muvis-startup">
+      <img src="/logos/muvis-logo.svg" alt="Muvis" width="330" height="96" fetchpriority="high" />
+      <span class="startup-status" role="status">Cargando Muvis…</span>
+      <button class="startup-retry" type="button" onclick="window.location.reload()">Reintentar carga</button>
+      <noscript>Activá JavaScript para abrir Muvis.</noscript>
+    </div>
+    <div id="root" inert></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

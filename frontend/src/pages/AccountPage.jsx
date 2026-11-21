@@ -1,3 +1,4 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import { AccountSession } from "../components/layout/Header";
@@ -5,6 +6,7 @@ import GoogleVinculacion from "../components/auth/GoogleVinculacion";
 import FeedbackPanel from "../components/ui/FeedbackPanel";
 import Icon from "../components/ui/Icon";
 import CollectionPrivacySettings from "../components/account/CollectionPrivacySettings";
+import NotificationSettings from "../components/account/NotificationSettings";
 import ProfileEditDialog from "../components/account/ProfileEditDialog";
 import ProfileAvatar from "../components/account/ProfileAvatar";
 import ProfileFeaturedMovies from "../components/account/ProfileFeaturedMovies";
@@ -50,6 +52,7 @@ function CuentaAutenticada({ user }) {
   const { guardarPerfil } = useAuth();
   const [feedbackAbierto, setFeedbackAbierto] = useState(false);
   const [perfilAbierto, setPerfilAbierto] = useState(false);
+  const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
   const [resumen, setResumen] = useState(null);
   const [intento, setIntento] = useState(0);
   const [guardandoVisibilidad, setGuardandoVisibilidad] = useState(null);
@@ -138,7 +141,7 @@ function CuentaAutenticada({ user }) {
         )}
       </section>
 
-      <ProfileFeaturedMovies coleccion={resumen?.coleccion} />
+      <ProfileFeaturedMovies coleccion={resumen?.coleccion} resumenListo={!verificado || resumen !== null} />
 
       <section className="account-page__settings" aria-labelledby="account-settings-heading">
         <h2 id="account-settings-heading"><Icon name="sliders" size={17} />Ajustes de cuenta</h2>
@@ -153,6 +156,15 @@ function CuentaAutenticada({ user }) {
           </div>
           <CollectionPrivacySettings valores={user} onChange={cambiarVisibilidad}
             disabled={Boolean(guardandoVisibilidad) || perfilAbierto} guardando={guardandoVisibilidad} />
+          {verificado && <button className="account-page__setting account-page__feedback" type="button"
+            aria-haspopup="dialog" onClick={() => setNotificacionesAbiertas(true)}>
+            <span className="account-page__setting-icon"><Icon name="bell" size={18} /></span>
+            <span className="account-page__setting-content">
+              <span className="account-page__setting-title">Notificaciones</span>
+              <span className="account-page__setting-description">Solicitudes y actividad de amigos</span>
+            </span>
+            <Icon name="chevron-right" size={16} />
+          </button>}
           <button className="account-page__setting account-page__feedback" type="button"
             onClick={() => setFeedbackAbierto(true)}>
             <span className="account-page__setting-icon"><Icon name="message" size={18} /></span>
@@ -169,6 +181,7 @@ function CuentaAutenticada({ user }) {
       </section>
 
       {perfilAbierto && <ProfileEditDialog user={user} onSave={guardarPerfil} onClose={() => setPerfilAbierto(false)} />}
+      {notificacionesAbiertas && <NotificationSettings onClose={() => setNotificacionesAbiertas(false)} />}
       {feedbackAbierto && <FeedbackPanel onClose={() => setFeedbackAbierto(false)} />}
     </>
   );
@@ -176,6 +189,7 @@ function CuentaAutenticada({ user }) {
 
 export default function AccountPage() {
   const { user } = useAuth();
+  useStartupReady(!user);
   return (
     <main className="account-page page-container">
       <header className="page-heading">

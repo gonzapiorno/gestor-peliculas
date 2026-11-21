@@ -1,3 +1,4 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigationType } from "react-router-dom";
 
@@ -65,6 +66,7 @@ function CollectionPage() {
   const [previousView] = useState(() => navigationType === "POP" ? collectionView(key, sessionKey) : undefined);
   const [peliculas, setPeliculas] = useState([]);
   const [cargando, setCargando] = useState(true);
+  useStartupReady(!cargando);
   const [error, setError] = useState(null);
   const [errorCambio, setErrorCambio] = useState(null);
   const [actualizandoIds, setActualizandoIds] = useState(new Set());

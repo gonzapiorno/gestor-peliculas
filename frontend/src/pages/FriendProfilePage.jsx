@@ -1,3 +1,4 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
@@ -7,6 +8,7 @@ import CollectionSortPicker from "../components/movies/CollectionSortPicker";
 import { collectionStatistics } from "../components/movies/collectionStatistics";
 import Dialog from "../components/ui/Dialog";
 import Icon from "../components/ui/Icon";
+import SegmentedControl from "../components/ui/SegmentedControl";
 import PageState from "../components/ui/PageState";
 import Poster from "../components/ui/Poster";
 import { obtenerColeccionAmigo, obtenerPerfilAmigo, quitarAmistad } from "../services/amistadesApi";
@@ -219,6 +221,8 @@ function PerfilAmigo({ id }) {
   const solicitud = useRef(null);
   const idValido = /^\d+$/.test(id) && Number(id) > 0 && Number(id) <= 2_147_483_647;
 
+  useStartupReady(!idValido || resultado !== null);
+
   useEffect(() => {
     if (resultado?.perfil) document.title = `${resultado.perfil.nombre_visible || resultado.perfil.nombre_usuario} · Muvis`;
   }, [resultado]);
@@ -365,14 +369,12 @@ function PerfilAmigo({ id }) {
                 setVista={(filtros) => setVista((actual) => ({ ...actual, lista, [lista]: filtros }))}
                 recordarVista={recordarVista}>
                 {ambas && (
-                  <div className="friend-profile__lists" role="group" aria-label="Elegir lista de películas">
-                    {[["vistas", "Vistas", vistas.length], ["pendientes", "Pendientes", pendientes.length]].map(([tipo, titulo, cantidad]) => (
-                      <button key={tipo} type="button" aria-pressed={lista === tipo}
-                        onClick={() => setVista((actual) => ({ ...actual, lista: tipo }))}>
-                        {titulo} <span>{formatoCantidad.format(cantidad)}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <SegmentedControl label="Elegir lista de películas" value={lista}
+                    options={[
+                      { value: "vistas", label: "Vistas", count: formatoCantidad.format(vistas.length) },
+                      { value: "pendientes", label: "Pendientes", count: formatoCantidad.format(pendientes.length) },
+                    ]}
+                    onChange={(tipo) => setVista((actual) => ({ ...actual, lista: tipo }))} />
                 )}
               </ColeccionCompartida>
             ) : <p className="friend-profile__message friend-profile__message--private"><Icon name="library" size={18} />Esta persona prefiere mantener su colección privada.</p>}

@@ -1,8 +1,13 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import CommunityFeed, { Publicacion } from "../components/community/CommunityFeed";
+import MovieDetailBackLink from "../components/movies/MovieDetailBackLink";
 import ProfileAvatar from "../components/account/ProfileAvatar";
 import Dialog from "../components/ui/Dialog";
 import Icon from "../components/ui/Icon";
+import PageState from "../components/ui/PageState";
+import SegmentedControl from "../components/ui/SegmentedControl";
 import {
   buscarUsuario,
   enviarSolicitud,
@@ -10,6 +15,7 @@ import {
   responderSolicitud,
 } from "../services/amistadesApi";
 import { errorMessage } from "../utils/errorMessage";
+import { obtenerPublicacion } from "../services/publicacionesApi";
 import "./CommunityPage.css";
 
 function Persona({ usuario }) {
@@ -71,18 +77,18 @@ function AccionesSolicitud({ solicitud, ocupada, onResponder }) {
   );
 }
 
-export default function CommunityPage() {
-  const { state } = useLocation();
+function Amigos({ amistadQuitada }) {
+  const { hash } = useLocation();
   const [bandeja, setBandeja] = useState(null);
   const [cargando, setCargando] = useState(true);
+  useStartupReady(!cargando);
   const [intento, setIntento] = useState(0);
   const [errorBandeja, setErrorBandeja] = useState("");
   const [consulta, setConsulta] = useState("");
   const [busqueda, setBusqueda] = useState(null);
   const [buscando, setBuscando] = useState(false);
   const [ocupada, setOcupada] = useState(false);
-  const [mostrarAdelanto, setMostrarAdelanto] = useState(false);
-  const [aviso, setAviso] = useState(() => state?.amistadQuitada ? { mensaje: "Amistad eliminada." } : null);
+  const [aviso, setAviso] = useState(() => amistadQuitada ? { mensaje: "Amistad eliminada." } : null);
   const operacion = useRef(false);
 
   useEffect(() => {
@@ -93,6 +99,12 @@ export default function CommunityPage() {
       .finally(() => { if (vigente) setCargando(false); });
     return () => { vigente = false; };
   }, [intento]);
+
+  useEffect(() => {
+    if (!cargando && hash === "#community-recibidas") {
+      document.getElementById("community-recibidas")?.scrollIntoView({ block: "start" });
+    }
+  }, [cargando, hash]);
 
   function actualizar() {
     setCargando(true);
@@ -173,17 +185,7 @@ export default function CommunityPage() {
   const accionesBloqueadas = ocupada || cargando || !bandeja;
 
   return (
-    <main className="community-page page-container">
-      <header className="community-heading page-heading">
-        <div>
-          <h1 className="page-title">Comunidad</h1>
-          <p className="page-description">El cine se disfruta más juntos.</p>
-        </div>
-        <button className="button community-upcoming-trigger" type="button" onClick={() => setMostrarAdelanto(true)} aria-haspopup="dialog">
-          <Icon name="message" size={16} />Mensajes<span>Próximamente</span>
-        </button>
-      </header>
-
+    <section className="community-friends" aria-label="Amigos">
       {aviso && <p className={aviso.error ? "inline-error" : "community-notice"} role={aviso.error ? "alert" : "status"}>{aviso.mensaje}</p>}
       {errorBandeja && (
         <div className="inline-error" role="alert">
@@ -266,21 +268,92 @@ export default function CommunityPage() {
           ) : bandeja && <p className="community-message">No tenés solicitudes enviadas pendientes.</p>}
         </Panel>
       </div>
+    </section>
+  );
+}
+
+const secciones = [
+  { value: "publicaciones", label: "Publicaciones" },
+  { value: "amigos", label: "Amigos" },
+];
+
+function PublicacionIndividual({ id }) {
+  const idValido = /^[1-9]\d*$/.test(id) && Number(id) <= 2_147_483_647;
+  const [estado, setEstado] = useState(null);
+  const [intento, setIntento] = useState(0);
+  const consulta = useRef(null);
+  useStartupReady(!idValido || estado !== null);
+
+  useEffect(() => {
+    if (!idValido) return;
+    let vigente = true;
+    if (consulta.current?.intento !== intento) consulta.current = { intento, promesa: obtenerPublicacion(id) };
+    consulta.current.promesa.then((datos) => { if (vigente) setEstado({ datos }); })
+      .catch((error) => { if (vigente) setEstado({ error }); });
+    return () => { vigente = false; };
+  }, [id, idValido, intento]);
+
+  const noDisponible = !idValido || estado?.error?.status === 404;
+  return (
+    <main className="community-page page-container">
+      <MovieDetailBackLink to="/comunidad">Volver a Comunidad</MovieDetailBackLink>
+      <div className="community-feed">
+        <h1 className="page-title">Publicación</h1>
+        {noDisponible ? <PageState kind="error" title="Publicación no disponible" />
+          : estado?.error ? <PageState kind="error" title="No pudimos abrir la publicación" description={errorMessage(estado.error)}>
+            <button className="button" type="button" onClick={() => {
+              setEstado(null);
+              setIntento((valor) => valor + 1);
+            }}>Reintentar</button>
+          </PageState>
+            : estado ? <Publicacion datos={estado.datos} desdeDetalle /> : <PageState title="Cargando publicación…" />}
+      </div>
+    </main>
+  );
+}
+
+export default function CommunityPage() {
+  const { publicacionId } = useParams();
+  const { state } = useLocation();
+  const [params, setParams] = useSearchParams();
+  const [mostrarAdelanto, setMostrarAdelanto] = useState(false);
+  const seccion = params.get("vista") === "amigos" || (state?.amistadQuitada && !params.has("vista"))
+    ? "amigos" : "publicaciones";
+
+  function cambiarSeccion(value) {
+    if (seccion === value) return;
+    setParams((actuales) => {
+      const nuevos = new URLSearchParams(actuales);
+      if (value === "amigos") nuevos.set("vista", value);
+      else nuevos.delete("vista");
+      return nuevos;
+    }, { replace: true });
+  }
+
+  if (publicacionId !== undefined) return <PublicacionIndividual key={publicacionId} id={publicacionId} />;
+
+  return (
+    <main className="community-page page-container">
+      <header className="community-heading page-heading">
+        <div>
+          <h1 className="page-title">Comunidad</h1>
+          <p className="page-description">El cine se disfruta más juntos.</p>
+        </div>
+        <button className="button community-upcoming-trigger" type="button" onClick={() => setMostrarAdelanto(true)} aria-haspopup="dialog">
+          <Icon name="message" size={16} />Mensajes
+        </button>
+      </header>
+
+      <SegmentedControl label="Secciones de Comunidad" value={seccion} options={secciones} onChange={cambiarSeccion} />
+
+      {seccion === "amigos" ? <Amigos amistadQuitada={state?.amistadQuitada} /> : <CommunityFeed />}
+
       {mostrarAdelanto && (
-        <Dialog className="community-upcoming dialog--enter" title="Lo próximo en Comunidad" description="Un adelanto de las funciones que queremos sumar a Muvis." onClose={() => setMostrarAdelanto(false)}>
-          <span className="community-upcoming__label">Próximamente</span>
-          <ul className="community-upcoming__features">
-            <li>
-              <span><Icon name="message" size={20} /></span>
-              <div><h3>Mensajes entre amigos</h3><p>Conversaciones privadas para charlar de cine y compartir películas y publicaciones.</p></div>
-            </li>
-            <li>
-              <span><Icon name="film" size={20} /></span>
-              <div><h3>Lo que estás viendo</h3><p>Publicaciones sobre la película que estás viendo o que ya viste, con likes y comentarios de tus amigos.</p></div>
-            </li>
-          </ul>
-          <p className="community-upcoming__note">Estas funciones todavía no están disponibles.</p>
-          <div className="dialog__actions"><button className="button button--primary" type="button" data-autofocus="" onClick={() => setMostrarAdelanto(false)}>Volver a Comunidad</button></div>
+        <Dialog className="community-upcoming dialog--enter" title="Mensajes entre amigos"
+          description="Próximamente vas a poder conversar en privado con tus amigos y compartirles películas y publicaciones."
+          onClose={() => setMostrarAdelanto(false)}>
+          <div className="dialog__actions"><button className="button button--primary" type="button"
+            data-autofocus="" onClick={() => setMostrarAdelanto(false)}>Volver a Comunidad</button></div>
         </Dialog>
       )}
     </main>

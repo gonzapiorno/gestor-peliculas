@@ -7,7 +7,7 @@ import {
   useMatch,
   useNavigationType,
 } from "react-router-dom";
-import { useEffect, useLayoutEffect } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 
 import AppLayout from "./components/layout/AppLayout";
 import Footer from "./components/layout/Footer";
@@ -29,6 +29,12 @@ import RequireAuth from "./auth/RequireAuth";
 import AccountPage from "./pages/AccountPage";
 import CommunityPage from "./pages/CommunityPage";
 import FriendProfilePage from "./pages/FriendProfilePage";
+import useStartupReady, { StartupContext } from "./hooks/useStartupReady";
+
+function StaticStartupPage({ children }) {
+  useStartupReady(true);
+  return children;
+}
 
 function RouteScroll({ sessionKey }) {
   const location = useLocation();
@@ -57,6 +63,7 @@ function RouteTitle() {
       "/restablecer-password": "Restablecer contraseña",
     };
     const title = titles[pathname] || (/^\/comunidad\/amigos\//.test(pathname) ? "Perfil de amigo"
+      : /^\/comunidad\/publicaciones\//.test(pathname) ? "Publicación"
       : /^\/(pelicula|coleccion)\//.test(pathname) ? "Detalle de película" : "Página no encontrada");
     document.title = `${title} · Muvis`;
   }, [pathname]);
@@ -72,11 +79,34 @@ function NotFoundPage() {
 }
 
 function AppContent() {
-  const { sessionKey } = useAuth();
+  const { sessionKey, status } = useAuth();
+  const [starting, setStarting] = useState(() => Boolean(document.getElementById("muvis-startup")));
+  const finishStartup = useCallback(() => setStarting(false), []);
   // El formulario del enlace conserva su token en memoria al actualizar la sesión.
   const contentKey = useMatch("/restablecer-password") ? "password-reset" : sessionKey;
+
+  useEffect(() => {
+    if (!starting) return;
+    const timeout = window.setTimeout(finishStartup, 8000);
+    return () => window.clearTimeout(timeout);
+  }, [finishStartup, starting]);
+
+  useLayoutEffect(() => {
+    if (starting) return;
+    const splash = document.getElementById("muvis-startup");
+    if (!splash || splash.hasAttribute("data-ready")) return;
+    const restoreFocus = splash.contains(document.activeElement);
+    splash.inert = true;
+    splash.setAttribute("aria-hidden", "true");
+    splash.setAttribute("data-ready", "");
+    document.getElementById("root").inert = false;
+    if (restoreFocus) document.getElementById("contenido")?.focus({ preventScroll: true });
+  }, [starting]);
+
+  if (starting && status === "loading") return null;
+
   return (
-    <>
+    <StartupContext.Provider value={starting ? finishStartup : null}>
       <RouteScroll sessionKey={sessionKey} />
       <RouteTitle />
       <AppLayout>
@@ -105,20 +135,21 @@ function AppContent() {
             />
             <Route path="/login" element={<AuthPage mode="login" />} />
             <Route path="/registro" element={<AuthPage mode="register" />} />
-            <Route path="/verificar-email" element={<VerifyEmailPage />} />
-            <Route path="/recuperar-password" element={<RecoverPasswordPage />} />
-            <Route path="/restablecer-password" element={<ResetPasswordPage />} />
+            <Route path="/verificar-email" element={<StaticStartupPage><VerifyEmailPage /></StaticStartupPage>} />
+            <Route path="/recuperar-password" element={<StaticStartupPage><RecoverPasswordPage /></StaticStartupPage>} />
+            <Route path="/restablecer-password" element={<StaticStartupPage><ResetPasswordPage /></StaticStartupPage>} />
             <Route path="/cuenta" element={<AccountPage />} />
             <Route path="/comunidad" element={<RequireAuth><CommunityPage /></RequireAuth>} />
+            <Route path="/comunidad/publicaciones/:publicacionId" element={<RequireAuth><CommunityPage /></RequireAuth>} />
             <Route path="/comunidad/amigos/:id" element={<RequireAuth><FriendProfilePage /></RequireAuth>} />
-            <Route path="*" element={<NotFoundPage />} />
+            <Route path="*" element={<StaticStartupPage><NotFoundPage /></StaticStartupPage>} />
           </Routes>
         </div>
 
         <Footer />
 
       </AppLayout>
-    </>
+    </StartupContext.Provider>
   );
 }
 

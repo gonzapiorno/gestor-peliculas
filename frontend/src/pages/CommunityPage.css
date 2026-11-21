@@ -30,15 +30,6 @@
   background: var(--color-surface-raised);
 }
 .community-upcoming-trigger > svg { color: var(--color-accent); }
-.community-upcoming-trigger > span {
-  padding: 2px 6px;
-  border-radius: var(--radius-pill);
-  background: #303b26;
-  color: var(--color-accent);
-  font-size: .62rem;
-  font-weight: 600;
-}
-
 .community-grid { display: grid; gap: 14px; align-items: start; }
 .community-panel {
   min-inline-size: 0;
@@ -67,6 +58,7 @@
   letter-spacing: -.02em;
 }
 .community-panel__header h2 > svg { color: var(--color-accent); }
+#community-recibidas { scroll-margin-block-start: calc(var(--header-height, 88px) + 14px); }
 .community-panel__count {
   display: inline-grid;
   min-inline-size: 20px;
@@ -179,7 +171,7 @@
 .community-message + .community-list { margin-block-start: 12px; }
 .community-message--error { color: var(--color-danger); }
 .community-notice { margin-block-end: 14px; padding: 10px 12px; border-radius: 9px; background: #202b1d; color: var(--color-accent); }
-.community-page > .inline-error { font-size: .8rem; }
+.community-friends > .inline-error { font-size: .8rem; }
 .community-empty { display: grid; justify-items: center; gap: 9px; padding: 24px 10px; text-align: center; }
 .community-empty__icon { display: grid; inline-size: 48px; block-size: 48px; place-items: center; border-radius: 14px; background: #283223; color: var(--color-accent); }
 .community-empty p { margin: 5px 0 0; font-size: .88rem; font-weight: 600; }
@@ -188,13 +180,6 @@
 .community-upcoming .dialog__body { padding: 24px; }
 .community-upcoming .dialog__title { margin-block-start: 2px; font-size: 1.3rem; font-weight: 650; }
 .community-upcoming .dialog__description { margin-block-end: 14px; font-size: .84rem; }
-.community-upcoming__label { display: inline-block; padding: 4px 8px; border-radius: var(--radius-pill); background: #303b26; color: var(--color-accent); font-size: .7rem; }
-.community-upcoming__features { display: grid; gap: 10px; margin: 16px 0; padding: 0; list-style: none; }
-.community-upcoming__features li { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border: 1px solid #30382c; border-radius: 11px; background: #141814; }
-.community-upcoming__features li > span { display: grid; inline-size: 34px; block-size: 34px; flex: none; place-items: center; border-radius: 10px; background: #283223; color: var(--color-accent); }
-.community-upcoming__features h3 { margin: 0 0 6px; font-size: .87rem; font-weight: 650; }
-.community-upcoming__features p,
-.community-upcoming__note { margin: 0; color: var(--color-text-secondary); font-size: .8rem; line-height: 1.7; }
 .community-upcoming .dialog__actions { margin-block-start: 18px; }
 
 @container community (min-width: 780px) {
@@ -205,7 +190,9 @@
   .community-panel--enviadas { grid-area: 3 / 2; }
 }
 @container community (max-width: 360px) {
-  .community-heading { gap: 12px; }
+  .community-heading { gap: 9px; align-items: start; }
+  .community-heading .page-description { max-inline-size: 19ch; }
+  .community-upcoming-trigger { margin-block-start: 3px; }
   .community-panel { padding: 13px; }
   .community-panel__header h2 { font-size: .87rem; }
 }

@@ -1,3 +1,4 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
@@ -31,6 +32,7 @@ function MovieDetailPage() {
   const [error, setError] = useState(null);
   const [reintentos, setReintentos] = useState(0);
   const [idParaAgregar, setIdParaAgregar] = useState(null);
+  useStartupReady(!cargando && coleccion.estadoColeccion !== "loading");
 
   useEffect(() => {
     let cancelado = false;
@@ -62,12 +64,16 @@ function MovieDetailPage() {
   const categoria = state?.catalogSearch?.category;
   const nombreCategoria = Object.hasOwn(catalogCategories, categoria) ? catalogCategories[categoria] : null;
   const amigo = Number.isInteger(state?.friendProfileId) && state.friendProfileId > 0 ? state.friendProfileId : null;
+  const desdeMuro = state?.desdeMuro === true;
+  const publicacionId = Number.isSafeInteger(state?.publicacionId) && state.publicacionId > 0 ? state.publicacionId : null;
   const destino = amigo ? `/comunidad/amigos/${amigo}${state.friendProfileCollection === true ? "?vista=coleccion" : ""}`
-    : resultadosUrl || (nombreCategoria ? catalogCategoryUrl(categoria, state.catalogSearch.decade) : "/");
+    : publicacionId ? `/comunidad/publicaciones/${publicacionId}`
+      : desdeMuro ? "/comunidad" : resultadosUrl || (nombreCategoria ? catalogCategoryUrl(categoria, state.catalogSearch.decade) : "/");
   const textoVolver = amigo ? "Volver al perfil"
-    : resultadosUrl ? "Volver a resultados" : nombreCategoria ? `Volver a ${nombreCategoria}` : "Volver a descubrir";
+    : publicacionId ? "Volver a la publicación"
+      : desdeMuro ? "Volver a Comunidad" : resultadosUrl ? "Volver a resultados" : nombreCategoria ? `Volver a ${nombreCategoria}` : "Volver a descubrir";
   const volver = (
-    <MovieDetailBackLink to={destino} historyBack={Boolean(amigo) || state?.catalogSearch?.fromDiscover === true}>
+    <MovieDetailBackLink to={destino} historyBack={Boolean(amigo) || desdeMuro || state?.catalogSearch?.fromDiscover === true}>
       {textoVolver}
     </MovieDetailBackLink>
   );

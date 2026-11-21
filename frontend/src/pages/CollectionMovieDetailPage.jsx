@@ -1,3 +1,4 @@
+import useStartupReady from "../hooks/useStartupReady";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -48,6 +49,7 @@ function PersonalMovieDetail({ id }) {
   const [errorCambio, setErrorCambio] = useState(null);
   const [mensaje, setMensaje] = useState("");
   const [dialogo, setDialogo] = useState(null);
+  useStartupReady(!cargando && (!pelicula?.id_tmdb || !cargandoDetalle));
 
   // Cada ruta tiene su propio ciclo: una respuesta tardía no modifica otra película.
   useEffect(() => {
