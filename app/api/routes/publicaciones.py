@@ -1,6 +1,6 @@
 import httpx
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Query, Response
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -25,6 +25,7 @@ from app.schemas.publicaciones import (
     PeliculaPublicacion,
     PublicacionRespuesta,
 )
+from app.services.notificaciones import avisar_publicacion
 from app.services.tmdb import obtener_detalle_pelicula
 
 
@@ -107,6 +108,7 @@ def respuesta_publicacion(fila):
 async def crear_publicacion(
     datos: CrearPublicacion,
     response: Response,
+    background_tasks: BackgroundTasks,
     usuario: Usuario = Depends(obtener_usuario_actual),
 ):
     try:
@@ -143,6 +145,7 @@ async def crear_publicacion(
         resultado = respuesta_publicacion(fila)
         sesion.commit()
 
+    background_tasks.add_task(avisar_publicacion, resultado.id)
     response.headers["Cache-Control"] = "private, no-store"
     return resultado
 

@@ -1,6 +1,4 @@
-import os
 from hashlib import sha256
-from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -13,6 +11,7 @@ from app.core.csrf import exigir_csrf
 from app.core.security import hash_token_sesion
 from app.db.models import DispositivoNotificaciones, PreferenciasNotificaciones, SesionUsuario, Usuario
 from app.db.session import engine
+from app.services.notificaciones import clave_publica_web_push, validar_endpoint_web_push
 
 
 router = APIRouter(
@@ -21,7 +20,6 @@ router = APIRouter(
     dependencies=[Depends(exigir_email_verificado)],
 )
 escritura_protegida = [Depends(exigir_csrf)]
-hosts_mozilla = {"updates.push.services.mozilla.com", "push.services.mozilla.com"}
 
 
 class CambiarPreferencias(BaseModel):
@@ -39,28 +37,7 @@ class EndpointDispositivo(BaseModel):
     @field_validator("endpoint")
     @classmethod
     def validar_endpoint(cls, valor: str) -> str:
-        try:
-            url = urlsplit(valor)
-            host = url.hostname or ""
-        except ValueError:
-            raise ValueError("Dirección de notificaciones inválida.") from None
-        valido = (
-            host.endswith(".push.apple.com")
-            or (host == "fcm.googleapis.com" and url.path.startswith("/fcm/send/"))
-            or (host in hosts_mozilla and url.path.startswith(("/wpush/", "/push/")))
-        )
-        if (
-            not valor.isascii()
-            or any(not 33 <= ord(caracter) <= 126 for caracter in valor)
-            or url.scheme != "https"
-            or not valido
-            or url.netloc != host
-            or not url.path
-            or "#" in valor
-            or "\\" in valor
-        ):
-            raise ValueError("Dirección de notificaciones inválida.")
-        return valor
+        return validar_endpoint_web_push(valor)
 
 
 class ClavesDispositivo(BaseModel):
@@ -77,10 +54,6 @@ class AltaDispositivo(EndpointDispositivo):
 class AjustesNotificaciones(CambiarPreferencias):
     clave_publica: str | None
     dispositivos: list[str]
-
-
-def clave_publica():
-    return os.getenv("WEB_PUSH_VAPID_PUBLIC_KEY", "").strip() or None
 
 
 def obtener_sesion_id(sesion: Session, request: Request, usuario_id: int, *, escritura=False):
@@ -112,7 +85,7 @@ def ajustes(sesion: Session, usuario_id: int, sesion_id: int, response: Response
     return AjustesNotificaciones(
         solicitudes_amistad=preferencias.solicitudes_amistad if preferencias else True,
         actividad_amigos=preferencias.actividad_amigos if preferencias else False,
-        clave_publica=clave_publica(),
+        clave_publica=clave_publica_web_push(),
         dispositivos=dispositivos,
     )
 
@@ -143,7 +116,7 @@ def guardar_ajustes(datos: CambiarPreferencias, request: Request, response: Resp
 @router.post("/dispositivos", response_model=AjustesNotificaciones, dependencies=escritura_protegida)
 def guardar_dispositivo(datos: AltaDispositivo, request: Request, response: Response,
                         usuario: Usuario = Depends(obtener_usuario_actual)):
-    if not clave_publica():
+    if not clave_publica_web_push():
         raise HTTPException(503, "El envío de notificaciones todavía no está disponible.")
     huella = sha256(datos.endpoint.encode("ascii")).hexdigest()
     with Session(engine) as sesion:

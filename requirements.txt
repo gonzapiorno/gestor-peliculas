@@ -11,3 +11,4 @@ pydantic[email]
 google-auth
 requests
 Pillow
+pywebpush==2.5.0

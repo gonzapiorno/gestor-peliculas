@@ -1,6 +1,6 @@
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Query, Request, Response
 from sqlalchemy import and_, case, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -23,6 +23,7 @@ from app.schemas.amistades import (
     PeliculaVistaAmigo,
     PeliculaPendienteAmigo,
 )
+from app.services.notificaciones import avisar_solicitud_amistad
 
 
 router = APIRouter(prefix="/amistades", tags=["Amistades"])
@@ -72,6 +73,7 @@ def buscar_usuario(
 def enviar_solicitud(
     request: Request,
     datos: EnviarSolicitudAmistad,
+    background_tasks: BackgroundTasks,
     usuario_actual: Usuario = Depends(obtener_usuario_actual),
 ):
     if datos.destinatario_id == usuario_actual.id:
@@ -114,6 +116,7 @@ def enviar_solicitud(
 
         sesion.commit()
 
+    background_tasks.add_task(avisar_solicitud_amistad, solicitud_id)
     return SolicitudAmistadCreada(id=solicitud_id, estado="pendiente")
 
 
